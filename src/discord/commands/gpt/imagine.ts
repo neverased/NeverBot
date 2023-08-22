@@ -1,4 +1,8 @@
-import { SlashCommandBuilder, AttachmentBuilder, EmbedBuilder } from 'discord.js';
+import {
+  SlashCommandBuilder,
+  AttachmentBuilder,
+  EmbedBuilder,
+} from 'discord.js';
 const { Configuration, OpenAIApi } = require('openai');
 import 'dotenv/config';
 import { createCanvas, loadImage } from 'canvas';
@@ -45,16 +49,16 @@ module.exports = {
       console.log(completion.data);
 
       const canvas = createCanvas(1024, 1024);
-        const ctx = canvas.getContext('2d');
-        loadImage(completion.data.url).then((image) => {
-            ctx.drawImage(image, 1024, 1024);
-        }).catch((err) => {
-            console.log(err);
+      const ctx = canvas.getContext('2d');
+      loadImage(completion.data.url)
+        .then((image) => {
+          ctx.drawImage(image, 1024, 1024);
+        })
+        .catch((err) => {
+          console.log(err);
         });
-        
-      const file = new AttachmentBuilder(
-        canvas.toBuffer(),
-        )
+
+      const file = new AttachmentBuilder(canvas.toBuffer());
 
       await interaction.editReply({ files: [file] });
     } catch (error) {

@@ -3,11 +3,13 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
-import { User } from './entities/user.entity'
+import { User } from './entities/user.entity';
 
 @Injectable()
 export class UsersService {
-  constructor(@InjectModel(User.name) private readonly usersModel: Model<User>) {}
+  constructor(
+    @InjectModel(User.name) private readonly usersModel: Model<User>,
+  ) {}
 
   create(createUserDto: CreateUserDto): Promise<User> {
     const createdUser = new this.usersModel(createUserDto);
@@ -29,16 +31,20 @@ export class UsersService {
 
   async update(serverId: string, updateUserDto: UpdateUserDto) {
     const existingUser = await this.usersModel
-      .findOneAndUpdate({ serverId: serverId }, { $set: updateUserDto }, { new: true })
+      .findOneAndUpdate(
+        { serverId: serverId },
+        { $set: updateUserDto },
+        { new: true },
+      )
       .exec();
-    
+
     if (!existingUser) {
       throw new NotFoundException(`Server #${serverId} not found`);
     }
     return existingUser;
   }
 
-  async remove(serverId: string) { 
+  async remove(serverId: string) {
     return await this.usersModel.deleteOne({ serverId: serverId }).exec();
   }
 }

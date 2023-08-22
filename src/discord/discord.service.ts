@@ -117,17 +117,19 @@ export class DiscordService implements OnModuleInit {
         }
       }
 
-      let isTranslation = discordFlagToLanguageCode({ emoji: reaction.emoji.name });
-      console.log("isTranslation: " + isTranslation);
+      const isTranslation = discordFlagToLanguageCode({
+        emoji: reaction.emoji.name,
+      });
+      console.log('isTranslation: ' + isTranslation);
       if (isTranslation == null) return;
 
-      let [firstValue] =
+      const [firstValue] =
         reaction.message.attachments.values() == undefined
           ? null
           : reaction.message.attachments.values();
       if (firstValue != null) {
         if (firstValue.contentType == 'image/png') {
-          let scrape = await textFromImage({
+          const scrape = await textFromImage({
             imgLink: firstValue.url,
             emoji: reaction.emoji.name,
             user,
@@ -136,7 +138,7 @@ export class DiscordService implements OnModuleInit {
           reaction.message.reply({ embeds: [scrape] });
         }
       } else {
-        let traslation = await translateText(
+        const traslation = await translateText(
           reaction.emoji.name,
           reaction.message.content,
           user,

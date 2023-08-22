@@ -48,7 +48,7 @@ export async function textFromImage({
   emoji: string;
   user: any;
 }): Promise<EmbedBuilder> {
-  let example_image_1 = await download_image(imgLink, 'example-1.png');
+  const example_image_1 = await download_image(imgLink, 'example-1.png');
 
   const [result] = await client.textDetection('example-1.png');
 
