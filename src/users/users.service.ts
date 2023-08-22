@@ -1,16 +1,17 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
-import { Users, UsersDocument } from './schemas/users.schema';
+import { User } from './entities/user.entity'
 
 @Injectable()
 export class UsersService {
-  constructor(@InjectModel(Users.name) private usersModel: Model<UsersDocument>) {}
+  constructor(@InjectModel(User.name) private readonly usersModel: Model<User>) {}
 
-  create(createUserDto: CreateUserDto): Promise<Users> {
+  create(createUserDto: CreateUserDto): Promise<User> {
     const createdUser = new this.usersModel(createUserDto);
+    console.log(createdUser, 'createdUser');
     return createdUser.save();
   }
 
@@ -18,15 +19,26 @@ export class UsersService {
     return this.usersModel.find().exec();
   }
 
-  findOne(id: number) {
-    return this.usersModel.findById(id).exec();
+  async findOne(serverId: string) {
+    const server = await this.usersModel.findOne({ serverId: serverId }).exec();
+    if (!server) {
+      throw new NotFoundException(`Server #${serverId} not found`);
+    }
+    return server;
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return this.usersModel.findByIdAndUpdate(id, updateUserDto).exec();
+  async update(serverId: string, updateUserDto: UpdateUserDto) {
+    const existingUser = await this.usersModel
+      .findOneAndUpdate({ serverId: serverId }, { $set: updateUserDto }, { new: true })
+      .exec();
+    
+    if (!existingUser) {
+      throw new NotFoundException(`Server #${serverId} not found`);
+    }
+    return existingUser;
   }
 
-  remove(id: number) {
-    return this.usersModel.findByIdAndDelete(id).exec();
+  async remove(serverId: string) { 
+    return await this.usersModel.deleteOne({ serverId: serverId }).exec();
   }
 }

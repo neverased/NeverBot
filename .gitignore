@@ -39,3 +39,6 @@ lerna-debug.log*
 
 # tokens
 sos-aio-*.json
+
+# package-lock.json
+package-lock.json

@@ -1,6 +1,7 @@
 export class User {
-    id: number;
+    registeredAt: Date;
     serverName: string;
-    ServerId: string;
-    tasks: Array<Object>;
+    serverId: string;
+    subscription: string;
+    tasks: any;
 }
