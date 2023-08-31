@@ -3,15 +3,14 @@ import {
   AttachmentBuilder,
   EmbedBuilder,
 } from 'discord.js';
-const { Configuration, OpenAIApi } = require('openai');
+const OpenAI = require('openai');
 import 'dotenv/config';
-import { createCanvas, loadImage } from 'canvas';
+import axios from 'axios';
+const fs = require('fs');
 
-const configuration = new Configuration({
+const openai = new OpenAI({
   apiKey: process.env.GPT_KEY,
 });
-
-const openai = new OpenAIApi(configuration);
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -40,27 +39,35 @@ module.exports = {
     }
 
     try {
-      const completion = await openai.createImage({
+      const completion = await openai.images.generate({
         prompt: question,
         n: 1,
         size: '1024x1024',
       });
 
-      console.log(completion.data);
+      console.log(completion.data[0].url.toString());
 
-      const canvas = createCanvas(1024, 1024);
-      const ctx = canvas.getContext('2d');
-      loadImage(completion.data.url)
-        .then((image) => {
-          ctx.drawImage(image, 1024, 1024);
-        })
-        .catch((err) => {
-          console.log(err);
-        });
+      const link = completion.data[0].url.toString();
 
-      const file = new AttachmentBuilder(canvas.toBuffer());
+      const download_image = (url, image_path) =>
+        axios({
+          url,
+          responseType: 'stream',
+        }).then(
+          (response) =>
+            new Promise<void>((resolve, reject) => {
+              response.data
+                .pipe(fs.createWriteStream(image_path))
+                .on('finish', () => resolve())
+                .on('error', (e) => reject(e));
+            }),
+        );
 
-      await interaction.editReply({ files: [file] });
+      await download_image(link, 'image.png');
+
+      await interaction.editReply({
+        files: ['image.png'],
+      });
     } catch (error) {
       if (error.response) {
         console.log(error.response.status);

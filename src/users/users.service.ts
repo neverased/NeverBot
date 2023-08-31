@@ -13,6 +13,7 @@ export class UsersService {
 
   create(createUserDto: CreateUserDto): Promise<User> {
     const createdUser = new this.usersModel(createUserDto);
+
     console.log(createdUser, 'createdUser');
     return createdUser.save();
   }

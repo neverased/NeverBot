@@ -1,6 +1,4 @@
 import { SlashCommandBuilder } from 'discord.js';
-const { Permissions } = require('discord.js');
-const User = require('../../../users/schemas/users.schema');
 import axios, { Axios } from 'axios';
 
 module.exports = {
@@ -18,7 +16,7 @@ module.exports = {
     await interaction.deferReply();
 
     await axios
-      .get(`http://localhost:3000/users/${interaction.guildId}`)
+      .get(`http://localhost:3500/users/${interaction.guildId}`)
       .then((response) => {
         //console.log(response, 'response');
 
@@ -31,7 +29,7 @@ module.exports = {
           };
 
           axios
-            .patch(`http://localhost:3000/users/${interaction.guildId}`, server)
+            .patch(`http://localhost:3500/users/${interaction.guildId}`, server)
             .then((response) => {
               console.log(response.data, 'response');
             });
@@ -56,7 +54,7 @@ module.exports = {
             },
           };
 
-          axios.post('http://localhost:3000/users', server).then((response) => {
+          axios.post('http://localhost:3500/users', server).then((response) => {
             console.log(response.data, 'response');
           });
 

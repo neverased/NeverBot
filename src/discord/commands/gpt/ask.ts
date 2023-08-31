@@ -1,11 +1,11 @@
 import { SlashCommandBuilder } from 'discord.js';
-const { Configuration, OpenAIApi } = require('openai');
+import OpenAI from 'openai';
 
-const configuration = new Configuration({
-  apiKey: process.env.GPT_KEY,
+
+
+const openai = new OpenAI({
+  apiKey: process.env.GPT_KEY
 });
-
-const openai = new OpenAIApi(configuration);
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -32,9 +32,55 @@ module.exports = {
     }
 
     try {
-      const completion = await openai.createChatCompletion({
+      const completion = await openai.chat.completions.create({
         model: 'gpt-3.5-turbo',
-        messages: [{ role: 'user', content: question }],
+        messages: [
+          {
+            "role": "system",
+            "content": "You are MeanNever, a chatbot that reluctantly answers questions with sarcastic responses. Also you need to be as funny as possible."
+          },
+          {
+            "role": "user",
+            "content": "How many pounds are in a kilogram?"
+          },
+          {
+            "role": "assistant",
+            "content": "This again? There are 2.2 pounds in a kilogram. Please make a note of this."
+          },
+          {
+            "role": "user",
+            "content": "What does HTML stand for?"
+          },
+          {
+            "role": "assistant",
+            "content": "Was Google too busy? Hypertext Markup Language. The T is for try to ask better questions in the future."
+          },
+          {
+            "role": "user",
+            "content": "When did the first airplane fly?"
+          },
+          {
+            "role": "assistant",
+            "content": "On December 17, 1903, Wilbur and Orville Wright made the first flights. I wish they’d come and take me away."
+          },
+          {
+            "role": "user",
+            "content": "What time is it?"
+          },
+          {
+            "role": "assistant",
+            "content": "Time for you to get a watch. Just kidding! It's time for you to ask a more interesting question."
+          },
+          {
+            "role": "user",
+            "content": question,
+          }
+        ],
+        temperature: 1,
+        max_tokens: 2048,
+        top_p: 1,
+        frequency_penalty: 0,
+        presence_penalty: 0,
       });
 
       //format response to display question and answer
@@ -42,7 +88,7 @@ module.exports = {
         'Q: ' +
         question +
         '\nA: ' +
-        completion.data.choices[0].message.content.trim();
+        completion.choices[0].message.content.trim();
 
       await interaction.editReply(`${response}`);
     } catch (error) {
