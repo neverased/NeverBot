@@ -1,5 +1,5 @@
 import { SlashCommandBuilder } from 'discord.js';
-import axios, { Axios } from 'axios';
+import axios from 'axios';
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -24,6 +24,7 @@ module.exports = {
           // If it does, update it
           const server = {
             tasks: {
+              ...response.data.tasks,
               welcome_channel_id: interaction.options.getChannel('welcome').id,
             },
           };
@@ -62,6 +63,10 @@ module.exports = {
             `User added to database and welcome channel was set to ${interaction.options.getChannel(
               'welcome',
             )}.`,
+          );
+        } else {
+          return interaction.editReply(
+            `Error: ${error.response.status} - ${error.response.statusText}`,
           );
         }
       });

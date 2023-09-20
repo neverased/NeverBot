@@ -1,7 +1,7 @@
 //function to run when a member leaves the server
 
-import axios from "axios";
-import { EmbedBuilder } from "discord.js";
+import axios from 'axios';
+import { EmbedBuilder } from 'discord.js';
 
 export async function goodbyeOldMember(member: any): Promise<void> {
   //send a goodbye message to the old member
@@ -15,7 +15,7 @@ export async function goodbyeOldMember(member: any): Promise<void> {
     });
 
   const goodbyeEmbed = new EmbedBuilder()
-    .setColor("#FF0000")
+    .setColor('#FF0000')
     .setTitle(`${member.user.username} just left the server! 👋`)
     .setDescription(
       `We're sorry to see you go. \nWe hope you enjoyed your stay. \n\nIf you ever want to come back, we'll be here waiting for you. \n\nUntil then, take care! 🍪🤖🎉`,

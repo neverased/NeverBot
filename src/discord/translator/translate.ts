@@ -1,10 +1,9 @@
 // Imports the Google Cloud client library
 import 'dotenv/config';
-const fs = require('fs');
+import fs from 'fs';
 
 const { Translate } = require('@google-cloud/translate').v2;
 import { EmbedBuilder } from 'discord.js';
-import { join } from 'path';
 
 const data = fs.readFileSync('./sos-aio-bot-40e1568bd219.json', {
   encoding: 'utf8',

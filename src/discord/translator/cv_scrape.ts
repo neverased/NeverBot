@@ -1,8 +1,8 @@
 import 'dotenv/config';
-const fs = require('fs');
+import fs from 'fs';
 const { Translate } = require('@google-cloud/translate').v2;
 import { EmbedBuilder } from 'discord.js';
-const vision = require('@google-cloud/vision');
+import vision from '@google-cloud/vision';
 import { justTranslateText } from './translate';
 
 const data = fs.readFileSync('./sos-aio-bot-40e1568bd219.json', {
@@ -19,7 +19,7 @@ const translate = new Translate({
   credentials: JSON.parse(data),
 });
 
-const axios = require('axios');
+import axios from 'axios';
 
 /* ============================================================
   Function: Download Image
@@ -48,7 +48,7 @@ export async function textFromImage({
   emoji: string;
   user: any;
 }): Promise<EmbedBuilder> {
-  const example_image_1 = await download_image(imgLink, 'example-1.png');
+  await download_image(imgLink, 'example-1.png');
 
   const [result] = await client.textDetection('example-1.png');
 
@@ -63,6 +63,8 @@ export async function textFromImage({
     detections[0].description, //text to translate
     emoji, //flag emoji
   );
+
+  const confidence = detections[0].confidence;
 
   if (translatedText == null) {
     translatedText = 'Translation failed';
@@ -80,7 +82,7 @@ export async function textFromImage({
     .setTimestamp()
     .setDescription(translatedText)
     .setFooter({
-      text: `Scraping confidence right about now is at %`,
+      text: `Scraping confidence right about now is at ${confidence}%`,
     });
 
   return embed;

@@ -5,10 +5,10 @@ import {
   Events,
   Collection,
   Partials,
-  Attachment,
+  ActivityType,
 } from 'discord.js';
 import 'dotenv/config';
-const fs = require('fs');
+import fs from 'fs';
 import * as path from 'path';
 import { setCommands } from './utils';
 import { translateText } from './translator/translate';
@@ -101,7 +101,7 @@ export class DiscordService implements OnModuleInit {
 
     this.client.on(Events.ClientReady, () => {
       console.log('Client is ready!');
-      //setCommands();
+      setCommands();
     });
 
     this.client.on(Events.GuildMemberAdd, async (member) => {
@@ -160,5 +160,9 @@ export class DiscordService implements OnModuleInit {
     });
 
     await this.client.login(this.token);
+
+    await this.client.user.setActivity('/help', {
+      type: ActivityType.Listening,
+    });
   }
 }

@@ -4,7 +4,7 @@ import { SlashCommandBuilder } from 'discord.js';
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('ping')
+    .setName('help')
     .setDescription('Displays all available commands'),
   async execute(interaction) {
     await interaction.reply('Coming soon!');

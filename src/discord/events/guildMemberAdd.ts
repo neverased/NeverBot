@@ -1,7 +1,7 @@
 //function to run when a new member joins the server
 
 import axios from 'axios';
-import { EmbedBuilder } from 'discord.js';
+import { EmbedBuilder, userMention } from 'discord.js';
 import OpenAI from 'openai';
 
 const openai = new OpenAI({
@@ -18,6 +18,8 @@ export async function welcomeNewMember(member: any): Promise<void> {
     .then((response) => {
       return response.data;
     });
+
+  const mora = userMention('701709518668693617');
 
   const completion = await openai.chat.completions.create({
     model: 'gpt-3.5-turbo',
@@ -37,7 +39,7 @@ export async function welcomeNewMember(member: any): Promise<void> {
       },
       {
         role: 'user',
-        content: `Give a warm welcome to @${member.user.username} \nIntroduce yourself in a short sentence and mention that '/help' is the command to get started or, you can always ask @Mora ! (blank space after @ is important)`,
+        content: `Give a warm welcome to @${member.user.username} \nIntroduce yourself in a short sentence and mention that '/help' is the command to get started or, you can always ask ${mora} !`,
       },
     ],
     temperature: 1,

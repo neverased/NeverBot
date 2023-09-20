@@ -1,6 +1,6 @@
 const { REST, Routes } = require('discord.js');
-const fs = require('node:fs');
-const path = require('node:path');
+import fs from 'node:fs';
+import path from 'node:path';
 import 'dotenv/config';
 
 export function setCommands(): any {
