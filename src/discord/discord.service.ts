@@ -8,7 +8,7 @@ import {
   ActivityType,
 } from 'discord.js';
 import 'dotenv/config';
-import fs from 'fs';
+import * as fs from 'fs';
 import * as path from 'path';
 import { setCommands } from './utils';
 import { translateText } from './translator/translate';

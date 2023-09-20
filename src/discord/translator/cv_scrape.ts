@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import fs from 'fs';
+import * as fs from 'fs';
 const { Translate } = require('@google-cloud/translate').v2;
 import { EmbedBuilder } from 'discord.js';
 import vision from '@google-cloud/vision';
