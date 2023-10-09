@@ -45,7 +45,7 @@ export class UsersService {
     return existingUser;
   }
 
-  async remove(serverId: string) {
+  async remove(serverId: string): Promise<any> {
     return await this.usersModel.deleteOne({ serverId: serverId }).exec();
   }
 }

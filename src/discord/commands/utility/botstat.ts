@@ -51,10 +51,13 @@ module.exports = {
         { name: 'Database', value: `${dbConnection}` },
         {
           name: 'CPU Usage',
-            value: `${parseFloat(os.loadavg(5).toString()).toFixed(2)}%`,
+          value: `${parseFloat(os.loadavg(5).toString()).toFixed(2)}%`,
         },
         { name: 'CPU Cores', value: `${os.cpuCount()}` },
-        { name: 'Free Memory', value: `${parseInt(os.freemem().toString())}MB` },
+        {
+          name: 'Free Memory',
+          value: `${parseInt(os.freemem().toString())}MB`,
+        },
         { name: 'Total Memory', value: `${os.totalmem()}MB` },
         { name: 'System Uptime', value: `${toHHMMSS(os.sysUptime())}` },
         { name: 'Process Uptime', value: `${toHHMMSS(os.processUptime())}` },

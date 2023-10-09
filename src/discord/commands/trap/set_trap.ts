@@ -1,13 +1,10 @@
 import axios from 'axios';
 import {
   ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
   ChannelSelectMenuBuilder,
   ComponentType,
   SlashCommandBuilder,
   StringSelectMenuBuilder,
-  StringSelectMenuInteraction,
   StringSelectMenuOptionBuilder,
 } from 'discord.js';
 import 'dayjs';
@@ -119,7 +116,7 @@ module.exports = {
               ? dayjs.utc().format()
               : dayjs().add(1, 'day').utc().format();
 
-          const trapDay = i.update({
+          i.update({
             content: `You have selected ${trapOptions.time} UTC.\nYou have selected start time for ${trapOptions.day}.\nPlease select a channel for the notification to be send to:`,
             components: [rowChannel],
 

@@ -15,10 +15,6 @@ const client = new vision.ImageAnnotatorClient({
   credentials: JSON.parse(data),
 });
 
-const translate = new Translate({
-  credentials: JSON.parse(data),
-});
-
 import axios from 'axios';
 
 /* ============================================================

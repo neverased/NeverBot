@@ -6,6 +6,8 @@ import { MongooseModule } from '@nestjs/mongoose';
 import 'dotenv/config';
 import { DiscordService } from './discord/discord.service';
 import { ScheduleModule } from '@nestjs/schedule';
+import { TasksModule } from './tasks/tasks.module';
+
 @Module({
   imports: [
     UsersModule,
@@ -13,6 +15,7 @@ import { ScheduleModule } from '@nestjs/schedule';
       `mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PW}@maincluster.uax2tb8.mongodb.net/`,
     ),
     ScheduleModule.forRoot(),
+    TasksModule,
   ],
   controllers: [AppController],
   providers: [AppService, DiscordService],
