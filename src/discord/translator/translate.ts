@@ -51,6 +51,8 @@ export function discordFlagToLanguageCode({
     '🇧🇪': 'BE',
     '🇧🇬': 'BG',
     '🇭🇷': 'HR',
+    //hindi as requested
+    '🇮🇳': 'HI',
     // Add more flag-to-country mappings as needed
   };
 
@@ -85,6 +87,8 @@ export function discordFlagToLanguageCode({
     BE: 'nl',
     BG: 'bg',
     HR: 'hr',
+    //hindi as requested
+    HI: 'hi',
     // Add more country-to-language mappings as needed
   };
 

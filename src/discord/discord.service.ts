@@ -101,7 +101,7 @@ export class DiscordService implements OnModuleInit {
 
     this.client.on(Events.ClientReady, () => {
       console.log('Client is ready!');
-      //setCommands();
+      setCommands();
     });
 
     this.client.on(Events.GuildMemberAdd, async (member) => {
