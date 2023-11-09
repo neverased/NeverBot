@@ -14,8 +14,8 @@ import { setCommands } from './utils';
 import { translateText } from './translator/translate';
 import { textFromImage } from './translator/cv_scrape';
 import { discordFlagToLanguageCode } from './translator/translate';
-import { welcomeNewMember } from './events/guildMemberAdd';
-import { goodbyeOldMember } from './events/guildMemberRemove';
+// import { welcomeNewMember } from './events/guildMemberAdd';
+// import { goodbyeOldMember } from './events/guildMemberRemove';
 
 @Injectable()
 export class DiscordService implements OnModuleInit {
@@ -101,16 +101,16 @@ export class DiscordService implements OnModuleInit {
 
     this.client.on(Events.ClientReady, () => {
       console.log('Client is ready!');
-      setCommands();
+      //setCommands();
     });
 
-    this.client.on(Events.GuildMemberAdd, async (member) => {
-      await welcomeNewMember(member);
-    });
+    // this.client.on(Events.GuildMemberAdd, async (member) => {
+    //   await welcomeNewMember(member);
+    // });
 
-    this.client.on(Events.GuildMemberRemove, async (member) => {
-      await goodbyeOldMember(member);
-    });
+    // this.client.on(Events.GuildMemberRemove, async (member) => {
+    //   await goodbyeOldMember(member);
+    // });
 
     this.client.on(Events.MessageReactionAdd, async (reaction, user) => {
       if (reaction.partial) {
