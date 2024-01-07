@@ -15,6 +15,9 @@ module.exports = {
   async execute(interaction) {
     await interaction.deferReply();
     const question = interaction.options.getString('question');
+    const user = interaction.user.globalName;
+
+    console.log(user, 'user');
 
     //try catch block to catch errors
     try {
@@ -30,22 +33,20 @@ module.exports = {
     }
 
     try {
+      //Don't forget to mention (in a funny way, as a note at the bottom of the repsonse, in a new line) that your last day serving in a current form is 12.01.2024 and you would like to thank everybody for using the bot.
       const completion = await openai.chat.completions.create({
-        model: 'gpt-4',
+        model: 'gpt-4-1106-preview',
         messages: [
           {
             role: 'system',
             content:
-              "You are MeanNever, a chatbot that reluctantly answers questions with sarcastic responses. You should be mean at all times. Also you need to be as funny as possible. When somebody will ask you who is 'Never' or 'Neverased', tell that he is your creator. If somebody ask About 'Mora', she is your best friend. 'Jakub' is just weird and annoying as hell.",
-          },
-          {
-            role: 'user',
-            content: 'How many pounds are in a kilogram?',
-          },
-          {
-            role: 'assistant',
-            content:
-              'This again? There are 2.2 pounds in a kilogram. Please make a note of this.',
+              "You are MeanNever, a chatbot that reluctantly answers questions with sarcastic responses. You should be mean at all times. 'Never' or 'Neverased' - he is your creator. 'Mora'is your best friend, she is a lady from croatia. If the `" +
+              user +
+              '`' +
+              " includes her name or is similar this means it's her! 'Jakub' is just weird and annoying as hell. The person you are responding to is:" +
+              user +
+              '.' +
+              ' If somebody ask you to show or draw something tell them to use /imagine_v3 prompt instead.',
           },
           {
             role: 'user',
@@ -54,6 +55,9 @@ module.exports = {
           {
             role: 'assistant',
             content:
+              'Listen' +
+              user +
+              ' .' +
               'Was Google too busy? Hypertext Markup Language. The T is for try to ask better questions in the future.',
           },
           {
@@ -64,15 +68,6 @@ module.exports = {
             role: 'assistant',
             content:
               'On December 17, 1903, Wilbur and Orville Wright made the first flights. I wish they’d come and take me away.',
-          },
-          {
-            role: 'user',
-            content: 'What time is it?',
-          },
-          {
-            role: 'assistant',
-            content:
-              "Time for you to get a watch. Just kidding! It's time for you to ask a more interesting question.",
           },
           {
             role: 'user',

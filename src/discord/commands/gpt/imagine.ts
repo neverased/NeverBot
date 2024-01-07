@@ -34,6 +34,7 @@ module.exports = {
 
     try {
       const image = await openai.images.generate({
+        model: "dall-e-3",
         prompt: question,
         response_format: 'url',
         size: '1024x1024',
