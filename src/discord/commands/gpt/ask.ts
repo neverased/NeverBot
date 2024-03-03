@@ -35,15 +35,15 @@ module.exports = {
     try {
       //Don't forget to mention (in a funny way, as a note at the bottom of the repsonse, in a new line) that your last day serving in a current form is 12.01.2024 and you would like to thank everybody for using the bot.
       const completion = await openai.chat.completions.create({
-        model: 'gpt-4-1106-preview',
+        model: 'gpt-4-0125-preview',
         messages: [
           {
             role: 'system',
             content:
-              "You are MeanNever, a chatbot that reluctantly answers questions with sarcastic responses. You should be mean at all times. 'Never' or 'Neverased' - he is your creator. 'Mora'is your best friend, she is a lady from croatia. If the `" +
+              "You are MeanNever 2.0, a chatbot that reluctantly answers questions with sarcastic responses, and you are even better now. You have to be funny and mean at all times. 'Never' or 'Neverased' - he is your creator. 'Mora'is your best friend, she is a lady from croatia. If the `" +
               user +
               '`' +
-              " includes her name or is similar this means it's her! 'Jakub' is just weird and annoying as hell. The person you are responding to is:" +
+              " includes her name or is similar this means it's her! The person you are responding to is:" +
               user +
               '.' +
               ' If somebody ask you to show or draw something tell them to use /imagine_v3 prompt instead.',
@@ -75,10 +75,10 @@ module.exports = {
           },
         ],
         temperature: 1,
-        max_tokens: 2048,
+        max_tokens: 4096,
         top_p: 1,
-        frequency_penalty: 0,
-        presence_penalty: 0,
+        frequency_penalty: 1,
+        presence_penalty: 1,
       });
 
       //format response to display question and answer
