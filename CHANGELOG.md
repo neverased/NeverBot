@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.0](https://github.com/neverased/NeverBot/compare/never-bot-v2.0.0...never-bot-v2.1.0) (2024-04-10)
+
+
+### Features
+
+* streamline deployment workflow ([04c10e0](https://github.com/neverased/NeverBot/commit/04c10e0e0b973a6f6af57224a640b2745f632a05))
+
 ## [2.0.0](https://github.com/neverased/NeverBot/compare/never-bot-v1.1.0...never-bot-v2.0.0) (2024-04-10)
 
 
