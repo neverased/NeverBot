@@ -1,33 +1,32 @@
-name: Deploy
+name: Check build
 
 on:
-  release:
-    types: [published]
+  pull_request:
+    branches:
+      - main
   # Trigger the workflow manually
   workflow_dispatch:
 
 jobs:
   deploy:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
-      - name: Kill previous deployments
-        run: lsof -t -i:3500 | xargs -r kill
-
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Create .env file
         run: echo "SECRET=${{ secrets.ENV }}" > .env
 
+      - name: Create google-credentials.json file
+        run: echo "${{ secrets.GOOGLE_API }}" > sos-aio-bot-40e1568bd219.json
+
       - name: Install node
         uses: actions/setup-node@v4
         with:
           node-version: '21'
           cache: 'npm'
-      - run: npm install
+      - run: npm ci
 
       - name: Build application
         run: npm run build
 
-      - name: Deploy application
-        run: npm run start:prod
