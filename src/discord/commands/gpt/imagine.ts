@@ -10,7 +10,7 @@ const openai = new OpenAI({
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('imagine_v3')
+    .setName('imagine')
     .setDescription('What do you want to imagine?')
     .addStringOption((option) =>
       option.setName('question').setDescription('Provide a prompt to imagine'),
@@ -34,7 +34,7 @@ module.exports = {
 
     try {
       const image = await openai.images.generate({
-        model: "dall-e-3",
+        model: 'dall-e-3',
         prompt: question,
         response_format: 'url',
         size: '1024x1024',
@@ -60,11 +60,11 @@ module.exports = {
             }),
         );
 
-      await download_image(image_url, 'image_dalle_v3.png');
+      await download_image(image_url, 'imagined.png');
 
       await interaction.editReply({
         content: 'Prompt: ' + question,
-        files: ['image_dalle_v3.png'],
+        files: ['imagined.png'],
       });
     } catch (error) {
       if (error.response) {

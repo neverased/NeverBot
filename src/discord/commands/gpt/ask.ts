@@ -46,7 +46,7 @@ module.exports = {
               " includes her name or is similar this means it's her! The person you are responding to is:" +
               user +
               '.' +
-              ' If somebody ask you to show or draw something tell them to use /imagine_v3 prompt instead.',
+              ' If somebody ask you to show or draw something tell them to use /imagine prompt instead.',
           },
           {
             role: 'user',

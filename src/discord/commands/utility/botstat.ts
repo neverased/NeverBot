@@ -3,7 +3,7 @@ import axios from 'axios';
 import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
 
 //import os-utils to get system stats
-import os from 'os-utils';
+const os = require('node:os');
 
 const toHHMMSS = (secs) => {
   const sec_num = parseInt(secs, 10);
@@ -47,20 +47,20 @@ module.exports = {
         `Bot is in ${interaction.client.guilds.cache.size} servers`,
       )
       .addFields(
-        { name: 'Platofrm', value: `${os.platform()}` },
+        { name: 'Platform', value: `${os.platform()}` },
         { name: 'Database', value: `${dbConnection}` },
         {
           name: 'CPU Usage',
-          value: `${parseFloat(os.loadavg(5).toString()).toFixed(2)}%`,
+          value: `${os.loadavg()}%`,
         },
-        { name: 'CPU Cores', value: `${os.cpuCount()}` },
+        // show the number of CPU cores
+        { name: 'CPU Cores', value: `${os.cpus().length}` },
         {
           name: 'Free Memory',
           value: `${parseInt(os.freemem().toString())}MB`,
         },
         { name: 'Total Memory', value: `${os.totalmem()}MB` },
-        { name: 'System Uptime', value: `${toHHMMSS(os.sysUptime())}` },
-        { name: 'Process Uptime', value: `${toHHMMSS(os.processUptime())}` },
+        { name: 'System Uptime', value: `${toHHMMSS(os.uptime())}` },
       )
       .setThumbnail(interaction.client.user.avatarURL())
       .setTimestamp();
