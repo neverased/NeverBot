@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/neverased/NeverBot/compare/v1.0.0...v1.1.0) (2024-04-10)
+
+
+### Features
+
+* update package dependencies ([eab17f4](https://github.com/neverased/NeverBot/commit/eab17f476e9715dc2fd4a93ae5740d6d9ca782c6))
+
 ## 1.0.0 (2024-03-06)
 
 
