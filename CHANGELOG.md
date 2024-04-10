@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.2.0](https://github.com/neverased/NeverBot/compare/never-bot-v2.1.0...never-bot-v2.2.0) (2024-04-10)
+
+
+### Features
+
+* Update GitHub workflow for build checks ([83edb5a](https://github.com/neverased/NeverBot/commit/83edb5a5ab9cc6a095c2883cc0a57f990a1c9eed))
+
 ## [2.1.0](https://github.com/neverased/NeverBot/compare/never-bot-v2.0.0...never-bot-v2.1.0) (2024-04-10)
 
 
