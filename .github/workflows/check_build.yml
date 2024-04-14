@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.1.1
 
       - name: Create .env file
         run: echo "SECRET=${{ secrets.ENV }}" > .env
@@ -21,7 +21,7 @@ jobs:
         run: echo "${{ secrets.GOOGLE_API }}" > sos-aio-bot-40e1568bd219.json
 
       - name: Install node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v4.0.2
         with:
           node-version: '21'
           cache: 'npm'
