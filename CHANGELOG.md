@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.3.0](https://github.com/neverased/NeverBot/compare/never-bot-v2.2.0...never-bot-v2.3.0) (2024-04-23)
+
+
+### Features
+
+* update package dependencies ([e2b5788](https://github.com/neverased/NeverBot/commit/e2b5788d6365c82eca5ff0012e535a651a54690d))
+
 ## [2.2.0](https://github.com/neverased/NeverBot/compare/never-bot-v2.1.0...never-bot-v2.2.0) (2024-04-10)
 
 
