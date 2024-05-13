@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.6.0](https://github.com/neverased/NeverBot/compare/never-bot-v2.5.0...never-bot-v2.6.0) (2024-05-13)
+
+
+### Features
+
+* Update dependencies and improve chatbot response handling ([032cfd9](https://github.com/neverased/NeverBot/commit/032cfd92077581d4a6cc87092d232127548bdf9c))
+
 ## [2.5.0](https://github.com/neverased/NeverBot/compare/never-bot-v2.4.0...never-bot-v2.5.0) (2024-05-05)
 
 
