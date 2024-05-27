@@ -12,7 +12,7 @@ function splitText(text, maxLength) {
   // Split the text by spaces to avoid breaking words
   const words = text.split(' ');
 
-  for (let word of words) {
+  for (const word of words) {
     if (currentPart.length + word.length + 1 > maxLength) {
       parts.push(currentPart);
       currentPart = word;
@@ -108,7 +108,7 @@ module.exports = {
 
       if (response.length > maxDiscordMessageLength) {
         const responseParts = splitText(response, maxDiscordMessageLength);
-        for (let part of responseParts) {
+        for (const part of responseParts) {
           await interaction.followUp(part);
         }
       } else {
@@ -121,24 +121,4 @@ module.exports = {
       );
     }
   },
-
-  //     //format response to display question and answer
-  //     const response =
-  //       'Q: ' +
-  //       question +
-  //       '\nA: ' +
-  //       completion.choices[0].message.content.trim();
-
-  //     await interaction.editReply(`${response}`);
-  //   } catch (error) {
-  //     if (error.response) {
-  //       console.log(error.response.status);
-  //       console.log(error.response.data);
-  //       await interaction.editReply(error.message);
-  //     } else {
-  //       console.log(error.message);
-  //       await interaction.editReply(error.message);
-  //     }
-  //   }
-  // },
 };

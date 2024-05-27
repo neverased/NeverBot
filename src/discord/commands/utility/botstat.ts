@@ -3,7 +3,7 @@ import axios from 'axios';
 import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
 
 //import os-utils to get system stats
-const os = require('node:os');
+import * as os from 'os';
 
 const toHHMMSS = (secs) => {
   const sec_num = parseInt(secs, 10);

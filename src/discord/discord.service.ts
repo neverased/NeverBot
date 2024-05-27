@@ -10,7 +10,7 @@ import {
 import 'dotenv/config';
 import * as fs from 'fs';
 import * as path from 'path';
-import { setCommands } from './utils';
+//import { setCommands } from './utils';
 import { translateText } from './translator/translate';
 import { textFromImage } from './translator/cv_scrape';
 import { discordFlagToLanguageCode } from './translator/translate';
