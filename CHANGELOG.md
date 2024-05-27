@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.7.0](https://github.com/neverased/NeverBot/compare/never-bot-v2.6.0...never-bot-v2.7.0) (2024-05-27)
+
+
+### Features
+
+* Refactor ESLint configuration and update dependencies ([da8843b](https://github.com/neverased/NeverBot/commit/da8843bcf5e6b37d3e1333a593726a7714c04bdc))
+* Remove sarif_file from eslint workflow ([f34b910](https://github.com/neverased/NeverBot/commit/f34b91055c2e2b9005360993a9d814116e9260a5))
+* streamline eslint workflow ([50e6c99](https://github.com/neverased/NeverBot/commit/50e6c9900d9f62cdc020e03875ec549bc6783870))
+* update codeql-action version ([2963649](https://github.com/neverased/NeverBot/commit/2963649962d225c603a2737fdc3f98dc1d42c0a0))
+* update Node.js and ESLint versions ([79de15e](https://github.com/neverased/NeverBot/commit/79de15eeb2bf163f0c6f515efe4f7c8784bd8656))
+* update package dependencies ([a9453f5](https://github.com/neverased/NeverBot/commit/a9453f5be2601df05e4efb217b2fc7b37f966e82))
+* update package dependencies ([98de5a4](https://github.com/neverased/NeverBot/commit/98de5a44f2123dfa8413a1471e27911cbcdf42b9))
+* upgrade typescript-eslint version ([60e7484](https://github.com/neverased/NeverBot/commit/60e74849df7e9add3d8c642319a74257b4564d96))
+
 ## [2.6.0](https://github.com/neverased/NeverBot/compare/never-bot-v2.5.0...never-bot-v2.6.0) (2024-05-13)
 
 
