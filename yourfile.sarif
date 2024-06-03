@@ -1,0 +1,822 @@
+{
+  "version": "2.1.0",
+  "$schema": "http://json.schemastore.org/sarif-2.1.0-rtm.5",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "ESLint",
+          "informationUri": "https://eslint.org",
+          "rules": [
+            {
+              "id": "@typescript-eslint/no-explicit-any",
+              "helpUri": "https://typescript-eslint.io/rules/no-explicit-any",
+              "properties": {},
+              "shortDescription": {
+                "text": "Disallow the `any` type"
+              }
+            },
+            {
+              "id": "@typescript-eslint/no-var-requires",
+              "helpUri": "https://typescript-eslint.io/rules/no-var-requires",
+              "properties": {},
+              "shortDescription": {
+                "text": "Disallow `require` statements except in import statements"
+              }
+            },
+            {
+              "id": "@typescript-eslint/no-unused-vars",
+              "helpUri": "https://typescript-eslint.io/rules/no-unused-vars",
+              "properties": {},
+              "shortDescription": {
+                "text": "Disallow unused variables"
+              }
+            }
+          ],
+          "version": "9.4.0"
+        }
+      },
+      "artifacts": [
+        {
+          "location": {
+            "uri": "file:///Users/neverased/Codebase/NeverBot/eslint.config.mjs"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///Users/neverased/Codebase/NeverBot/src/app.controller.spec.ts"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///Users/neverased/Codebase/NeverBot/src/app.controller.ts"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///Users/neverased/Codebase/NeverBot/src/app.module.ts"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///Users/neverased/Codebase/NeverBot/src/app.service.ts"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///Users/neverased/Codebase/NeverBot/src/discord/commands/fun/help.ts"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///Users/neverased/Codebase/NeverBot/src/discord/commands/fun/ping.ts"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///Users/neverased/Codebase/NeverBot/src/discord/commands/gpt/ask.ts"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///Users/neverased/Codebase/NeverBot/src/discord/commands/gpt/imagine.ts"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///Users/neverased/Codebase/NeverBot/src/discord/commands/utility/botstat.ts"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///Users/neverased/Codebase/NeverBot/src/discord/commands/utility/server.ts"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///Users/neverased/Codebase/NeverBot/src/discord/commands/utility/user.ts"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///Users/neverased/Codebase/NeverBot/src/discord/discord.service.spec.ts"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///Users/neverased/Codebase/NeverBot/src/discord/discord.service.ts"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///Users/neverased/Codebase/NeverBot/src/discord/embeds/error.ts"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///Users/neverased/Codebase/NeverBot/src/discord/embeds/idle.ts"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///Users/neverased/Codebase/NeverBot/src/discord/embeds/success.ts"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///Users/neverased/Codebase/NeverBot/src/discord/schedule/trap_agenda.ts"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///Users/neverased/Codebase/NeverBot/src/discord/translator/cv_scrape.ts"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///Users/neverased/Codebase/NeverBot/src/discord/translator/translate.ts"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///Users/neverased/Codebase/NeverBot/src/discord/utils.ts"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///Users/neverased/Codebase/NeverBot/src/main.ts"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///Users/neverased/Codebase/NeverBot/src/old/admin/welcome.ts"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///Users/neverased/Codebase/NeverBot/src/old/events/guildMemberAdd.ts"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///Users/neverased/Codebase/NeverBot/src/old/events/guildMemberRemove.ts"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///Users/neverased/Codebase/NeverBot/src/old/imagine.ts"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///Users/neverased/Codebase/NeverBot/src/old/trap/set_trap.ts"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///Users/neverased/Codebase/NeverBot/src/tasks/dto/create-task.dto.ts"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///Users/neverased/Codebase/NeverBot/src/tasks/dto/update-task.dto.ts"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///Users/neverased/Codebase/NeverBot/src/tasks/entities/task.entity.ts"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///Users/neverased/Codebase/NeverBot/src/tasks/tasks.controller.spec.ts"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///Users/neverased/Codebase/NeverBot/src/tasks/tasks.controller.ts"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///Users/neverased/Codebase/NeverBot/src/tasks/tasks.module.ts"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///Users/neverased/Codebase/NeverBot/src/tasks/tasks.service.spec.ts"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///Users/neverased/Codebase/NeverBot/src/tasks/tasks.service.ts"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///Users/neverased/Codebase/NeverBot/src/users/dto/create-user.dto.ts"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///Users/neverased/Codebase/NeverBot/src/users/dto/update-user.dto.ts"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///Users/neverased/Codebase/NeverBot/src/users/entities/user.entity.ts"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///Users/neverased/Codebase/NeverBot/src/users/schemas/users.schema.ts"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///Users/neverased/Codebase/NeverBot/src/users/users.controller.spec.ts"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///Users/neverased/Codebase/NeverBot/src/users/users.controller.ts"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///Users/neverased/Codebase/NeverBot/src/users/users.module.ts"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///Users/neverased/Codebase/NeverBot/src/users/users.service.spec.ts"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///Users/neverased/Codebase/NeverBot/src/users/users.service.ts"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///Users/neverased/Codebase/NeverBot/test/app.e2e-spec.ts"
+          }
+        }
+      ],
+      "results": [
+        {
+          "level": "error",
+          "message": {
+            "text": "Unexpected any. Specify a different type."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///Users/neverased/Codebase/NeverBot/src/discord/discord.service.ts",
+                  "index": 13
+                },
+                "region": {
+                  "startLine": 38,
+                  "startColumn": 9,
+                  "endLine": 38,
+                  "endColumn": 12
+                }
+              }
+            }
+          ],
+          "ruleId": "@typescript-eslint/no-explicit-any",
+          "ruleIndex": 0
+        },
+        {
+          "level": "error",
+          "message": {
+            "text": "Unexpected any. Specify a different type."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///Users/neverased/Codebase/NeverBot/src/discord/discord.service.ts",
+                  "index": 13
+                },
+                "region": {
+                  "startLine": 45,
+                  "startColumn": 18,
+                  "endLine": 45,
+                  "endColumn": 21
+                }
+              }
+            }
+          ],
+          "ruleId": "@typescript-eslint/no-explicit-any",
+          "ruleIndex": 0
+        },
+        {
+          "level": "error",
+          "message": {
+            "text": "Require statement not part of import statement."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///Users/neverased/Codebase/NeverBot/src/discord/discord.service.ts",
+                  "index": 13
+                },
+                "region": {
+                  "startLine": 58,
+                  "startColumn": 25,
+                  "endLine": 58,
+                  "endColumn": 42
+                }
+              }
+            }
+          ],
+          "ruleId": "@typescript-eslint/no-var-requires",
+          "ruleIndex": 1
+        },
+        {
+          "level": "error",
+          "message": {
+            "text": "'Translate' is assigned a value but never used."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///Users/neverased/Codebase/NeverBot/src/discord/translator/cv_scrape.ts",
+                  "index": 18
+                },
+                "region": {
+                  "startLine": 3,
+                  "startColumn": 9,
+                  "endLine": 3,
+                  "endColumn": 18
+                }
+              }
+            }
+          ],
+          "ruleId": "@typescript-eslint/no-unused-vars",
+          "ruleIndex": 2
+        },
+        {
+          "level": "error",
+          "message": {
+            "text": "Require statement not part of import statement."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///Users/neverased/Codebase/NeverBot/src/discord/translator/cv_scrape.ts",
+                  "index": 18
+                },
+                "region": {
+                  "startLine": 3,
+                  "startColumn": 23,
+                  "endLine": 3,
+                  "endColumn": 57
+                }
+              }
+            }
+          ],
+          "ruleId": "@typescript-eslint/no-var-requires",
+          "ruleIndex": 1
+        },
+        {
+          "level": "error",
+          "message": {
+            "text": "Unexpected any. Specify a different type."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///Users/neverased/Codebase/NeverBot/src/discord/translator/cv_scrape.ts",
+                  "index": 18
+                },
+                "region": {
+                  "startLine": 45,
+                  "startColumn": 9,
+                  "endLine": 45,
+                  "endColumn": 12
+                }
+              }
+            }
+          ],
+          "ruleId": "@typescript-eslint/no-explicit-any",
+          "ruleIndex": 0
+        },
+        {
+          "level": "error",
+          "message": {
+            "text": "Require statement not part of import statement."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///Users/neverased/Codebase/NeverBot/src/discord/translator/translate.ts",
+                  "index": 19
+                },
+                "region": {
+                  "startLine": 5,
+                  "startColumn": 23,
+                  "endLine": 5,
+                  "endColumn": 57
+                }
+              }
+            }
+          ],
+          "ruleId": "@typescript-eslint/no-var-requires",
+          "ruleIndex": 1
+        },
+        {
+          "level": "error",
+          "message": {
+            "text": "Unexpected any. Specify a different type."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///Users/neverased/Codebase/NeverBot/src/discord/translator/translate.ts",
+                  "index": 19
+                },
+                "region": {
+                  "startLine": 117,
+                  "startColumn": 9,
+                  "endLine": 117,
+                  "endColumn": 12
+                }
+              }
+            }
+          ],
+          "ruleId": "@typescript-eslint/no-explicit-any",
+          "ruleIndex": 0
+        },
+        {
+          "level": "error",
+          "message": {
+            "text": "Require statement not part of import statement."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///Users/neverased/Codebase/NeverBot/src/discord/utils.ts",
+                  "index": 20
+                },
+                "region": {
+                  "startLine": 1,
+                  "startColumn": 26,
+                  "endLine": 1,
+                  "endColumn": 47
+                }
+              }
+            }
+          ],
+          "ruleId": "@typescript-eslint/no-var-requires",
+          "ruleIndex": 1
+        },
+        {
+          "level": "error",
+          "message": {
+            "text": "Unexpected any. Specify a different type."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///Users/neverased/Codebase/NeverBot/src/discord/utils.ts",
+                  "index": 20
+                },
+                "region": {
+                  "startLine": 6,
+                  "startColumn": 32,
+                  "endLine": 6,
+                  "endColumn": 35
+                }
+              }
+            }
+          ],
+          "ruleId": "@typescript-eslint/no-explicit-any",
+          "ruleIndex": 0
+        },
+        {
+          "level": "error",
+          "message": {
+            "text": "Require statement not part of import statement."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///Users/neverased/Codebase/NeverBot/src/discord/utils.ts",
+                  "index": 20
+                },
+                "region": {
+                  "startLine": 22,
+                  "startColumn": 23,
+                  "endLine": 22,
+                  "endColumn": 40
+                }
+              }
+            }
+          ],
+          "ruleId": "@typescript-eslint/no-var-requires",
+          "ruleIndex": 1
+        },
+        {
+          "level": "error",
+          "message": {
+            "text": "Unexpected any. Specify a different type."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///Users/neverased/Codebase/NeverBot/src/old/events/guildMemberAdd.ts",
+                  "index": 23
+                },
+                "region": {
+                  "startLine": 11,
+                  "startColumn": 48,
+                  "endLine": 11,
+                  "endColumn": 51
+                }
+              }
+            }
+          ],
+          "ruleId": "@typescript-eslint/no-explicit-any",
+          "ruleIndex": 0
+        },
+        {
+          "level": "error",
+          "message": {
+            "text": "Unexpected any. Specify a different type."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///Users/neverased/Codebase/NeverBot/src/old/events/guildMemberRemove.ts",
+                  "index": 24
+                },
+                "region": {
+                  "startLine": 6,
+                  "startColumn": 48,
+                  "endLine": 6,
+                  "endColumn": 51
+                }
+              }
+            }
+          ],
+          "ruleId": "@typescript-eslint/no-explicit-any",
+          "ruleIndex": 0
+        },
+        {
+          "level": "error",
+          "message": {
+            "text": "'CreateTaskDto' is defined but never used."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///Users/neverased/Codebase/NeverBot/src/tasks/tasks.controller.ts",
+                  "index": 31
+                },
+                "region": {
+                  "startLine": 5,
+                  "startColumn": 10,
+                  "endLine": 5,
+                  "endColumn": 23
+                }
+              }
+            }
+          ],
+          "ruleId": "@typescript-eslint/no-unused-vars",
+          "ruleIndex": 2
+        },
+        {
+          "level": "error",
+          "message": {
+            "text": "'UpdateTaskDto' is defined but never used."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///Users/neverased/Codebase/NeverBot/src/tasks/tasks.controller.ts",
+                  "index": 31
+                },
+                "region": {
+                  "startLine": 6,
+                  "startColumn": 10,
+                  "endLine": 6,
+                  "endColumn": 23
+                }
+              }
+            }
+          ],
+          "ruleId": "@typescript-eslint/no-unused-vars",
+          "ruleIndex": 2
+        },
+        {
+          "level": "error",
+          "message": {
+            "text": "'createTaskDto' is defined but never used."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///Users/neverased/Codebase/NeverBot/src/tasks/tasks.service.ts",
+                  "index": 34
+                },
+                "region": {
+                  "startLine": 7,
+                  "startColumn": 10,
+                  "endLine": 7,
+                  "endColumn": 23
+                }
+              }
+            }
+          ],
+          "ruleId": "@typescript-eslint/no-unused-vars",
+          "ruleIndex": 2
+        },
+        {
+          "level": "error",
+          "message": {
+            "text": "'updateTaskDto' is defined but never used."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///Users/neverased/Codebase/NeverBot/src/tasks/tasks.service.ts",
+                  "index": 34
+                },
+                "region": {
+                  "startLine": 19,
+                  "startColumn": 22,
+                  "endLine": 19,
+                  "endColumn": 35
+                }
+              }
+            }
+          ],
+          "ruleId": "@typescript-eslint/no-unused-vars",
+          "ruleIndex": 2
+        },
+        {
+          "level": "error",
+          "message": {
+            "text": "Unexpected any. Specify a different type."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///Users/neverased/Codebase/NeverBot/src/users/dto/create-user.dto.ts",
+                  "index": 35
+                },
+                "region": {
+                  "startLine": 6,
+                  "startColumn": 10,
+                  "endLine": 6,
+                  "endColumn": 13
+                }
+              }
+            }
+          ],
+          "ruleId": "@typescript-eslint/no-explicit-any",
+          "ruleIndex": 0
+        },
+        {
+          "level": "error",
+          "message": {
+            "text": "Unexpected any. Specify a different type."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///Users/neverased/Codebase/NeverBot/src/users/dto/update-user.dto.ts",
+                  "index": 36
+                },
+                "region": {
+                  "startLine": 9,
+                  "startColumn": 10,
+                  "endLine": 9,
+                  "endColumn": 13
+                }
+              }
+            }
+          ],
+          "ruleId": "@typescript-eslint/no-explicit-any",
+          "ruleIndex": 0
+        },
+        {
+          "level": "error",
+          "message": {
+            "text": "Unexpected any. Specify a different type."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///Users/neverased/Codebase/NeverBot/src/users/entities/user.entity.ts",
+                  "index": 37
+                },
+                "region": {
+                  "startLine": 6,
+                  "startColumn": 10,
+                  "endLine": 6,
+                  "endColumn": 13
+                }
+              }
+            }
+          ],
+          "ruleId": "@typescript-eslint/no-explicit-any",
+          "ruleIndex": 0
+        },
+        {
+          "level": "error",
+          "message": {
+            "text": "'schemaWelcome' is assigned a value but never used."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///Users/neverased/Codebase/NeverBot/src/users/schemas/users.schema.ts",
+                  "index": 38
+                },
+                "region": {
+                  "startLine": 14,
+                  "startColumn": 7,
+                  "endLine": 14,
+                  "endColumn": 20
+                }
+              }
+            }
+          ],
+          "ruleId": "@typescript-eslint/no-unused-vars",
+          "ruleIndex": 2
+        },
+        {
+          "level": "error",
+          "message": {
+            "text": "'paginationQuery' is defined but never used."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///Users/neverased/Codebase/NeverBot/src/users/users.controller.ts",
+                  "index": 40
+                },
+                "region": {
+                  "startLine": 25,
+                  "startColumn": 20,
+                  "endLine": 25,
+                  "endColumn": 35
+                }
+              }
+            }
+          ],
+          "ruleId": "@typescript-eslint/no-unused-vars",
+          "ruleIndex": 2
+        },
+        {
+          "level": "error",
+          "message": {
+            "text": "Unexpected any. Specify a different type."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///Users/neverased/Codebase/NeverBot/src/users/users.service.ts",
+                  "index": 43
+                },
+                "region": {
+                  "startLine": 48,
+                  "startColumn": 43,
+                  "endLine": 48,
+                  "endColumn": 46
+                }
+              }
+            }
+          ],
+          "ruleId": "@typescript-eslint/no-explicit-any",
+          "ruleIndex": 0
+        }
+      ]
+    }
+  ]
+}
