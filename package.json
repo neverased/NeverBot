@@ -23,7 +23,7 @@
     "@google-cloud/translate": "^8.3.0",
     "@google-cloud/vision": "^4.3.0",
     "@hokify/agenda": "^6.3.0",
-    "@nestjs/common": "^10.3.9",
+    "@nestjs/common": "^10.3.10",
     "@nestjs/config": "^3.2.2",
     "@nestjs/core": "^10.3.9",
     "@nestjs/mapped-types": "*",
