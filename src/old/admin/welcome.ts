@@ -1,5 +1,5 @@
-import { SlashCommandBuilder } from 'discord.js';
 import axios from 'axios';
+import { SlashCommandBuilder } from 'discord.js';
 
 module.exports = {
   data: new SlashCommandBuilder()

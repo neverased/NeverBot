@@ -1,4 +1,8 @@
+import 'dayjs';
+
 import axios from 'axios';
+import * as dayjs from 'dayjs';
+import * as utc from 'dayjs/plugin/utc';
 import {
   ActionRowBuilder,
   ChannelSelectMenuBuilder,
@@ -7,9 +11,6 @@ import {
   StringSelectMenuBuilder,
   StringSelectMenuOptionBuilder,
 } from 'discord.js';
-import 'dayjs';
-import * as dayjs from 'dayjs';
-import * as utc from 'dayjs/plugin/utc';
 dayjs.extend(utc);
 
 module.exports = {

@@ -1,6 +1,7 @@
-import { SlashCommandBuilder } from 'discord.js';
 import 'dotenv/config';
+
 import axios from 'axios';
+import { SlashCommandBuilder } from 'discord.js';
 import * as fs from 'fs';
 
 module.exports = {

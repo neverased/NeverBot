@@ -1,8 +1,9 @@
+import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
+import { User } from 'discord.js';
+
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
-import { getModelToken } from '@nestjs/mongoose';
-import { User } from 'discord.js';
 
 describe('UsersController', () => {
   let controller: UsersController;

@@ -1,7 +1,6 @@
 //slash command to display bot stats and server stats
 import axios from 'axios';
-import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
-
+import { EmbedBuilder,SlashCommandBuilder } from 'discord.js';
 //import os-utils to get system stats
 import * as os from 'os';
 

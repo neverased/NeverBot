@@ -1,26 +1,28 @@
 // Imports the Google Cloud client library
 import 'dotenv/config';
+
+import { Translate } from '@google-cloud/translate/build/src/v2';
+import { EmbedBuilder } from 'discord.js';
 import * as fs from 'fs';
 
-const { Translate } = require('@google-cloud/translate').v2;
-import { EmbedBuilder } from 'discord.js';
-
-const data = fs.readFileSync('./sos-aio-bot-40e1568bd219.json', {
-  encoding: 'utf8',
-  flag: 'r',
-});
+// Load Google Cloud credentials from environment variable
+const credentialsPath =
+  process.env.GOOGLE_CLOUD_CREDENTIALS_PATH || './sos-aio-bot-40e1568bd219.json';
+const data = fs.readFileSync(credentialsPath, { encoding: 'utf8', flag: 'r' });
 
 // Creates a client
-const translate = new Translate({
-  credentials: JSON.parse(data),
-});
+const translate = new Translate({ credentials: JSON.parse(data) });
 
+interface FlagToLanguageCodeParams {
+  emoji: string;
+}
+
+// Maps Discord flag emoji to language codes
 export function discordFlagToLanguageCode({
   emoji,
-}: {
-  emoji: string;
-}): string | null {
-  const flagToCountry: { [key: string]: string } = {
+}: FlagToLanguageCodeParams): string | null {
+  // Mapping of flag emoji to country codes
+  const flagToCountry: Record<string, string> = {
     '🇺🇸': 'US',
     '🇬🇧': 'GB',
     '🇫🇷': 'FR',
@@ -56,7 +58,7 @@ export function discordFlagToLanguageCode({
     // Add more flag-to-country mappings as needed
   };
 
-  const countryToLanguage: { [key: string]: string } = {
+  const countryToLanguage: Record<string, string> = {
     US: 'en',
     GB: 'en',
     FR: 'fr',
@@ -92,44 +94,49 @@ export function discordFlagToLanguageCode({
     // Add more country-to-language mappings as needed
   };
 
-  if (emoji in flagToCountry) {
-    const countryCode: string = flagToCountry[emoji];
-    if (countryCode in countryToLanguage) {
-      return countryToLanguage[countryCode];
-    }
-  }
-  return null; // Return null if no mapping is found
+  const countryCode = flagToCountry[emoji];
+  return countryCode ? countryToLanguage[countryCode] : null;
 }
 
+// Translates text without creating an embed
 export async function justTranslateText(
   text: string,
   emoji: string,
-): Promise<string> {
-  const target = discordFlagToLanguageCode({ emoji });
-  if (target == null) return null;
-  const [translations] = await translate.translate(text, target);
-  return translations;
+): Promise<string | null> {
+  try {
+    const target = discordFlagToLanguageCode({ emoji });
+    if (target == null) return null;
+    const [translations] = await translate.translate(text, target);
+    return translations;
+  } catch (error) {
+    console.error('Error translating text:', error);
+    return null;
+  }
 }
 
+// Translates text and creates a Discord embed
 export async function translateText(
   emoji: string,
   text: string,
-  user: any,
-): Promise<EmbedBuilder> {
-  const target = discordFlagToLanguageCode({ emoji });
-  if (target == null) return null;
-  const translations = await translate.translate(text, target);
-  //console.log('Translations:');
-  //console.log(translations);
+  user: { username: string; avatarURL: () => string },
+): Promise<EmbedBuilder | null> {
+  try {
+    const target = discordFlagToLanguageCode({ emoji });
+    if (target == null) return null;
+    const [translations] = await translate.translate(text, target);
 
-  const embed = new EmbedBuilder()
-    .setAuthor({
-      name: user.username + ' requested translation to ' + emoji + '',
-      iconURL: user.avatarURL(),
-    })
-    .setDescription(translations[0])
-    .setColor('#0099ff')
-    .setTimestamp();
+    const embed = new EmbedBuilder()
+      .setAuthor({
+        name: `${user.username} requested translation to ${emoji}`,
+        iconURL: user.avatarURL(),
+      })
+      .setDescription(translations)
+      .setColor('#0099ff')
+      .setTimestamp();
 
-  return embed;
+    return embed;
+  } catch (error) {
+    console.error('Error creating translation embed:', error);
+    return null;
+  }
 }

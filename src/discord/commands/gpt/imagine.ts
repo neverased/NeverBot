@@ -1,8 +1,9 @@
-import { SlashCommandBuilder } from 'discord.js';
-import OpenAI from 'openai';
 import 'dotenv/config';
+
 import axios from 'axios';
+import { SlashCommandBuilder } from 'discord.js';
 import * as fs from 'fs';
+import OpenAI from 'openai';
 
 const openai = new OpenAI({
   apiKey: process.env.GPT_KEY,
@@ -40,11 +41,11 @@ module.exports = {
         size: '1024x1024',
       });
 
-      console.log(image.data, 'image');
+      //console.log(image.data, 'image');
 
       const image_url = image.data[0].url;
 
-      console.log(image_url, 'image_url');
+      //console.log(image_url, 'image_url');
 
       const download_image = (url, image_path) =>
         axios({

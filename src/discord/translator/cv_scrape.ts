@@ -1,39 +1,34 @@
 import 'dotenv/config';
-import * as fs from 'fs';
-const { Translate } = require('@google-cloud/translate').v2;
-import { EmbedBuilder } from 'discord.js';
+
 import vision from '@google-cloud/vision';
+import axios from 'axios';
+import { EmbedBuilder, User } from 'discord.js';
+import { createWriteStream,promises as fsPromises } from 'fs';
+import path from 'path';
+
 import { justTranslateText } from './translate';
 
-const data = fs.readFileSync('./sos-aio-bot-40e1568bd219.json', {
-  encoding: 'utf8',
-  flag: 'r',
-});
+async function loadCredentials(): Promise<string> {
+  const credentialsPath = path.join(__dirname, './sos-aio-bot-40e1568bd219.json');
+  return fsPromises.readFile(credentialsPath, 'utf8');
+}
 
-// Creates a client
-const client = new vision.ImageAnnotatorClient({
-  credentials: JSON.parse(data),
-});
+const visionClient = async () => {
+  const credentials = await loadCredentials();
+  return new vision.ImageAnnotatorClient({
+    credentials: JSON.parse(credentials),
+  });
+};
 
-import axios from 'axios';
-
-/* ============================================================
-  Function: Download Image
-============================================================ */
-
-const download_image = (url, image_path) =>
-  axios({
-    url,
-    responseType: 'stream',
-  }).then(
-    (response) =>
-      new Promise<void>((resolve, reject) => {
-        response.data
-          .pipe(fs.createWriteStream(image_path))
-          .on('finish', () => resolve())
-          .on('error', (e) => reject(e));
-      }),
-  );
+const downloadImage = async (url: string, imagePath: string): Promise<void> => {
+  const response = await axios({ url, responseType: 'stream' });
+  const writer = createWriteStream(imagePath);
+  response.data.pipe(writer);
+  return new Promise((resolve, reject) => {
+    writer.on('finish', resolve);
+    writer.on('error', reject);
+  });
+};
 
 export async function textFromImage({
   imgLink,
@@ -42,36 +37,35 @@ export async function textFromImage({
 }: {
   imgLink: string;
   emoji: string;
-  user: any;
+  user: User;
 }): Promise<EmbedBuilder> {
-  await download_image(imgLink, 'example-1.png');
+  const imagePath = path.join(__dirname, 'temp-image.png');
+  await downloadImage(imgLink, imagePath);
 
-  const [result] = await client.textDetection('example-1.png');
+  const client = await visionClient();
+  const [result] = await client.textDetection(imagePath);
+  const detections = result.textAnnotations ?? [];
 
-  const detections = result.textAnnotations;
+  // Clean up the image file asynchronously without waiting for it to finish
+  fsPromises.unlink(imagePath).catch((error) => console.error('Failed to delete image:', error));
 
-  //console.log('Text: ' + detections[0].description);
-
-  //delete image
-  fs.unlinkSync('example-1.png');
-
-  let translatedText = await justTranslateText(
-    detections[0].description, //text to translate
-    emoji, //flag emoji
-  );
-
-  const confidence = detections[0].confidence;
-
-  if (translatedText == null) {
-    translatedText = 'Translation failed';
+  if (detections.length === 0) {
+    throw new Error('No text detected in the image.');
   }
 
-  //console.log('Translated Text: ' + translatedText);
+  const detectedText = detections[0]?.description ?? '';
+  let translatedText = await justTranslateText(detectedText, emoji);
+
+  const confidence = detections[0]?.confidence ?? 'N/A';
+
+  if (!translatedText) {
+    translatedText = 'Translation failed';
+  }
 
   const embed = new EmbedBuilder()
     .setTitle('Image Translation Request')
     .setAuthor({
-      name: user.username + ' requested translation to ' + emoji + '',
+      name: `${user.username} requested translation to ${emoji}`,
       iconURL: user.avatarURL(),
     })
     .setColor('#0099ff')
@@ -83,4 +77,3 @@ export async function textFromImage({
 
   return embed;
 }
-// Performs text detection on the local file
