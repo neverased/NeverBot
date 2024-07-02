@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.8.0](https://github.com/neverased/NeverBot/compare/never-bot-v2.7.0...never-bot-v2.8.0) (2024-07-02)
+
+
+### Features
+
+* Add eslint-formatter-sarif and new SARIF file ([bb001f8](https://github.com/neverased/NeverBot/commit/bb001f80b4b4a4e4173d02a53f39aab6b47e416a))
+* Add new SARIF results file ([ef2a982](https://github.com/neverased/NeverBot/commit/ef2a9824a11a103f80295c8b26e4cef99562a1e8))
+* enhance Discord service with better error handling and logging ([c171279](https://github.com/neverased/NeverBot/commit/c1712790e7ea046635d1a9c7dca5c1c2bf9a8e59))
+* Remove CodeQL workflow ([9587a92](https://github.com/neverased/NeverBot/commit/9587a92556f380dc93bf4bc041c230dd07755487))
+* update dependencies and improve code formatting ([444733b](https://github.com/neverased/NeverBot/commit/444733b0131942460b82c77d37589294359bbb48))
+* Update ESLint command and add SARIF results ([a538bf8](https://github.com/neverased/NeverBot/commit/a538bf89f36978cf2d1ad6d2dd18a7ec01fec18a))
+* update package dependencies ([6d838aa](https://github.com/neverased/NeverBot/commit/6d838aac82723a2f1217dd99485e8300e0048ad1))
+* Update package dependencies ([20f7b49](https://github.com/neverased/NeverBot/commit/20f7b4924b16d9d47c60ca9d429dafe29120771a))
+
 ## [2.7.0](https://github.com/neverased/NeverBot/compare/never-bot-v2.6.0...never-bot-v2.7.0) (2024-05-27)
 
 
