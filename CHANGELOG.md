@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.9.0](https://github.com/neverased/NeverBot/compare/never-bot-v2.8.0...never-bot-v2.9.0) (2024-07-02)
+
+
+### Features
+
+* ESLint and codebase improvements ([0d2df37](https://github.com/neverased/NeverBot/commit/0d2df376c5e7de99857b6baecbe74e8a1350cb08))
+* Update .gitignore and remove results.sarif ([6ea2134](https://github.com/neverased/NeverBot/commit/6ea21345a35c1c6ddce94245ff9fdf7ce35e6fe4))
+
 ## [2.8.0](https://github.com/neverased/NeverBot/compare/never-bot-v2.7.0...never-bot-v2.8.0) (2024-07-02)
 
 
