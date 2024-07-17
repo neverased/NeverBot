@@ -20,13 +20,18 @@ jobs:
       - name: Create google-credentials.json file
         run: echo "${{ secrets.GOOGLE_API }}" > sos-aio-bot-40e1568bd219.json
 
-      - name: Install node
+      - name: Setup Node.js
         uses: actions/setup-node@v4.0.3
         with:
           node-version: '22'
-          cache: 'npm'
-      - run: npm ci
+          cache: 'pnpm'
+
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      - name: Install dependencies with pnpm
+        run: pnpm install
 
       - name: Build application
-        run: npm run build
+        run: pnpm run build
 
