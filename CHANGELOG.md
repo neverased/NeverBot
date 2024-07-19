@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.10.0](https://github.com/neverased/NeverBot/compare/never-bot-v2.9.0...never-bot-v2.10.0) (2024-07-19)
+
+
+### Features
+
+* Improve build workflow ([db341a1](https://github.com/neverased/NeverBot/commit/db341a1967bf965d96ce5b0cf74d793ee58c937e))
+* Switch to pnpm and update dependencies ([ae06ab1](https://github.com/neverased/NeverBot/commit/ae06ab1defd53d78f2e821b925b7d8518b538c36))
+* Update package dependencies ([0bd8833](https://github.com/neverased/NeverBot/commit/0bd8833c18b31ecc727d7631fcf03cc38f308524))
+* Update pnpm setup in GitHub workflow ([9e36298](https://github.com/neverased/NeverBot/commit/9e36298238f5b27eb26d23b70d55dac3cc944b9f))
+
 ## [2.9.0](https://github.com/neverased/NeverBot/compare/never-bot-v2.8.0...never-bot-v2.9.0) (2024-07-02)
 
 ### Features
