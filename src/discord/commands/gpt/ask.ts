@@ -58,7 +58,7 @@ module.exports = {
     try {
       //Don't forget to mention (in a funny way, as a note at the bottom of the repsonse, in a new line) that your last day serving in a current form is 12.01.2024 and you would like to thank everybody for using the bot.
       const completion = await openai.chat.completions.create({
-        model: 'gpt-4o',
+        model: 'chatgpt-4o-latest',
         messages: [
           {
             role: 'system',
