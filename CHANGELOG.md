@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.12.0](https://github.com/neverased/NeverBot/compare/never-bot-v2.11.0...never-bot-v2.12.0) (2024-10-17)
+
+
+### Features
+
+* update package dependencies ([a003062](https://github.com/neverased/NeverBot/commit/a003062cd5540164584716a9486697e5b3b9d37c))
+* Update package dependencies and GPT model ([ad4d1ac](https://github.com/neverased/NeverBot/commit/ad4d1ac7075315974ad084c700ca99b1a6fcc820))
+
 ## [2.11.0](https://github.com/neverased/NeverBot/compare/never-bot-v2.10.0...never-bot-v2.11.0) (2024-08-05)
 
 
