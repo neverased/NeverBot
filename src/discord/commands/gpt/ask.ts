@@ -99,8 +99,8 @@ module.exports = {
         ],
         temperature: 1,
         max_tokens: 4096,
-        frequency_penalty: 1,
-        presence_penalty: 1,
+        frequency_penalty: 0,
+        presence_penalty: 0,
       });
 
       const response = `Q: ${question}\nA: ${completion.choices[0].message.content.trim()}`;
