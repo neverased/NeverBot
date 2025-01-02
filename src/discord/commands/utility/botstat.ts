@@ -1,6 +1,6 @@
 //slash command to display bot stats and server stats
 import axios from 'axios';
-import { EmbedBuilder,SlashCommandBuilder } from 'discord.js';
+import { EmbedBuilder, SlashCommandBuilder } from 'discord.js';
 //import os-utils to get system stats
 import * as os from 'os';
 
@@ -54,11 +54,15 @@ module.exports = {
         },
         // show the number of CPU cores
         { name: 'CPU Cores', value: `${os.cpus().length}` },
+
         {
           name: 'Free Memory',
-          value: `${parseInt(os.freemem().toString())}MB`,
+          value: `${(os.freemem() / (1024 * 1024 * 1024)).toFixed(2)} GB`,
         },
-        { name: 'Total Memory', value: `${os.totalmem()}MB` },
+        {
+          name: 'Total Memory',
+          value: `${(os.totalmem() / (1024 * 1024 * 1024)).toFixed(2)} GB`,
+        },
         { name: 'System Uptime', value: `${toHHMMSS(os.uptime())}` },
       )
       .setThumbnail(interaction.client.user.avatarURL())
