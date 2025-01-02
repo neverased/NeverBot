@@ -1,3 +1,5 @@
+# Neverbot
+
 ## Description
 
 Discord bot with NestJS and Discord.js
@@ -5,7 +7,7 @@ Discord bot with NestJS and Discord.js
 ## Installation
 
 ```bash
-$ npm install
+npm install
 ```
 
 ## Running the app

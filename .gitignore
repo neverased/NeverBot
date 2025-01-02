@@ -29,10 +29,10 @@ lerna-debug.log*
 
 # IDE - VSCode
 .vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
+.vscode/settings.json
+.vscode/tasks.json
+.vscode/launch.json
+.vscode/extensions.json
 
 # env
 .env
@@ -40,5 +40,8 @@ lerna-debug.log*
 # tokens
 sos-aio-*.json
 
-# package-lock.json
-package-lock.json
+# images
+image.png
+image_from_queue.png
+image_dalle_v3.png
+imagined.png

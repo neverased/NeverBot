@@ -1,12 +1,9 @@
-import {
-  SlashCommandBuilder,
-  AttachmentBuilder,
-  EmbedBuilder,
-} from 'discord.js';
-const OpenAI = require('openai');
 import 'dotenv/config';
+
 import axios from 'axios';
-const fs = require('fs');
+import { SlashCommandBuilder } from 'discord.js';
+import * as fs from 'fs';
+import OpenAI from 'openai';
 
 const openai = new OpenAI({
   apiKey: process.env.GPT_KEY,
@@ -27,9 +24,7 @@ module.exports = {
     try {
       //if no question is provided
       if (!question) {
-        return await interaction.editReply(
-          'Please provide a prompt to imagine!',
-        );
+        return await interaction.editReply('Please provide a prompt!');
       }
     } catch (error) {
       console.log(error);
@@ -39,15 +34,18 @@ module.exports = {
     }
 
     try {
-      const completion = await openai.images.generate({
+      const image = await openai.images.generate({
+        model: 'dall-e-3',
         prompt: question,
-        n: 1,
+        response_format: 'url',
         size: '1024x1024',
       });
 
-      console.log(completion.data[0].url.toString());
+      //console.log(image.data, 'image');
 
-      const link = completion.data[0].url.toString();
+      const image_url = image.data[0].url;
+
+      //console.log(image_url, 'image_url');
 
       const download_image = (url, image_path) =>
         axios({
@@ -63,10 +61,11 @@ module.exports = {
             }),
         );
 
-      await download_image(link, 'image.png');
+      await download_image(image_url, 'imagined.png');
 
       await interaction.editReply({
-        files: ['image.png'],
+        content: 'Prompt: ' + question,
+        files: ['imagined.png'],
       });
     } catch (error) {
       if (error.response) {
