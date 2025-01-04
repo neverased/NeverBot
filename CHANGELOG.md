@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.13.0](https://github.com/neverased/NeverBot/compare/never-bot-v2.12.0...never-bot-v2.13.0) (2025-01-02)
+
+
+### Features
+
+* add Docker support ([004c2e8](https://github.com/neverased/NeverBot/commit/004c2e84eb62f7dd6018f711d23636656da8d6e3))
+
+
+### Bug Fixes
+
+* **botstat:** correct memory units and formatting ([7215108](https://github.com/neverased/NeverBot/commit/7215108e44d9c42050e05634d104d3287f387551))
+
 ## [2.12.0](https://github.com/neverased/NeverBot/compare/never-bot-v2.11.0...never-bot-v2.12.0) (2024-10-17)
 
 
