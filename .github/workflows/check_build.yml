@@ -21,12 +21,12 @@ jobs:
         run: echo "${{ secrets.GOOGLE_API }}" > sos-aio-bot-40e1568bd219.json
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v4.1.0
         with:
           run_install: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4.1.0
+        uses: actions/setup-node@v4.2.0
         with:
           node-version: '22'
           cache: 'pnpm'
