@@ -48,7 +48,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.26.9",
-    "@eslint/js": "^9.21.0",
+    "@eslint/js": "^9.23.0",
     "@microsoft/eslint-formatter-sarif": "^3.1.0",
     "@nestjs/cli": "^11.0.5",
     "@nestjs/schematics": "^11.0.2",
