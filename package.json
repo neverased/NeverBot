@@ -41,7 +41,7 @@
     "express": "^5.1.0",
     "mongoose": "^8.13.2",
     "node-fetch": "^3.3.2",
-    "openai": "^4.91.1",
+    "openai": "^4.94.0",
     "os-utils": "^0.0.14",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2"
