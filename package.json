@@ -58,7 +58,7 @@
     "@types/node": "^22.14.1",
     "@types/os-utils": "^0.0.4",
     "@types/supertest": "^6.0.3",
-    "eslint": "^9.24.0",
+    "eslint": "^9.25.1",
     "eslint-config-prettier": "^10.1.2",
     "eslint-plugin-prettier": "^5.2.6",
     "eslint-plugin-simple-import-sort": "^12.1.1",
