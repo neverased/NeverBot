@@ -5,19 +5,24 @@ import {
   TextChannel,
   userMention,
 } from 'discord.js';
-import OpenAI from 'openai';
-
-const openai = new OpenAI({
-  apiKey: process.env.GPT_KEY,
-});
+import openai from '../../utils/openai-client';
 
 export async function welcomeNewMember(member: GuildMember): Promise<void> {
+  const apiUrl = process.env.API_URL || 'http://localhost:3500';
   try {
     console.log(`New member joined: ${member.user.username}`);
 
-    const guildSettings = await axios
-      .get(`${process.env.API_URL}/users/${member.guild.id}`)
-      .then((response) => response.data);
+    let guildSettings;
+    try {
+      const response = await axios.get(`${apiUrl}/users/${member.guild.id}`);
+      guildSettings = response.data;
+    } catch (apiError) {
+      console.error(
+        `Failed to fetch guild settings for ${member.guild.id}:`,
+        apiError.message,
+      );
+      return;
+    }
 
     if (
       !guildSettings ||
@@ -31,7 +36,7 @@ export async function welcomeNewMember(member: GuildMember): Promise<void> {
     const mora = userMention('701709518668693617');
 
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: 'gpt-4.1',
       messages: [
         {
           role: 'system',

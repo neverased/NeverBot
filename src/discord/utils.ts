@@ -1,7 +1,8 @@
 import 'dotenv/config';
 
-import fs from 'node:fs/promises';
-import path from 'node:path';
+// Use require for built-in Node.js modules for potentially better script compatibility
+const fs = require('node:fs/promises');
+const path = require('node:path');
 
 import { REST, Routes, SlashCommandBuilder } from 'discord.js';
 
@@ -33,22 +34,35 @@ export async function setCommands(): Promise<void> {
       const commandsPath: string = path.join(foldersPath, folder);
       const commandFiles: string[] = (await fs.readdir(commandsPath)).filter(
         (file) => file.endsWith('.js') || file.endsWith('.ts'),
-      ); // Assuming TypeScript files might also be present
+      );
 
       for (const file of commandFiles) {
         const filePath: string = path.join(commandsPath, file);
         try {
-          const { default: command }: { default: Command } = await import(
-            filePath
-          );
+          const importedModule = await import(filePath);
 
-          if (command?.data && command?.execute) {
+          // Check if the command is the default export or the module itself
+          let command: Command | undefined = undefined;
+          if (
+            importedModule.default &&
+            importedModule.default.data &&
+            importedModule.default.execute
+          ) {
+            command = importedModule.default;
+          } else if (importedModule.data && importedModule.execute) {
+            command = importedModule;
+          }
+
+          if (command && command.data && command.execute) {
             console.log(`[INFO] Adding command from ${filePath}`);
             commands.push(command);
           } else {
             console.warn(
-              `[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`,
+              `[WARNING] The command at ${filePath} is missing a required "data" or "execute" property (or module structure is unexpected).`,
             );
+            // For debugging, log the structure of the imported module
+            // console.log(`[DEBUG] Imported module structure from ${filePath}:`, JSON.stringify(importedModule, null, 2));
+            // console.log(`[DEBUG] Keys in imported module:`, Object.keys(importedModule));
           }
         } catch (importError) {
           console.error(
@@ -78,6 +92,12 @@ export async function setCommands(): Promise<void> {
       );
     }
   } catch (error) {
-    console.error(`[ERROR] Failed to set commands: ${error.message}`);
+    if (error.message.includes(foldersPath)) {
+      console.error(
+        `[ERROR] Could not read command folders. Path used: ${foldersPath}. Error: ${error.message}`,
+      );
+    } else {
+      console.error(`[ERROR] Failed to set commands: ${error.message}`);
+    }
   }
 }

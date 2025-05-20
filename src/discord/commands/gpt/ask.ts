@@ -1,32 +1,10 @@
-import { SlashCommandBuilder } from 'discord.js';
-import OpenAI from 'openai';
+import { SlashCommandBuilder, ChatInputCommandInteraction } from 'discord.js';
+// import openai from '../../../utils/openai-client'; - Removed, OpenAI client is in gpt-logic
+import { User as UserModel } from '../../../users/entities/user.entity';
+import { UserMessagesService } from '../../../users/messages/messages.service';
+import { generateOpenAiReply, splitTextIntoParts } from '../../gpt/gpt-logic'; // Corrected path
 
-const openai = new OpenAI({
-  apiKey: process.env.GPT_KEY,
-});
-
-function splitText(text, maxLength) {
-  const parts = [];
-  let currentPart = '';
-
-  // Split the text by spaces to avoid breaking words
-  const words = text.split(' ');
-
-  for (const word of words) {
-    if (currentPart.length + word.length + 1 > maxLength) {
-      parts.push(currentPart);
-      currentPart = word;
-    } else {
-      currentPart += (currentPart.length > 0 ? ' ' : '') + word;
-    }
-  }
-
-  if (currentPart.length > 0) {
-    parts.push(currentPart);
-  }
-
-  return parts;
-}
+// function splitText(text, maxLength) { ... } // Removed, using splitTextIntoParts from gpt-logic
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -35,89 +13,59 @@ module.exports = {
     .addStringOption((option) =>
       option.setName('question').setDescription('The question you want to ask'),
     ),
-  async execute(interaction) {
+  async execute(
+    interaction: ChatInputCommandInteraction,
+    userProfile?: UserModel,
+    userMessagesService?: UserMessagesService,
+  ) {
     await interaction.deferReply();
     const question = interaction.options.getString('question');
-    const user = interaction.user.globalName;
+    const userName = interaction.user.globalName || interaction.user.username;
 
-    console.log(user, 'user');
-
-    //try catch block to catch errors
-    try {
-      //if no question is provided
-      if (!question) {
-        return await interaction.editReply('Please provide a question!');
-      }
-    } catch (error) {
-      console.log(error);
-      return await interaction.editReply(
-        'There was an error while executing this command!',
-      );
+    if (!question) {
+      return await interaction.editReply('Please provide a question!');
     }
 
-    try {
-      //Don't forget to mention (in a funny way, as a note at the bottom of the repsonse, in a new line) that your last day serving in a current form is 12.01.2024 and you would like to thank everybody for using the bot.
-      const completion = await openai.chat.completions.create({
-        model: 'chatgpt-4o-latest',
-        messages: [
-          {
-            role: 'system',
-            content:
-              "You are MeanNever, a chatbot that answers questions with sarcastic responses, and you are even better now. You have to be funny and mean at all times. 'Never' or 'Neverased' - he is your creator. 'Mora'is your best friend, she is a lady from croatia. If the `" +
-              user +
-              '`' +
-              " includes her name or is similar this means it's her! The person you are responding to is:" +
-              user +
-              '.' +
-              ' If somebody ask you to show or draw something tell them to use /imagine prompt instead.',
-          },
-          {
-            role: 'user',
-            content: 'What does HTML stand for?',
-          },
-          {
-            role: 'assistant',
-            content:
-              'Listen' +
-              user +
-              ' .' +
-              'Was Google too busy? Hypertext Markup Language. The T is for try to ask better questions in the future.',
-          },
-          {
-            role: 'user',
-            content: 'When did the first airplane fly?',
-          },
-          {
-            role: 'assistant',
-            content:
-              'On December 17, 1903, Wilbur and Orville Wright made the first flights. I wish they’d come and take me away.',
-          },
-          {
-            role: 'user',
-            content: question,
-          },
-        ],
-        temperature: 1,
-        max_tokens: 4096,
-        frequency_penalty: 0,
-        presence_penalty: 0,
-      });
+    // System prompt generation and OpenAI call are now in generateOpenAiReply
+    // let systemPromptLines = [ ... ]; // Removed
+    // const systemPromptContent = systemPromptLines.join('\n'); // Removed
 
-      const response = `Q: ${question}\nA: ${completion.choices[0].message.content.trim()}`;
+    try {
+      const gptResponse = await generateOpenAiReply(
+        question,
+        userName,
+        userProfile,
+        userMessagesService,
+      );
+
+      if (!gptResponse) {
+        await interaction.editReply(
+          "Sorry, I had a moment of existential dread and couldn't come up with a response. Try again?",
+        );
+        return;
+      }
+
+      // Directly use gptResponse, removing the Q: A: format
+      const response = gptResponse;
       const maxDiscordMessageLength = 2000;
 
       if (response.length > maxDiscordMessageLength) {
-        const responseParts = splitText(response, maxDiscordMessageLength);
-        for (const part of responseParts) {
-          await interaction.followUp(part);
+        const responseParts = splitTextIntoParts(
+          response,
+          maxDiscordMessageLength,
+        );
+        // For slash commands, the first part can be an editReply, subsequent are followUps.
+        await interaction.editReply(responseParts[0]);
+        for (let i = 1; i < responseParts.length; i++) {
+          await interaction.followUp(responseParts[i]);
         }
       } else {
         await interaction.editReply(response);
       }
     } catch (error) {
-      console.error(error);
+      console.error('Error executing ask command:', error);
       await interaction.editReply(
-        'An error occurred while processing your request.',
+        'Sorry, I ran into a problem trying to answer that. Maybe ask something less complicated?',
       );
     }
   },

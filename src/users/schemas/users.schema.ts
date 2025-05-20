@@ -17,6 +17,9 @@ export type UserDocument = HydratedDocument<User>;
 
 @Schema()
 export class User {
+  @Prop({ type: String, required: true, unique: true })
+  discordUserId: string;
+
   @Prop({ type: Date, default: Date.now })
   registeredAt: Date;
 
@@ -28,6 +31,24 @@ export class User {
 
   @Prop({ type: String, default: 'free' })
   subscription: string;
+
+  @Prop({ type: Number, default: 0 })
+  messageCount: number;
+
+  @Prop({ type: Date, default: Date.now })
+  lastSeen: Date;
+
+  @Prop({ type: [String], default: [] })
+  topicsOfInterest: string[];
+
+  @Prop({
+    type: [{ sentiment: String, score: Number, timestamp: Date }],
+    default: [],
+  })
+  sentimentHistory: { sentiment: string; score: number; timestamp: Date }[];
+
+  @Prop({ type: String, default: '' })
+  personalitySummary: string;
 
   @Prop({ type: mongoose.Schema.Types.Mixed, default: {} })
   tasks: mongoose.Schema.Types.Mixed;

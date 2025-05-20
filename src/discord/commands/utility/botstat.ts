@@ -4,8 +4,8 @@ import { EmbedBuilder, SlashCommandBuilder } from 'discord.js';
 //import os-utils to get system stats
 import * as os from 'os';
 
-const toHHMMSS = (secs) => {
-  const sec_num = parseInt(secs, 10);
+const toHHMMSS = (secs: number) => {
+  const sec_num = parseInt(secs.toString(), 10);
   const hours = Math.floor(sec_num / 3600);
   const minutes = Math.floor(sec_num / 60) % 60;
   const seconds = sec_num % 60;
@@ -23,21 +23,20 @@ module.exports = {
   async execute(interaction) {
     await interaction.deferReply();
 
-    let dbConnection: string = '';
+    let dbConnection: string = 'Not Connected';
+    const apiUrl = process.env.API_URL || 'http://localhost:3500/';
 
-    await axios
-      .get('http://localhost:3500/')
-      .then((response) => {
-        if (response.status === 200) {
-          dbConnection = 'Connected and Healthy';
-        } else {
-          dbConnection = 'Not Connected';
-        }
-      })
-      .catch((error) => {
-        console.log(error, 'error');
-        dbConnection = 'Not Connected';
-      });
+    try {
+      const response = await axios.get(apiUrl);
+      if (response.status === 200) {
+        dbConnection = 'Connected and Healthy';
+      }
+    } catch (error) {
+      console.log(`Error checking API status at ${apiUrl}:`, error.message);
+    }
+
+    const loadAvgs = os.loadavg();
+    const cpuUsage = loadAvgs[0].toFixed(2);
 
     const botstatEmbed = new EmbedBuilder()
       .setColor('#00FF00')
@@ -49,8 +48,8 @@ module.exports = {
         { name: 'Platform', value: `${os.platform()}` },
         { name: 'Database', value: `${dbConnection}` },
         {
-          name: 'CPU Usage',
-          value: `${os.loadavg()}%`,
+          name: 'CPU Usage (1 min avg)',
+          value: `${cpuUsage}%`,
         },
         // show the number of CPU cores
         { name: 'CPU Cores', value: `${os.cpus().length}` },

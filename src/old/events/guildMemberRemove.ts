@@ -2,17 +2,22 @@ import axios from 'axios';
 import { EmbedBuilder, GuildMember, TextChannel } from 'discord.js';
 
 export async function goodbyeOldMember(member: GuildMember): Promise<void> {
+  const apiUrl = process.env.API_URL || 'http://localhost:3500'; // Ensure API_URL is defined
   try {
     console.log(`Member left: ${member.user.username}`);
 
-    // Fetch guild settings using environment variable for the API URL
-    const guildSettings = await axios
-      .get(`${process.env.API_URL}/guilds/${member.guild.id}`)
-      .then((response) => response.data)
-      .catch((error) => {
-        console.error('Error fetching guild settings:', error);
-        return null; // Return null to handle this error gracefully
-      });
+    let guildSettings;
+    try {
+      // Fetch guild settings using environment variable for the API URL
+      const response = await axios.get(`${apiUrl}/guilds/${member.guild.id}`);
+      guildSettings = response.data;
+    } catch (apiError) {
+      console.error(
+        `Failed to fetch guild settings for ${member.guild.id}:`,
+        apiError.message,
+      );
+      return; // Stop if guild settings can't be fetched
+    }
 
     // Check for necessary guild settings
     if (

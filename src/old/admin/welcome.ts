@@ -14,61 +14,56 @@ module.exports = {
     .setDefaultMemberPermissions(0),
   async execute(interaction) {
     await interaction.deferReply();
+    const apiUrl = process.env.API_URL || 'http://localhost:3500';
+    const guildId = interaction.guildId;
+    const welcomeChannelId = interaction.options.getChannel('welcome').id;
 
-    await axios
-      .get(`http://localhost:3500/users/${interaction.guildId}`)
-      .then((response) => {
-        //console.log(response, 'response');
-
-        if (response.data.statusCode != 404) {
-          // If it does, update it
-          const server = {
-            tasks: {
-              ...response.data.tasks,
-              welcome_channel_id: interaction.options.getChannel('welcome').id,
-            },
-          };
-
-          axios
-            .patch(`http://localhost:3500/users/${interaction.guildId}`, server)
-            .then((response) => {
-              console.log(response.data, 'response');
-            });
-
-          return interaction.editReply(
-            `Welcome channel was set to ${interaction.options.getChannel(
-              'welcome',
-            )}.`,
-          );
-        }
-      })
-      .catch((error) => {
-        //console.log(error, 'error');
-
-        if (error.response.status === 404) {
-          // If it doesn't, create it
-          const server = {
-            serverId: interaction.guildId,
-            serverName: interaction.guild.name,
-            tasks: {
-              welcome_channel_id: interaction.options.getChannel('welcome').id,
-            },
-          };
-
-          axios.post('http://localhost:3500/users', server).then((response) => {
-            console.log(response.data, 'response');
-          });
-
-          return interaction.editReply(
+    try {
+      const response = await axios.get(`${apiUrl}/users/${guildId}`);
+      // User/server config exists, so update it
+      const serverUpdateData = {
+        tasks: {
+          ...response.data.tasks,
+          welcome_channel_id: welcomeChannelId,
+        },
+      };
+      await axios.patch(`${apiUrl}/users/${guildId}`, serverUpdateData);
+      await interaction.editReply(
+        `Welcome channel was updated to ${interaction.options.getChannel('welcome')}.`,
+      );
+    } catch (error) {
+      if (error.response && error.response.status === 404) {
+        // User/server config does not exist, so create it
+        const serverCreateData = {
+          serverId: guildId,
+          serverName: interaction.guild.name,
+          tasks: {
+            welcome_channel_id: welcomeChannelId,
+          },
+        };
+        try {
+          await axios.post(`${apiUrl}/users`, serverCreateData);
+          await interaction.editReply(
             `User added to database and welcome channel was set to ${interaction.options.getChannel(
               'welcome',
             )}.`,
           );
-        } else {
-          return interaction.editReply(
-            `Error: ${error.response.status} - ${error.response.statusText}`,
+        } catch (postError) {
+          console.error('Error creating server config:', postError.message);
+          await interaction.editReply(
+            `Error creating server config: ${postError.message}`,
           );
         }
-      });
+      } else {
+        // Other errors (network issue, server error, etc.)
+        console.error('Error fetching/updating server config:', error.message);
+        const errorMessage = error.response
+          ? `${error.response.status} - ${error.response.statusText}`
+          : error.message;
+        await interaction.editReply(
+          `Error setting welcome channel: ${errorMessage}`,
+        );
+      }
+    }
   },
 };

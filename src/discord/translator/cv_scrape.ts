@@ -3,14 +3,17 @@ import 'dotenv/config';
 import vision from '@google-cloud/vision';
 import axios from 'axios';
 import { EmbedBuilder, User } from 'discord.js';
-import { createWriteStream,promises as fsPromises } from 'fs';
+import { readFile, writeFile, unlink } from 'fs/promises';
 import path from 'path';
 
 import { justTranslateText } from './translate';
 
 async function loadCredentials(): Promise<string> {
-  const credentialsPath = path.join(__dirname, './sos-aio-bot-40e1568bd219.json');
-  return fsPromises.readFile(credentialsPath, 'utf8');
+  const credentialsPath = path.join(
+    __dirname,
+    './sos-aio-bot-40e1568bd219.json',
+  );
+  return readFile(credentialsPath, 'utf8');
 }
 
 const visionClient = async () => {
@@ -21,13 +24,8 @@ const visionClient = async () => {
 };
 
 const downloadImage = async (url: string, imagePath: string): Promise<void> => {
-  const response = await axios({ url, responseType: 'stream' });
-  const writer = createWriteStream(imagePath);
-  response.data.pipe(writer);
-  return new Promise((resolve, reject) => {
-    writer.on('finish', resolve);
-    writer.on('error', reject);
-  });
+  const response = await axios({ url, responseType: 'arraybuffer' });
+  await writeFile(imagePath, response.data);
 };
 
 export async function textFromImage({
@@ -47,7 +45,9 @@ export async function textFromImage({
   const detections = result.textAnnotations ?? [];
 
   // Clean up the image file asynchronously without waiting for it to finish
-  fsPromises.unlink(imagePath).catch((error) => console.error('Failed to delete image:', error));
+  unlink(imagePath).catch((error) =>
+    console.error('Failed to delete image:', error),
+  );
 
   if (detections.length === 0) {
     throw new Error('No text detected in the image.');
