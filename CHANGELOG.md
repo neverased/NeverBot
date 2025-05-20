@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.14.0](https://github.com/neverased/NeverBot/compare/never-bot-v2.13.0...never-bot-v2.14.0) (2025-05-20)
+
+
+### Features
+
+* add personality insights and improve conversation context ([b1d8c68](https://github.com/neverased/NeverBot/commit/b1d8c684717b77ca2ce1025b71128b1c5136b248))
+
 ## [2.13.0](https://github.com/neverased/NeverBot/compare/never-bot-v2.12.0...never-bot-v2.13.0) (2025-01-02)
 
 
