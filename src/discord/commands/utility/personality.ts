@@ -1,12 +1,13 @@
 import {
-  SlashCommandBuilder,
   ChatInputCommandInteraction,
   EmbedBuilder,
+  SlashCommandBuilder,
   User as DiscordUser,
 } from 'discord.js';
-import { UsersService } from '../../../users/users.service';
+
 import { User as UserModel } from '../../../users/entities/user.entity';
 import { UserMessagesService } from '../../../users/messages/messages.service';
+import { UsersService } from '../../../users/users.service';
 
 module.exports = {
   data: new SlashCommandBuilder()

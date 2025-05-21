@@ -7,7 +7,8 @@ import * as fs from 'fs';
 
 // Load Google Cloud credentials from environment variable
 const credentialsPath =
-  process.env.GOOGLE_CLOUD_CREDENTIALS_PATH || './sos-aio-bot-40e1568bd219.json';
+  process.env.GOOGLE_CLOUD_CREDENTIALS_PATH ||
+  './sos-aio-bot-40e1568bd219.json';
 const data = fs.readFileSync(credentialsPath, { encoding: 'utf8', flag: 'r' });
 
 // Creates a client

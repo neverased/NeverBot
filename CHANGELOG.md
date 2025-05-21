@@ -2,47 +2,41 @@
 
 ## [2.14.0](https://github.com/neverased/NeverBot/compare/never-bot-v2.13.0...never-bot-v2.14.0) (2025-05-20)
 
-
 ### Features
 
-* add personality insights and improve conversation context ([b1d8c68](https://github.com/neverased/NeverBot/commit/b1d8c684717b77ca2ce1025b71128b1c5136b248))
+- add personality insights and improve conversation context ([b1d8c68](https://github.com/neverased/NeverBot/commit/b1d8c684717b77ca2ce1025b71128b1c5136b248))
 
 ## [2.13.0](https://github.com/neverased/NeverBot/compare/never-bot-v2.12.0...never-bot-v2.13.0) (2025-01-02)
 
-
 ### Features
 
-* add Docker support ([004c2e8](https://github.com/neverased/NeverBot/commit/004c2e84eb62f7dd6018f711d23636656da8d6e3))
-
+- add Docker support ([004c2e8](https://github.com/neverased/NeverBot/commit/004c2e84eb62f7dd6018f711d23636656da8d6e3))
 
 ### Bug Fixes
 
-* **botstat:** correct memory units and formatting ([7215108](https://github.com/neverased/NeverBot/commit/7215108e44d9c42050e05634d104d3287f387551))
+- **botstat:** correct memory units and formatting ([7215108](https://github.com/neverased/NeverBot/commit/7215108e44d9c42050e05634d104d3287f387551))
 
 ## [2.12.0](https://github.com/neverased/NeverBot/compare/never-bot-v2.11.0...never-bot-v2.12.0) (2024-10-17)
 
-
 ### Features
 
-* update package dependencies ([a003062](https://github.com/neverased/NeverBot/commit/a003062cd5540164584716a9486697e5b3b9d37c))
-* Update package dependencies and GPT model ([ad4d1ac](https://github.com/neverased/NeverBot/commit/ad4d1ac7075315974ad084c700ca99b1a6fcc820))
+- update package dependencies ([a003062](https://github.com/neverased/NeverBot/commit/a003062cd5540164584716a9486697e5b3b9d37c))
+- Update package dependencies and GPT model ([ad4d1ac](https://github.com/neverased/NeverBot/commit/ad4d1ac7075315974ad084c700ca99b1a6fcc820))
 
 ## [2.11.0](https://github.com/neverased/NeverBot/compare/never-bot-v2.10.0...never-bot-v2.11.0) (2024-08-05)
 
-
 ### Features
 
-* update package dependencies ([63a76c6](https://github.com/neverased/NeverBot/commit/63a76c64cb5208a87858a3f50815b4641bbbdaf4))
+- update package dependencies ([63a76c6](https://github.com/neverased/NeverBot/commit/63a76c64cb5208a87858a3f50815b4641bbbdaf4))
 
 ## [2.10.0](https://github.com/neverased/NeverBot/compare/never-bot-v2.9.0...never-bot-v2.10.0) (2024-07-19)
 
-
 ### Features
 
-* Improve build workflow ([db341a1](https://github.com/neverased/NeverBot/commit/db341a1967bf965d96ce5b0cf74d793ee58c937e))
-* Switch to pnpm and update dependencies ([ae06ab1](https://github.com/neverased/NeverBot/commit/ae06ab1defd53d78f2e821b925b7d8518b538c36))
-* Update package dependencies ([0bd8833](https://github.com/neverased/NeverBot/commit/0bd8833c18b31ecc727d7631fcf03cc38f308524))
-* Update pnpm setup in GitHub workflow ([9e36298](https://github.com/neverased/NeverBot/commit/9e36298238f5b27eb26d23b70d55dac3cc944b9f))
+- Improve build workflow ([db341a1](https://github.com/neverased/NeverBot/commit/db341a1967bf965d96ce5b0cf74d793ee58c937e))
+- Switch to pnpm and update dependencies ([ae06ab1](https://github.com/neverased/NeverBot/commit/ae06ab1defd53d78f2e821b925b7d8518b538c36))
+- Update package dependencies ([0bd8833](https://github.com/neverased/NeverBot/commit/0bd8833c18b31ecc727d7631fcf03cc38f308524))
+- Update pnpm setup in GitHub workflow ([9e36298](https://github.com/neverased/NeverBot/commit/9e36298238f5b27eb26d23b70d55dac3cc944b9f))
 
 ## [2.9.0](https://github.com/neverased/NeverBot/compare/never-bot-v2.8.0...never-bot-v2.9.0) (2024-07-02)
 

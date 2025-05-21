@@ -210,7 +210,7 @@ module.exports = {
         }
       });
 
-      collector.on('end', async (collected, reason) => {
+      collector.on('end', async () => {
         // Added collected and reason parameters
         selectTime.setDisabled(true);
         selectDay.setDisabled(true);

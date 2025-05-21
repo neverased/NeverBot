@@ -1,14 +1,14 @@
 import 'dotenv/config';
 
 // Use require for built-in Node.js modules for potentially better script compatibility
-const fs = require('node:fs/promises');
-const path = require('node:path');
+import * as fs from 'node:fs/promises';
+import * as path from 'node:path';
 
 import { REST, Routes, SlashCommandBuilder } from 'discord.js';
 
 interface Command {
   data: SlashCommandBuilder;
-  execute: (...args: any[]) => void;
+  execute: (...args: unknown[]) => void;
 }
 
 export async function setCommands(): Promise<void> {

@@ -3,37 +3,35 @@ import 'dotenv/config';
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import {
   ActivityType,
+  ChatInputCommandInteraction,
   Client,
   Collection,
   CommandInteraction,
-  ChatInputCommandInteraction,
+  DMChannel,
   Events,
   GatewayIntentBits,
   Interaction,
   Message,
   MessageReaction,
-  Partials,
-  User as DiscordUserType,
-  TextChannel,
   NewsChannel,
+  Partials,
+  TextChannel,
   ThreadChannel,
-  DMChannel,
+  User as DiscordUserType,
 } from 'discord.js';
 import * as fs from 'fs/promises';
-import * as path from 'path';
 import * as natural from 'natural';
 import OpenAI from 'openai';
+import * as path from 'path';
 
-import { UsersService } from '../users/users.service';
-import { UpdateUserDto } from '../users/dto/update-user.dto';
 import { User as UserModel } from '../users/entities/user.entity';
-import { UserMessagesService } from '../users/messages/messages.service';
 import { CreateUserMessageDto } from '../users/messages/dto/create-user-message.dto';
-
+import { UserMessagesService } from '../users/messages/messages.service';
+import { UsersService } from '../users/users.service';
+import { generateOpenAiReply, splitTextIntoParts } from './gpt/gpt-logic';
 import { textFromImage } from './translator/cv_scrape';
 import { translateText } from './translator/translate';
 import { discordFlagToLanguageCode } from './translator/translate';
-import { generateOpenAiReply, splitTextIntoParts } from './gpt/gpt-logic';
 
 interface Command {
   data: { name: string; description?: string };
@@ -520,7 +518,7 @@ export class DiscordService implements OnModuleInit {
           `Bot engaged by ${message.author.username} (Mention: ${isBotMentioned}, Follow-up: ${isFollowUp}): "${message.content}"`,
         );
         try {
-          let currentConversationHistory: Array<OpenAI.Chat.ChatCompletionMessageParam> =
+          const currentConversationHistory: Array<OpenAI.Chat.ChatCompletionMessageParam> =
             [];
           if (
             isFollowUp &&
@@ -574,11 +572,13 @@ export class DiscordService implements OnModuleInit {
           try {
             await message
               .reply('Something went very sideways. My apologies!')
-              .catch((e) =>
-                this.logger.error('Really failed to send error: ' + e.message),
+              .catch((replyError) =>
+                this.logger.error(
+                  'Really failed to send error: ' + replyError.message,
+                ),
               );
-          } catch (e) {
-            /* Already logged */
+          } catch {
+            /* Already logged or intentionally ignored */
           }
         }
       } else if (cachedContext && !isFollowUp) {

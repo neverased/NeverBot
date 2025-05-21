@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 
+import { UserMessagesModule } from './messages/messages.module';
 import { User, UserSchema } from './schemas/users.schema';
+import { UserSummaryUpdateService } from './user-summary-update.service';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
-import { UserMessagesModule } from './messages/messages.module';
-import { UserSummaryUpdateService } from './user-summary-update.service';
 
 @Module({
   imports: [

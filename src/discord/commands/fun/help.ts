@@ -8,8 +8,14 @@ module.exports = {
     .setDescription('Displays all available commands'),
   async execute(interaction) {
     await interaction.deferReply();
-    const commands = interaction.client.commands.map((command) => command.data.toJSON());
-    const commandList = commands.map((command) => `/${command.name} - ${command.description}`).join('\n');
-    await interaction.editReply(`Here is a list of all available commands:\n${commandList}`);
+    const commands = interaction.client.commands.map((command) =>
+      command.data.toJSON(),
+    );
+    const commandList = commands
+      .map((command) => `/${command.name} - ${command.description}`)
+      .join('\n');
+    await interaction.editReply(
+      `Here is a list of all available commands:\n${commandList}`,
+    );
   },
 };

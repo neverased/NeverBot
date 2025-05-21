@@ -10,9 +10,5 @@
     }
   },
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
-  "extra-files": [
-    "CHANGELOG.md",
-    "README.md",
-    "package.json"
-  ]
+  "extra-files": ["CHANGELOG.md", "README.md", "package.json"]
 }

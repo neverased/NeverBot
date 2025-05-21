@@ -1,9 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { UsersService } from './users.service';
-import { UserMessagesService } from './messages/messages.service';
+
 import openai from '../utils/openai-client';
 import { User } from './entities/user.entity';
+import { UserMessagesService } from './messages/messages.service';
+import { UsersService } from './users.service';
 
 @Injectable()
 export class UserSummaryUpdateService {

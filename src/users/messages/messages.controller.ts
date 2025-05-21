@@ -1,17 +1,19 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
 } from '@nestjs/common';
-import { UserMessagesService } from './messages.service';
+import { mongo } from 'mongoose';
+
 import {
   CreateUserMessageDto,
   UpdateUserMessageDto,
 } from './dto/create-user-message.dto';
+import { UserMessagesService } from './messages.service';
 
 @Controller('users/:userId/messages')
 export class UserMessagesController {
@@ -55,7 +57,7 @@ export class UserMessagesController {
   remove(
     @Param('userId') userId: string,
     @Param('messageId') messageId: string,
-  ) {
+  ): Promise<mongo.DeleteResult> {
     return this.userMessagesService.remove(userId, messageId);
   }
 }

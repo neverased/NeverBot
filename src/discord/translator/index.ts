@@ -1,2 +1,2 @@
 export * from './cv_scrape';
-export * from './translate'
+export * from './translate';
