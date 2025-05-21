@@ -11,7 +11,7 @@ export class Welcome {
   welcome_message: string;
 }
 
-const schemaWelcome = SchemaFactory.createForClass(Welcome);
+const _schemaWelcome = SchemaFactory.createForClass(Welcome);
 
 export type UserDocument = HydratedDocument<User>;
 

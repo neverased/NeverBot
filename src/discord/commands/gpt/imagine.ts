@@ -3,6 +3,7 @@ import 'dotenv/config';
 // import axios from 'axios'; // No longer needed for b64_json
 import { SlashCommandBuilder } from 'discord.js';
 import * as fs from 'fs/promises';
+
 import openai from '../../../utils/openai-client';
 
 module.exports = {

@@ -3,7 +3,7 @@ import 'dotenv/config';
 import vision from '@google-cloud/vision';
 import axios from 'axios';
 import { EmbedBuilder, User } from 'discord.js';
-import { readFile, writeFile, unlink } from 'fs/promises';
+import { readFile, unlink, writeFile } from 'fs/promises';
 import path from 'path';
 
 import { justTranslateText } from './translate';

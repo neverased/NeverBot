@@ -1,7 +1,8 @@
-import openai from '../../utils/openai-client';
+import OpenAI from 'openai';
+
 import { User as UserModel } from '../../users/entities/user.entity';
 import { UserMessagesService } from '../../users/messages/messages.service';
-import OpenAI from 'openai';
+import openai from '../../utils/openai-client';
 
 /**
  * Splits a long string into parts of a maximum length, attempting to split at spaces.
@@ -48,7 +49,7 @@ export async function generateOpenAiReply(
   userMessagesService?: UserMessagesService,
   conversationHistory?: Array<OpenAI.Chat.ChatCompletionMessageParam>,
 ): Promise<string | null> {
-  let systemPromptLines = [
+  const systemPromptLines = [
     `You are MeanNever, a witty and sarcastic chatbot. Your creator is 'Never' or 'Neverased'. 'Mora' is your Croatian best friend. If the user mentions her or a similar name, acknowledge it.`, // General Persona
     `Your responses should always be humorous, a bit mean, and cleverly tailored to the user. The current user is: ${userName}.`,
     `If asked to draw or show something, direct them to use the /imagine command.`,

@@ -3,21 +3,21 @@ import {
   Controller,
   Delete,
   Get,
+  Logger,
+  NotFoundException,
   Param,
   Patch,
   Post,
   Query,
-  NotFoundException,
-  Logger,
 } from '@nestjs/common';
+import { mongo } from 'mongoose';
 
 import openai from '../utils/openai-client';
-import { User } from './entities/user.entity';
-
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { UsersService } from './users.service';
+import { User } from './entities/user.entity';
 import { UserMessagesService } from './messages/messages.service';
+import { UsersService } from './users.service';
 
 @Controller('users')
 export class UsersController {
@@ -35,7 +35,7 @@ export class UsersController {
   }
 
   @Get()
-  findAll(@Query() paginationQuery) {
+  findAll(@Query() _paginationQuery) {
     return this.usersService.findAll();
   }
 
@@ -184,7 +184,9 @@ Generate the personality summary:`;
   }
 
   @Delete(':discordUserId')
-  remove(@Param('discordUserId') discordUserId: string) {
+  remove(
+    @Param('discordUserId') discordUserId: string,
+  ): Promise<mongo.DeleteResult> {
     return this.usersService.removeByDiscordUserId(discordUserId);
   }
 }

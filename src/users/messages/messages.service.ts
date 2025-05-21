@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, mongo } from 'mongoose';
+
 import {
   CreateUserMessageDto,
   UpdateUserMessageDto,
@@ -63,7 +64,7 @@ export class UserMessagesService {
       .exec();
   }
 
-  async remove(userId: string, messageId: string): Promise<any> {
+  async remove(userId: string, messageId: string): Promise<mongo.DeleteResult> {
     return this.userMessageModel.deleteOne({ userId, messageId }).exec();
   }
 

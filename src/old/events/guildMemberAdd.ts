@@ -5,6 +5,7 @@ import {
   TextChannel,
   userMention,
 } from 'discord.js';
+
 import openai from '../../utils/openai-client';
 
 export async function welcomeNewMember(member: GuildMember): Promise<void> {

@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, mongo } from 'mongoose';
 
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -78,7 +78,9 @@ export class UsersService {
       .exec();
   }
 
-  async removeByDiscordUserId(discordUserId: string): Promise<any> {
+  async removeByDiscordUserId(
+    discordUserId: string,
+  ): Promise<mongo.DeleteResult> {
     const result = await this.usersModel
       .deleteOne({ discordUserId: discordUserId })
       .exec();
@@ -90,7 +92,7 @@ export class UsersService {
     return result;
   }
 
-  async remove(serverId: string): Promise<any> {
+  async remove(serverId: string): Promise<mongo.DeleteResult> {
     return await this.usersModel.deleteOne({ serverId: serverId }).exec();
   }
 
