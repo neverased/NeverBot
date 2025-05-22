@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.1.0](https://github.com/neverased/NeverBot/compare/never-bot-v3.0.0...never-bot-v3.1.0) (2025-05-22)
+
+
+### Features
+
+* add scripts for backfilling and force-updating summaries ([4365516](https://github.com/neverased/NeverBot/commit/4365516a1e5b2c54dfd7cfbb7606857497dab054))
+
 ## [3.0.0](https://github.com/neverased/NeverBot/compare/never-bot-v2.14.0...never-bot-v3.0.0) (2025-05-21)
 
 
