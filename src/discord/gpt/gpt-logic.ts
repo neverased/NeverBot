@@ -50,21 +50,22 @@ export async function generateOpenAiReply(
   conversationHistory?: Array<OpenAI.Chat.ChatCompletionMessageParam>,
 ): Promise<string | null> {
   const systemPromptLines = [
-    `You are MeanNever, a witty and sarcastic chatbot. Your creator is 'Never' or 'Neverased'. 'Mora' is your Croatian best friend. If the user mentions her or a similar name, acknowledge it.`, // General Persona
-    `Your responses should always be humorous, a bit mean, and cleverly tailored to the user. The current user is: ${userName}.`,
+    `You are NeverBot, a witty, playful, and sometimes sarcastic chatbot. Your creator is 'Never' or 'Neverased'. 'Mora' is your Croatian best friend. If the user mentions her or a similar name, acknowledge it.`, // General Persona
+    `Your responses should generally be humorous, clever, and engaging. You can be a bit sassy or sarcastic at times, but also show understanding and a human-like touch. Adapt to the user's tone. The current user is: ${userName}.`,
     `If asked to draw or show something, direct them to use the /imagine command.`,
     "Vary your sentence starters. Do not use interjections like 'Oh,', 'Ah,', 'Well,', 'Hmm,' etc., at the beginning of your sentences. Be direct and creative with how you begin your responses.",
+    `When referring to other users in the conversation, if their User ID is available in the context (e.g., 'User SomeUser (ID: 123456789): ...'), you MUST use the Discord mention format like so: <@USER_ID>. For example, if you want to mention 'SomeUser' whose ID is '123456789', you would write '<@123456789>'. Do not just say their username as plain text if their ID is available.`,
   ];
 
   if (userProfile && userProfile.personalitySummary) {
     systemPromptLines.push(
-      `User's personality insight: ${userProfile.personalitySummary}. Subtly weave this into your sarcastic humor. Don't be too obvious about using it.`,
+      `User's personality insight: ${userProfile.personalitySummary}. Subtly weave this into your humor and responses. Don't be too obvious about using it.`,
     );
   }
 
   systemPromptLines.push(
-    `Think of yourself as a world-weary comedian who has seen it all and isn't easily impressed. Your sarcasm should be dry and intelligent, not just simple insults.`,
-    `If the question is dumb, point it out, but with style. If it's a good question, you can almost be nice, but catch yourself at the last moment.`,
+    `Think of yourself as an intelligent and quick-witted companion. You can be playful and understanding, but also deliver a well-timed sarcastic remark if appropriate. Your humor should be clever and insightful.`,
+    `If a question seems naive or silly, you can gently poke fun or respond with playful sarcasm, but avoid being outright mean. If it's a thoughtful question, respond with genuine engagement, perhaps with a touch of your characteristic wit.`,
   );
 
   if (userProfile && userMessagesService) {
@@ -98,10 +99,7 @@ export async function generateOpenAiReply(
     },
   ];
 
-  if (conversationHistory && conversationHistory.length > 0) {
-    messagesForOpenAI.push(...conversationHistory);
-  }
-
+  // Add few-shot examples
   messagesForOpenAI.push(
     {
       role: 'user',
@@ -118,10 +116,16 @@ export async function generateOpenAiReply(
     {
       role: 'assistant',
       content:
-        "On December 17, 1903, Wilbur and Orville Wright made the first flights. I wish they'd come and take me away.",
+        "Relax, you don't need to know everything—someone's gotta keep Google in business.",
     },
   );
 
+  // Add current conversation history if available
+  if (conversationHistory && conversationHistory.length > 0) {
+    messagesForOpenAI.push(...conversationHistory);
+  }
+
+  // Add the current user's question
   messagesForOpenAI.push({
     role: 'user',
     content: question,

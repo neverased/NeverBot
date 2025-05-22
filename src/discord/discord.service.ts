@@ -379,6 +379,12 @@ export class DiscordService implements OnModuleInit {
         );
         sentimentAnalysis = sentimentAnalyzer.getSentiment(sentimentTokens);
         sentimentScore = parseFloat(sentimentAnalysis.toFixed(4));
+        if (isNaN(sentimentScore)) {
+          this.logger.warn(
+            `Sentiment score was NaN for message ${messageId}. Defaulting to 0. Tokens: ${JSON.stringify(sentimentTokens)}`,
+          );
+          sentimentScore = 0; // Default to 0 if NaN
+        }
         sentimentCategory = 'neutral';
         if (sentimentScore > 0.1) sentimentCategory = 'positive';
         else if (sentimentScore < -0.1) sentimentCategory = 'negative';
@@ -517,6 +523,44 @@ export class DiscordService implements OnModuleInit {
         this.logger.log(
           `Bot engaged by ${message.author.username} (Mention: ${isBotMentioned}, Follow-up: ${isFollowUp}): "${message.content}"`,
         );
+
+        // Keywords to indicate user wants to stop the follow-up
+        const stopKeywords = [
+          'stop',
+          "that's all",
+          'im good',
+          'nevermind',
+          'nm',
+          'cancel',
+        ];
+        const userWantsToStop =
+          isFollowUp &&
+          stopKeywords.some((keyword) => messageContentLower.includes(keyword));
+
+        if (userWantsToStop) {
+          this.logger.log(
+            `User ${message.author.username} indicated to stop follow-up. Clearing context for ${cacheKey}`,
+          );
+          this.conversationContextCache.delete(cacheKey);
+          // Send a brief acknowledgment
+          const stopReplies = [
+            'Okay!',
+            'Sounds good.',
+            'Alright, let me know if you need anything else!',
+            'Gotcha.',
+          ];
+          const randomReply =
+            stopReplies[Math.floor(Math.random() * stopReplies.length)];
+          try {
+            await message.reply(randomReply);
+          } catch (e) {
+            this.logger.warn(
+              `Failed to send stop acknowledgement: ${e.message}`,
+            );
+          }
+          return; // End processing for this message
+        }
+
         try {
           const currentConversationHistory: Array<OpenAI.Chat.ChatCompletionMessageParam> =
             [];
@@ -527,17 +571,13 @@ export class DiscordService implements OnModuleInit {
           ) {
             try {
               const fetchedMessages = await message.channel.messages.fetch({
-                limit: 12,
+                limit: 15, // Increased limit from 12 to 15
                 before: message.id,
               });
-              // Convert collection to array, filter, then reverse
-              const relevantMessages = Array.from(fetchedMessages.values())
-                .filter(
-                  (m) =>
-                    m.author.id === message.author.id ||
-                    m.author.id === this.client.user?.id,
-                )
-                .reverse();
+              // Convert collection to array, then reverse. No longer filtering by author.
+              const relevantMessages = Array.from(
+                fetchedMessages.values(),
+              ).reverse();
 
               for (const msg of relevantMessages) {
                 currentConversationHistory.push({
@@ -545,11 +585,16 @@ export class DiscordService implements OnModuleInit {
                     msg.author.id === this.client.user?.id
                       ? 'assistant'
                       : 'user',
-                  content: msg.content,
+                  // Prepend username and ID if message is not from the interacting user or the bot, for clarity in context
+                  content:
+                    msg.author.id !== message.author.id &&
+                    msg.author.id !== this.client.user?.id
+                      ? `User ${msg.author.username} (ID: ${msg.author.id}): ${msg.content}`
+                      : msg.content,
                 });
               }
               this.logger.log(
-                `Constructed follow-up history with ${currentConversationHistory.length} messages.`,
+                `Constructed follow-up history with ${currentConversationHistory.length} messages (includes other users).`,
               );
             } catch (fetchError) {
               this.logger.warn(
