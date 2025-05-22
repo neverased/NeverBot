@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.2.0](https://github.com/neverased/NeverBot/compare/never-bot-v3.1.0...never-bot-v3.2.0) (2025-05-22)
+
+
+### Features
+
+* enhance convo handling and persona context ([0f366d4](https://github.com/neverased/NeverBot/commit/0f366d4c32d29d16d677d8ff0c6f91c40bb292e8))
+* enriches chatbot persona with dynamic emotions ([9be7f60](https://github.com/neverased/NeverBot/commit/9be7f60b19f23e9e56c5bd5c74ebed3bac74bce1))
+
 ## [3.1.0](https://github.com/neverased/NeverBot/compare/never-bot-v3.0.0...never-bot-v3.1.0) (2025-05-22)
 
 
