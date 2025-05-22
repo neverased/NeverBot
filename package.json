@@ -19,7 +19,9 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "release": "release-please",
-    "register-commands": "ts-node src/register-commands.ts"
+    "register-commands": "ts-node src/register-commands.ts",
+    "backfill:messagecounts": "ts-node src/scripts/backfill-message-counts.ts",
+    "force-summaries": "ts-node src/scripts/force-update-all-summaries.ts"
   },
   "dependencies": {
     "@google-cloud/translate": "^9.1.0",
