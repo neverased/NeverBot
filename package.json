@@ -43,7 +43,7 @@
     "discord.js": "^14.19.3",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
-    "mongoose": "^8.15.0",
+    "mongoose": "^8.15.1",
     "natural": "^8.0.1",
     "node-fetch": "^3.3.2",
     "openai": "^4.100.0",
