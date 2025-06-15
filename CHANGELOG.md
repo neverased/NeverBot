@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.3.0](https://github.com/neverased/NeverBot/compare/never-bot-v3.2.0...never-bot-v3.3.0) (2025-06-15)
+
+
+### Features
+
+* add per-channel bot enablement controls ([cdce130](https://github.com/neverased/NeverBot/commit/cdce130381e3ab0331292aff6f1395306d668b3d))
+* add slash command for AI-powered changelog summaries ([8eca3f7](https://github.com/neverased/NeverBot/commit/8eca3f7df8745e8bf622735f52ec515ecc004ade))
+
 ## [3.2.0](https://github.com/neverased/NeverBot/compare/never-bot-v3.1.0...never-bot-v3.2.0) (2025-05-22)
 
 
