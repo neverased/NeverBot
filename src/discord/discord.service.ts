@@ -164,8 +164,14 @@ export class DiscordService implements OnModuleInit {
 
         try {
           let userProfile: UserModel | undefined = undefined;
+          let serverConfig: any = undefined;
           if (interaction.user) {
             try {
+              serverConfig = await this.usersService.findOrCreateUser(
+                interaction.guild?.id,
+                interaction.guild?.name,
+                interaction.guild?.id,
+              );
               userProfile = await this.usersService.findOrCreateUser(
                 interaction.user.id,
                 interaction.guild?.name,
@@ -173,9 +179,29 @@ export class DiscordService implements OnModuleInit {
               );
             } catch (err) {
               this.logger.error(
-                `Error fetching user profile for ${interaction.user.id}:`,
+                `Error fetching user/server profile for ${interaction.user.id}:`,
                 err,
               );
+            }
+          }
+          // Channel enablement check
+          if (
+            interaction.guild &&
+            serverConfig &&
+            serverConfig.tasks &&
+            Array.isArray(serverConfig.tasks.enabledChannels) &&
+            serverConfig.tasks.enabledChannels.length > 0
+          ) {
+            if (
+              !serverConfig.tasks.enabledChannels.includes(
+                interaction.channelId,
+              )
+            ) {
+              await interaction.reply({
+                content: 'This command is not enabled in this channel.',
+                ephemeral: true,
+              });
+              return;
             }
           }
           await command.execute(
@@ -344,18 +370,39 @@ export class DiscordService implements OnModuleInit {
       const alternativeBotNameLower = 'never';
 
       let user: UserModel;
+      let serverConfig: any = undefined;
       try {
         user = await this.usersService.findOrCreateUser(
           discordUserId,
           serverName,
           serverId,
         );
+        if (serverId) {
+          serverConfig = await this.usersService.findOrCreateUser(
+            serverId,
+            serverName,
+            serverId,
+          );
+        }
       } catch (error) {
         this.logger.error(
           `Error finding or creating user ${discordUserId} in server ${serverId}: ${error.message}`,
           error.stack,
         );
         return;
+      }
+
+      // Channel enablement check
+      if (
+        message.guild &&
+        serverConfig &&
+        serverConfig.tasks &&
+        Array.isArray(serverConfig.tasks.enabledChannels) &&
+        serverConfig.tasks.enabledChannels.length > 0
+      ) {
+        if (!serverConfig.tasks.enabledChannels.includes(channelId)) {
+          return; // Do not respond in this channel
+        }
       }
 
       // --- NLP and Message Saving Logic (existing, ensure it runs for all user messages) ---
