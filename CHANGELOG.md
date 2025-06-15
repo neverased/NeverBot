@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.4.0](https://github.com/neverased/NeverBot/compare/never-bot-v3.3.0...never-bot-v3.4.0) (2025-06-15)
+
+
+### Features
+
+* migrate server config to dedicated servers collection ([b71acc4](https://github.com/neverased/NeverBot/commit/b71acc4c1f5d993ebe452213fd97acefa7e91cbe))
+
 ## [3.3.0](https://github.com/neverased/NeverBot/compare/never-bot-v3.2.0...never-bot-v3.3.0) (2025-06-15)
 
 
