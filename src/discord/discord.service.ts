@@ -28,6 +28,7 @@ import { User as UserModel } from '../users/entities/user.entity';
 import { CreateUserMessageDto } from '../users/messages/dto/create-user-message.dto';
 import { UserMessagesService } from '../users/messages/messages.service';
 import { UsersService } from '../users/users.service';
+import { ServersService } from '../servers/servers.service';
 import { generateOpenAiReply, splitTextIntoParts } from './gpt/gpt-logic';
 import { textFromImage } from './translator/cv_scrape';
 import { translateText } from './translator/translate';
@@ -40,6 +41,7 @@ interface Command {
     userProfile?: UserModel,
     userMessagesService?: UserMessagesService,
     usersService?: UsersService,
+    serversService?: ServersService,
   ) => Promise<void>;
 }
 
@@ -69,6 +71,7 @@ export class DiscordService implements OnModuleInit {
   constructor(
     private readonly usersService: UsersService,
     private readonly userMessagesService: UserMessagesService,
+    private readonly serversService: ServersService,
   ) {
     this.validateToken();
     this.client = this.initializeClient();
@@ -167,11 +170,12 @@ export class DiscordService implements OnModuleInit {
           let serverConfig: any = undefined;
           if (interaction.user) {
             try {
-              serverConfig = await this.usersService.findOrCreateUser(
-                interaction.guild?.id,
-                interaction.guild?.name,
-                interaction.guild?.id,
-              );
+              if (interaction.guild) {
+                serverConfig = await this.serversService.findOrCreateServer(
+                  interaction.guild.id,
+                  interaction.guild.name,
+                );
+              }
               userProfile = await this.usersService.findOrCreateUser(
                 interaction.user.id,
                 interaction.guild?.name,
@@ -184,19 +188,14 @@ export class DiscordService implements OnModuleInit {
               );
             }
           }
-          // Channel enablement check
+          // Channel enablement check (servers collection)
           if (
             interaction.guild &&
             serverConfig &&
-            serverConfig.tasks &&
-            Array.isArray(serverConfig.tasks.enabledChannels) &&
-            serverConfig.tasks.enabledChannels.length > 0
+            Array.isArray(serverConfig.enabledChannels) &&
+            serverConfig.enabledChannels.length > 0
           ) {
-            if (
-              !serverConfig.tasks.enabledChannels.includes(
-                interaction.channelId,
-              )
-            ) {
+            if (!serverConfig.enabledChannels.includes(interaction.channelId)) {
               await interaction.reply({
                 content: 'This command is not enabled in this channel.',
                 ephemeral: true,
@@ -209,6 +208,7 @@ export class DiscordService implements OnModuleInit {
             userProfile,
             this.userMessagesService,
             this.usersService,
+            this.serversService,
           );
         } catch (error) {
           this.logger.error(
@@ -378,10 +378,9 @@ export class DiscordService implements OnModuleInit {
           serverId,
         );
         if (serverId) {
-          serverConfig = await this.usersService.findOrCreateUser(
+          serverConfig = await this.serversService.findOrCreateServer(
             serverId,
             serverName,
-            serverId,
           );
         }
       } catch (error) {
@@ -396,11 +395,10 @@ export class DiscordService implements OnModuleInit {
       if (
         message.guild &&
         serverConfig &&
-        serverConfig.tasks &&
-        Array.isArray(serverConfig.tasks.enabledChannels) &&
-        serverConfig.tasks.enabledChannels.length > 0
+        Array.isArray(serverConfig.enabledChannels) &&
+        serverConfig.enabledChannels.length > 0
       ) {
-        if (!serverConfig.tasks.enabledChannels.includes(channelId)) {
+        if (!serverConfig.enabledChannels.includes(channelId)) {
           return; // Do not respond in this channel
         }
       }

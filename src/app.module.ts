@@ -9,10 +9,12 @@ import { AppService } from './app.service';
 import { DiscordService } from './discord/discord.service';
 import { TasksModule } from './tasks/tasks.module';
 import { UsersModule } from './users/users.module';
+import { ServersModule } from './servers/servers.module';
 
 @Module({
   imports: [
     UsersModule,
+    ServersModule,
     MongooseModule.forRoot(
       `mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PW}@maincluster.uax2tb8.mongodb.net/`,
     ),

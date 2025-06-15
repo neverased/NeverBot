@@ -1,6 +1,6 @@
 import { SlashCommandBuilder } from 'discord.js';
 import * as fs from 'fs/promises';
-import path from 'path';
+import * as path from 'path';
 import openai from '../../../utils/openai-client';
 
 module.exports = {
@@ -14,10 +14,10 @@ module.exports = {
   async execute(interaction) {
     await interaction.deferReply();
     try {
-      const changelogPath = path.resolve(__dirname, '../../../CHANGELOG.md');
+      const changelogPath = path.resolve(__dirname, '../../../../CHANGELOG.md');
       const changelogContent = await fs.readFile(changelogPath, 'utf8');
       // Use OpenAI to summarize the changelog in a friendly, human-readable way
-      const prompt = `You are a Discord bot. Summarize the following CHANGELOG.md in a friendly, conversational, and human-readable way for users. Use bullet points for each version and highlight the most important changes. Do not include version numbers in the summary if they are not relevant to users. Here is the changelog:
+      const prompt = `You are a Discord bot. Summarize the following CHANGELOG.md in a friendly, conversational, and human-readable way for users. Use bullet points for each version and highlight the most important changes from the end user perspective. Do not include infrastructure or just code changes in the summary. Here is the changelog:
 
 ${changelogContent}
 

@@ -7,7 +7,9 @@ set -e
 # !!! IMPORTANT: Replace 'your-dockerhub-username' with your actual Docker Hub username or registry path !!!
 DOCKER_REGISTRY_USER="neverased" # Takes username from first script argument, or uses default
 IMAGE_NAME="neverbot"
-TAG="v3.1.0"
+#TAG="v3.1.0"
+# Automatically extract version from package.json using jq
+TAG="v$(jq -r .version package.json)"
 PLATFORMS="linux/amd64,linux/arm64" # Platforms to build for
 
 FULL_IMAGE_NAME="${DOCKER_REGISTRY_USER}/${IMAGE_NAME}"

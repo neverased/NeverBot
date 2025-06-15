@@ -6,7 +6,7 @@ import {
   ChannelSelectMenuBuilder,
   ComponentType,
 } from 'discord.js';
-import { UsersService } from '../../../users/users.service';
+import { ServersService } from '../../../servers/servers.service';
 
 const CUSTOM_ID = 'setbotchannels_select';
 
@@ -22,9 +22,16 @@ module.exports = {
    * @param {import('discord.js').ChatInputCommandInteraction} interaction
    * @param {any} _userProfile
    * @param {any} _userMessagesService
-   * @param {UsersService} usersService
+   * @param {any} _usersService
+   * @param {ServersService} serversService
    */
-  async execute(interaction, _userProfile, _userMessagesService, usersService) {
+  async execute(
+    interaction,
+    _userProfile,
+    _userMessagesService,
+    _usersService,
+    serversService,
+  ) {
     if (
       !interaction.memberPermissions?.has(PermissionFlagsBits.Administrator) &&
       !interaction.memberPermissions?.has(PermissionFlagsBits.ManageGuild)
@@ -64,20 +71,10 @@ module.exports = {
       const guildId = interaction.guildId;
       const guildName = interaction.guild?.name || 'N/A';
       try {
-        // Fetch or create the server config
-        const serverConfig = await usersService.findOrCreateUser(
-          guildId,
-          guildName,
-          guildId,
-        );
-        const updatedTasks = {
-          ...(serverConfig.tasks && typeof serverConfig.tasks === 'object'
-            ? serverConfig.tasks
-            : {}),
+        // Fetch or create the server config in servers collection
+        await serversService.findOrCreateServer(guildId, guildName);
+        await serversService.updateServerByDiscordServerId(guildId, {
           enabledChannels: selectedChannels,
-        };
-        await usersService.updateUserByDiscordUserId(guildId, {
-          tasks: updatedTasks,
         });
         await selectInteraction.update({
           content: `Bot enabled in: ${selectedChannels
