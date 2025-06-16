@@ -36,6 +36,9 @@ COPY --from=prod-deps /app/node_modules /app/node_modules
 # Copy the built artifacts from build
 COPY --from=build /app/dist /app/dist
 
+# Copy the CHANGELOG.md file
+COPY CHANGELOG.md /app/CHANGELOG.md
+
 # Expose port 8000
 EXPOSE 8000
 
