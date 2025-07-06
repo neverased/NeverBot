@@ -131,7 +131,7 @@ Generate the personality summary:`;
     try {
       this.logger.log(`Sending request to OpenAI for user ${discordUserId}`);
       const completion = await openai.chat.completions.create({
-        model: 'gpt-4.1',
+        model: 'o3',
         messages: [
           {
             role: 'system',
@@ -141,7 +141,7 @@ Generate the personality summary:`;
           { role: 'user', content: prompt },
         ],
         temperature: 0.7,
-        max_tokens: 150,
+        max_completion_tokens: 150,
       });
 
       const summary =

@@ -167,7 +167,7 @@ Generate the personality summary:`;
 
     try {
       const completion = await openai.chat.completions.create({
-        model: 'gpt-4.1',
+        model: 'o3',
         messages: [
           {
             role: 'system',
@@ -177,7 +177,7 @@ Generate the personality summary:`;
           { role: 'user', content: prompt },
         ],
         temperature: 0.7,
-        max_tokens: 150,
+        max_completion_tokens: 150,
       });
 
       return completion.choices[0]?.message?.content?.trim() || null;

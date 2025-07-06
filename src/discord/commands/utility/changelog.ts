@@ -23,13 +23,13 @@ ${changelogContent}
 
 Summary:`;
       const completion = await openai.chat.completions.create({
-        model: 'gpt-4.1',
+        model: 'o3',
         messages: [
           { role: 'system', content: 'You are a helpful assistant.' },
           { role: 'user', content: prompt },
         ],
         temperature: 0.7,
-        max_tokens: 1024,
+        max_completion_tokens: 1024,
       });
       const summary = completion.choices[0]?.message?.content?.trim();
       if (!summary) {

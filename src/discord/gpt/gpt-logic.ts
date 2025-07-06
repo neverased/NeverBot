@@ -135,10 +135,10 @@ export async function generateOpenAiReply(
 
   try {
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4.1',
+      model: 'o3',
       messages: messagesForOpenAI,
       temperature: 1,
-      max_tokens: 4096,
+      max_completion_tokens: 4096,
       frequency_penalty: 0,
       presence_penalty: 0,
     });
