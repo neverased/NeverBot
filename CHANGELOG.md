@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.5.0](https://github.com/neverased/NeverBot/compare/never-bot-v3.4.0...never-bot-v3.5.0) (2025-07-06)
+
+
+### Features
+
+* upgrade to OpenAI o3 model with max_completion_tokens parameter ([f6f1cf2](https://github.com/neverased/NeverBot/commit/f6f1cf216328d7c1ec95feb6fb032dfe5cf3ab5c))
+
 ## [3.4.0](https://github.com/neverased/NeverBot/compare/never-bot-v3.3.0...never-bot-v3.4.0) (2025-06-15)
 
 
