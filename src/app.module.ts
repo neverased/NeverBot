@@ -11,6 +11,7 @@ import { TasksModule } from './tasks/tasks.module';
 import { UsersModule } from './users/users.module';
 import { ServersModule } from './servers/servers.module';
 import { AppConfigModule } from './core/config/config.module';
+import { WikisModule } from './wikis/wikis.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { AppConfigModule } from './core/config/config.module';
     ),
     ScheduleModule.forRoot(),
     TasksModule,
+    WikisModule,
   ],
   controllers: [AppController],
   providers: [AppService, DiscordService],

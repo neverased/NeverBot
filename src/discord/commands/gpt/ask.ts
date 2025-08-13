@@ -4,6 +4,7 @@ import { ChatInputCommandInteraction, SlashCommandBuilder } from 'discord.js';
 import { User as UserModel } from '../../../users/entities/user.entity';
 import { UserMessagesService } from '../../../users/messages/messages.service';
 import { generateOpenAiReply, splitTextIntoParts } from '../../gpt/gpt-logic'; // Corrected path
+import { WikiSearchService } from '../../../wikis/wikisearch.service';
 
 // function splitText(text, maxLength) { ... } // Removed, using splitTextIntoParts from gpt-logic
 
@@ -18,6 +19,9 @@ module.exports = {
     interaction: ChatInputCommandInteraction,
     userProfile?: UserModel,
     userMessagesService?: UserMessagesService,
+    _usersService?: unknown,
+    _serversService?: unknown,
+    wikiSearchService?: WikiSearchService,
   ) {
     await interaction.deferReply();
     const question = interaction.options.getString('question');
@@ -37,6 +41,8 @@ module.exports = {
         userName,
         userProfile,
         userMessagesService,
+        undefined,
+        wikiSearchService,
       );
 
       if (!gptResponse) {

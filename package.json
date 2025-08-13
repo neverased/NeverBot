@@ -21,7 +21,8 @@
     "release": "release-please",
     "register-commands": "ts-node src/register-commands.ts",
     "backfill:messagecounts": "ts-node src/scripts/backfill-message-counts.ts",
-    "force-summaries": "ts-node src/scripts/force-update-all-summaries.ts"
+    "force-summaries": "ts-node src/scripts/force-update-all-summaries.ts",
+    "index:sos": "ts-node src/scripts/index-sos-wiki.ts"
   },
   "dependencies": {
     "@google-cloud/translate": "^9.2.0",
@@ -36,6 +37,7 @@
     "@nestjs/schedule": "^6.0.0",
     "@nestjs/swagger": "^11.2.0",
     "axios": "^1.11.0",
+    "cheerio": "^1.0.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
     "dayjs": "^1.11.13",
@@ -47,6 +49,7 @@
     "natural": "^8.1.0",
     "node-fetch": "^3.3.2",
     "openai": "^5.12.2",
+    "p-limit": "^6.2.0",
     "joi": "^17.13.3",
     "os-utils": "^0.0.14",
     "reflect-metadata": "^0.2.2",

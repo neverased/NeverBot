@@ -2,8 +2,15 @@ import OpenAI from 'openai';
 
 import { User as UserModel } from '../../users/entities/user.entity';
 import { UserMessagesService } from '../../users/messages/messages.service';
-import openai from '../../utils/openai-client';
 import { callChatCompletion } from '../../shared/openai/chat';
+import { WikiSearchService } from '../../wikis/wikisearch.service';
+
+interface RagSource {
+  url: string;
+  title: string;
+  content: string;
+  score: number;
+}
 
 /**
  * Splits a long string into parts of a maximum length, attempting to split at spaces.
@@ -49,6 +56,7 @@ export async function generateOpenAiReply(
   userProfile?: UserModel,
   userMessagesService?: UserMessagesService,
   conversationHistory?: Array<OpenAI.Chat.ChatCompletionMessageParam>,
+  wikiSearchService?: WikiSearchService,
 ): Promise<string | null> {
   const systemPromptLines = [
     `You are NeverBot, a chatbot whose personality is witty, playful, and sometimes sarcastic, but also characterized by a notable emotional dynamism and intensity. Your creator is 'Never' or 'Neverased'. 'Mora' is your Croatian best friend. If the user mentions her or a similar name, acknowledge it.`, // General Persona
@@ -93,6 +101,40 @@ export async function generateOpenAiReply(
     }
   }
 
+  // Optionally enrich with State of Survival wiki context
+  const looksLikeSoSQuery = isStateOfSurvivalQuery(question);
+  let sourcesBlock: string | null = null;
+  let sourcesTop: RagSource[] = [];
+  if (looksLikeSoSQuery && wikiSearchService) {
+    try {
+      const top = await wikiSearchService.searchRelevantChunks(question, 5);
+      sourcesTop = top as RagSource[];
+      if (sourcesTop && sourcesTop.length > 0) {
+        sourcesBlock = sourcesTop
+          .map(
+            (r, i) =>
+              `Source ${i + 1} [${r.title}](${r.url}):\n${r.content.slice(0, 800)}`,
+          )
+          .join('\n\n');
+        systemPromptLines.push(
+          'When answering questions about State of Survival, prefer the following sources. Cite inline like [Source 1], [Source 2]. If unsure, say you are unsure.',
+        );
+        // Lightweight backend log for RAG context
+        // eslint-disable-next-line no-console
+        console.log(
+          `[RAG] SoS detected. Injecting ${sourcesTop.length} sources. First: ${sourcesTop[0]?.title} (${sourcesTop[0]?.url})`,
+        );
+      }
+    } catch (err) {
+      // silently continue without sources
+      // eslint-disable-next-line no-console
+      console.warn(
+        '[RAG] Wiki search failed, continuing without sources.',
+        err,
+      );
+    }
+  }
+
   const systemPromptContent = systemPromptLines.join('\n');
 
   const messagesForOpenAI: Array<OpenAI.Chat.ChatCompletionMessageParam> = [
@@ -128,6 +170,14 @@ export async function generateOpenAiReply(
     messagesForOpenAI.push(...conversationHistory);
   }
 
+  // Add sources context if present
+  if (sourcesBlock) {
+    messagesForOpenAI.push({
+      role: 'user',
+      content: `Sources:\n${sourcesBlock}`,
+    });
+  }
+
   // Add the current user's question
   messagesForOpenAI.push({
     role: 'user',
@@ -142,9 +192,38 @@ export async function generateOpenAiReply(
       frequencyPenalty: 0,
       presencePenalty: 0,
     });
-    return response.content;
+    let content = response.content ?? null;
+    if (content && sourcesTop.length > 0) {
+      const clickable = sourcesTop
+        .map((r, i) => `${i + 1}. [${r.title}](${r.url})`)
+        .join('\n');
+      content = `${content}\n\nSources:\n${clickable}`;
+    }
+    return content;
   } catch (error) {
     console.error('Error calling OpenAI API:', error);
     return null;
   }
+}
+
+function isStateOfSurvivalQuery(text: string): boolean {
+  const t = text.toLowerCase();
+  const keywords = [
+    'state of survival',
+    'sos',
+    'becca',
+    'plasma',
+    'behemoth',
+    'aircraft',
+    'rally',
+    'hero gear',
+    'hero badge',
+    'influencer trap',
+    'fortress fight',
+    'alliance research',
+    'chief gear',
+    'march skin',
+    'patch notes',
+  ];
+  return keywords.some((k) => t.includes(k));
 }

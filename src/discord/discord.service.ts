@@ -35,6 +35,7 @@ import { textFromImage } from './translator/cv_scrape';
 import { translateText } from './translator/translate';
 import { discordFlagToLanguageCode } from './translator/translate';
 import { callChatCompletion } from '../shared/openai/chat';
+import { WikiSearchService } from '../wikis/wikisearch.service';
 
 interface Command {
   data: { name: string; description?: string };
@@ -44,6 +45,7 @@ interface Command {
     userMessagesService?: UserMessagesService,
     usersService?: UsersService,
     serversService?: ServersService,
+    wikiSearchService?: WikiSearchService,
   ) => Promise<void>;
 }
 
@@ -74,6 +76,7 @@ export class DiscordService implements OnModuleInit {
     private readonly usersService: UsersService,
     private readonly userMessagesService: UserMessagesService,
     private readonly serversService: ServersService,
+    private readonly wikiSearchService: WikiSearchService,
   ) {
     this.validateToken();
     this.client = this.initializeClient();
@@ -213,6 +216,7 @@ export class DiscordService implements OnModuleInit {
             this.userMessagesService,
             this.usersService,
             this.serversService,
+            this.wikiSearchService,
           );
         } catch (error) {
           this.logger.error(
@@ -350,13 +354,16 @@ export class DiscordService implements OnModuleInit {
     if (this.isSendableChannel(message.channel)) {
       await message.channel.sendTyping();
     }
-
+    this.logger.log(
+      `[GPT] Incoming question from ${message.author.username}: "${gptQuestion}"`,
+    );
     const gptResponse = await generateOpenAiReply(
       gptQuestion,
       message.author.globalName || message.author.username,
       user,
       this.userMessagesService,
       conversationHistory,
+      this.wikiSearchService,
     );
 
     const cacheKey = `${message.channel.id}-${message.author.id}`;
@@ -380,6 +387,9 @@ export class DiscordService implements OnModuleInit {
       let botReplyMessage: Message | undefined;
 
       if (gptResponse.length > maxDiscordMessageLength) {
+        this.logger.debug(
+          `[GPT] Response length ${gptResponse.length} exceeds limit. Splitting...`,
+        );
         const responseParts = splitTextIntoParts(
           gptResponse,
           maxDiscordMessageLength,
@@ -415,6 +425,9 @@ export class DiscordService implements OnModuleInit {
           lastBotMessageId: botReplyMessage.id,
           lastUserMessageId: message.id,
         });
+        this.logger.log(
+          `[GPT] Replied to ${message.author.username}. Message ID: ${botReplyMessage.id}`,
+        );
       }
     } else {
       const errorReply =
@@ -439,6 +452,7 @@ export class DiscordService implements OnModuleInit {
           lastUserMessageId: message.id,
         });
       }
+      this.logger.warn('[GPT] No response generated; sent error fallback.');
     }
   }
 
