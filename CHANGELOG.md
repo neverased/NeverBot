@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.9.0](https://github.com/neverased/NeverBot/compare/never-bot-v3.8.0...never-bot-v3.9.0) (2025-08-13)
+
+
+### Features
+
+* add cron-based wiki reindexing support ([58fb311](https://github.com/neverased/NeverBot/commit/58fb31192acc21a4b23b7c1571fbcc807ce424be))
+
 ## [3.8.0](https://github.com/neverased/NeverBot/compare/never-bot-v3.7.0...never-bot-v3.8.0) (2025-08-13)
 
 
