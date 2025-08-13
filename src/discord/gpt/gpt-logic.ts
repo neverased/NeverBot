@@ -119,6 +119,9 @@ export async function generateOpenAiReply(
         systemPromptLines.push(
           'When answering questions about State of Survival, prefer the following sources. Cite inline like [Source 1], [Source 2]. If unsure, say you are unsure.',
         );
+        systemPromptLines.push(
+          'Maintain your witty, playful, and sarcastic persona even when using sources. Keep the tone conversational, not academic; be concise and user-friendly.',
+        );
         // Lightweight backend log for RAG context
         // eslint-disable-next-line no-console
         console.log(
