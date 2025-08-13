@@ -76,6 +76,32 @@ Runs `src/scripts/index-sos-wiki.ts` to crawl and index. Tune in that script:
 
 - `maxPages`, `concurrency`.
 
+### Scheduled re-indexing
+
+- Enable: set `WIKI_INDEX_CRON_ENABLED=true`.
+- Schedule: `WIKI_INDEX_CRON` (default `0 3 * * 0`).
+- Limits: `WIKI_INDEX_MAX_PAGES` (default 1000), `WIKI_INDEX_CONCURRENCY` (default 4).
+- Entry: `src/wikis/wiki-indexer.cron.ts` (wired in `WikisModule`).
+
+### Update semantics
+
+- Pages: upsert via `findOneAndUpdate({ url }, { ... }, { upsert: true })`.
+- Chunks: old chunks for the page are deleted and fully re-created with fresh embeddings.
+- No global drop: only touched pages/chunks are updated.
+
+### Scheduled re-indexing (cron)
+
+- Enable: set `WIKI_INDEX_CRON_ENABLED=true`.
+- Schedule: `WIKI_INDEX_CRON` (default `0 3 * * 0`).
+- Limits: `WIKI_INDEX_MAX_PAGES` (default 1000), `WIKI_INDEX_CONCURRENCY` (default 4).
+- Entry: `src/wikis/wiki-indexer.cron.ts` (wired in `WikisModule`).
+
+### Update semantics (upsert)
+
+- Pages: upsert via `findOneAndUpdate({ url }, { ... }, { upsert: true })`.
+- Chunks: old chunks for the page are deleted and fully re-created with fresh embeddings.
+- No global drop: only touched pages/chunks are updated.
+
 ## Runtime Behavior
 
 - On-demand: retrieval triggers only for SoS-like prompts (`isStateOfSurvivalQuery`)
