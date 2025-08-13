@@ -37,7 +37,7 @@ export async function welcomeNewMember(member: GuildMember): Promise<void> {
     const mora = userMention('701709518668693617');
 
     const completion = await openai.chat.completions.create({
-      model: 'o3',
+      model: 'gpt-5',
       messages: [
         {
           role: 'system',

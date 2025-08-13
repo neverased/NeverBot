@@ -135,7 +135,7 @@ export async function generateOpenAiReply(
 
   try {
     const completion = await openai.chat.completions.create({
-      model: 'o3',
+      model: 'gpt-5',
       messages: messagesForOpenAI,
       temperature: 1,
       max_completion_tokens: 4096,

@@ -167,7 +167,7 @@ Generate the personality summary:`;
 
     try {
       const completion = await openai.chat.completions.create({
-        model: 'o3',
+        model: 'gpt-5',
         messages: [
           {
             role: 'system',
