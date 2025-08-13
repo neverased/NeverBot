@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.8.0](https://github.com/neverased/NeverBot/compare/never-bot-v3.7.0...never-bot-v3.8.0) (2025-08-13)
+
+
+### Features
+
+* add env toggle for RAG citations ([fedf064](https://github.com/neverased/NeverBot/commit/fedf064eeaf8a3224174ce85ccce30db7cc681fc))
+
 ## [3.7.0](https://github.com/neverased/NeverBot/compare/never-bot-v3.6.0...never-bot-v3.7.0) (2025-08-13)
 
 
