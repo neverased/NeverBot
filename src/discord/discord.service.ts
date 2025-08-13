@@ -723,7 +723,7 @@ export class DiscordService implements OnModuleInit {
           ) {
             try {
               const fetchedMessages = await message.channel.messages.fetch({
-                limit: 15, // Increased limit from 12 to 15
+                limit: 20, // adjusted per request
                 before: message.id,
               });
               // Convert collection to array, then reverse. No longer filtering by author.

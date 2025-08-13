@@ -176,7 +176,7 @@ export async function generateOpenAiReply(
     },
   );
 
-  // Add current conversation history if available
+  // Add current conversation history if available (lift limit by allowing more messages)
   if (conversationHistory && conversationHistory.length > 0) {
     messagesForOpenAI.push(...conversationHistory);
   }
@@ -198,8 +198,8 @@ export async function generateOpenAiReply(
   try {
     const response = await callChatCompletion(messagesForOpenAI, {
       model: 'gpt-5',
-      temperature: 1,
-      maxCompletionTokens: 4096,
+      temperature: 0.7,
+      maxCompletionTokens: 8192,
       frequencyPenalty: 0,
       presencePenalty: 0,
     });
