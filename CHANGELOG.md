@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.6.0](https://github.com/neverased/NeverBot/compare/never-bot-v3.5.0...never-bot-v3.6.0) (2025-08-13)
+
+
+### Features
+
+* add SoS wiki RAG grounding ([3db11d8](https://github.com/neverased/NeverBot/commit/3db11d8fa2ce95e60fc20533d860187db7407832))
+* add welcome/trap features & env validation ([351be39](https://github.com/neverased/NeverBot/commit/351be39677acc3237832350ebf46509afcf8579f))
+
 ## [3.5.0](https://github.com/neverased/NeverBot/compare/never-bot-v3.4.0...never-bot-v3.5.0) (2025-07-06)
 
 ### Features
