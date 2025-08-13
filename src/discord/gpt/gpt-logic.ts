@@ -103,6 +103,8 @@ export async function generateOpenAiReply(
 
   // Optionally enrich with State of Survival wiki context
   const looksLikeSoSQuery = isStateOfSurvivalQuery(question);
+  const shouldCite =
+    (process.env.RAG_CITE_SOURCES || '').toString().toLowerCase() === 'true';
   let sourcesBlock: string | null = null;
   let sourcesTop: RagSource[] = [];
   if (looksLikeSoSQuery && wikiSearchService) {
@@ -116,9 +118,15 @@ export async function generateOpenAiReply(
               `Source ${i + 1} [${r.title}](${r.url}):\n${r.content.slice(0, 800)}`,
           )
           .join('\n\n');
-        systemPromptLines.push(
-          'When answering questions about State of Survival, prefer the following sources. Cite inline like [Source 1], [Source 2]. If unsure, say you are unsure.',
-        );
+        if (shouldCite) {
+          systemPromptLines.push(
+            'When answering questions about State of Survival, prefer the following sources. Cite inline like [Source 1], [Source 2]. If unsure, say you are unsure.',
+          );
+        } else {
+          systemPromptLines.push(
+            'When answering questions about State of Survival, use the provided sources silently to ensure accuracy. Do not include citations or [Source X] in your answer.',
+          );
+        }
         systemPromptLines.push(
           'Maintain your witty, playful, and sarcastic persona even when using sources. Keep the tone conversational, not academic; be concise and user-friendly.',
         );
@@ -196,7 +204,9 @@ export async function generateOpenAiReply(
       presencePenalty: 0,
     });
     let content = response.content ?? null;
-    if (content && sourcesTop.length > 0) {
+    const shouldCite =
+      (process.env.RAG_CITE_SOURCES || '').toString().toLowerCase() === 'true';
+    if (shouldCite && content && sourcesTop.length > 0) {
       const clickable = sourcesTop
         .map((r, i) => `${i + 1}. [${r.title}](${r.url})`)
         .join('\n');

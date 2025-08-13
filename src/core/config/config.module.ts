@@ -13,6 +13,7 @@ import * as Joi from 'joi';
         MONGO_PW: Joi.string().required(),
         API_URL: Joi.string().uri().optional(),
         GOOGLE_CLOUD_CREDENTIALS_PATH: Joi.string().optional(),
+        RAG_CITE_SOURCES: Joi.boolean().optional(),
         NODE_ENV: Joi.string()
           .valid('development', 'test', 'production')
           .optional(),
