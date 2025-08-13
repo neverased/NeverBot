@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.7.0](https://github.com/neverased/NeverBot/compare/never-bot-v3.6.0...never-bot-v3.7.0) (2025-08-13)
+
+
+### Features
+
+* keep witty persona with sources ([13fc4c2](https://github.com/neverased/NeverBot/commit/13fc4c2d0858460a06cea99f063b02f963400c44))
+
 ## [3.6.0](https://github.com/neverased/NeverBot/compare/never-bot-v3.5.0...never-bot-v3.6.0) (2025-08-13)
 
 
