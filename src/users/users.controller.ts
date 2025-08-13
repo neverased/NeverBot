@@ -12,7 +12,7 @@ import {
 } from '@nestjs/common';
 import { mongo } from 'mongoose';
 
-import openai from '../utils/openai-client';
+import { callChatCompletion } from '../shared/openai/chat';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
@@ -130,9 +130,8 @@ Generate the personality summary:`;
 
     try {
       this.logger.log(`Sending request to OpenAI for user ${discordUserId}`);
-      const completion = await openai.chat.completions.create({
-        model: 'gpt-5',
-        messages: [
+      const { content: generated } = await callChatCompletion(
+        [
           {
             role: 'system',
             content:
@@ -140,13 +139,10 @@ Generate the personality summary:`;
           },
           { role: 'user', content: prompt },
         ],
-        temperature: 0.7,
-        max_completion_tokens: 150,
-      });
+        { model: 'gpt-5', temperature: 0.7, maxCompletionTokens: 150 },
+      );
 
-      const summary =
-        completion.choices[0]?.message?.content?.trim() ||
-        'Could not generate summary.';
+      const summary = generated?.trim() || 'Could not generate summary.';
       this.logger.log(
         `Received summary from OpenAI for user ${discordUserId}: "${summary}"`,
       );

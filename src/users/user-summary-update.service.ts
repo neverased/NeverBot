@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 
-import openai from '../utils/openai-client';
+import { callChatCompletion } from '../shared/openai/chat';
 import { User } from './entities/user.entity';
 import { UserMessagesService } from './messages/messages.service';
 import { UsersService } from './users.service';
@@ -166,9 +166,8 @@ Example Summary: "This user is generally positive, frequently discusses gaming a
 Generate the personality summary:`;
 
     try {
-      const completion = await openai.chat.completions.create({
-        model: 'gpt-5',
-        messages: [
+      const { content } = await callChatCompletion(
+        [
           {
             role: 'system',
             content:
@@ -176,11 +175,10 @@ Generate the personality summary:`;
           },
           { role: 'user', content: prompt },
         ],
-        temperature: 0.7,
-        max_completion_tokens: 150,
-      });
+        { model: 'gpt-5', temperature: 0.7, maxCompletionTokens: 150 },
+      );
 
-      return completion.choices[0]?.message?.content?.trim() || null;
+      return content || null;
     } catch (error) {
       this.logger.error(
         `Error generating summary for user ${user.discordUserId} with OpenAI:`,

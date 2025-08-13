@@ -3,6 +3,7 @@ import OpenAI from 'openai';
 import { User as UserModel } from '../../users/entities/user.entity';
 import { UserMessagesService } from '../../users/messages/messages.service';
 import openai from '../../utils/openai-client';
+import { callChatCompletion } from '../../shared/openai/chat';
 
 /**
  * Splits a long string into parts of a maximum length, attempting to split at spaces.
@@ -134,16 +135,14 @@ export async function generateOpenAiReply(
   });
 
   try {
-    const completion = await openai.chat.completions.create({
+    const response = await callChatCompletion(messagesForOpenAI, {
       model: 'gpt-5',
-      messages: messagesForOpenAI,
       temperature: 1,
-      max_completion_tokens: 4096,
-      frequency_penalty: 0,
-      presence_penalty: 0,
+      maxCompletionTokens: 4096,
+      frequencyPenalty: 0,
+      presencePenalty: 0,
     });
-
-    return completion.choices[0].message.content?.trim() || null;
+    return response.content;
   } catch (error) {
     console.error('Error calling OpenAI API:', error);
     return null;

@@ -17,6 +17,7 @@ import {
   Partials,
   TextChannel,
   ThreadChannel,
+  GuildMember,
   User as DiscordUserType,
 } from 'discord.js';
 import * as fs from 'fs/promises';
@@ -33,6 +34,7 @@ import { generateOpenAiReply, splitTextIntoParts } from './gpt/gpt-logic';
 import { textFromImage } from './translator/cv_scrape';
 import { translateText } from './translator/translate';
 import { discordFlagToLanguageCode } from './translator/translate';
+import { callChatCompletion } from '../shared/openai/chat';
 
 interface Command {
   data: { name: string; description?: string };
@@ -141,6 +143,8 @@ export class DiscordService implements OnModuleInit {
     this.registerClientReadyHandler();
     this.registerMessageReactionAddHandler();
     this.registerMessageCreateHandler();
+    this.registerGuildMemberAddHandler();
+    this.registerGuildMemberRemoveHandler();
     await this.loginClient();
   }
 
@@ -235,6 +239,95 @@ export class DiscordService implements OnModuleInit {
         await this.handleMessageReaction(reaction, user);
       },
     );
+  }
+
+  private registerGuildMemberAddHandler(): void {
+    this.client.on(Events.GuildMemberAdd, async (member: GuildMember) => {
+      try {
+        const serverId = member.guild.id;
+        const serverName = member.guild.name;
+        const serverConfig = await this.serversService.findOrCreateServer(
+          serverId,
+          serverName,
+        );
+        const welcomeChannelId = serverConfig?.welcomeChannelId;
+        if (!welcomeChannelId) return;
+
+        const channel = member.guild.channels.cache.get(welcomeChannelId);
+        if (!channel || !(channel instanceof TextChannel)) return;
+
+        const { content } = await callChatCompletion(
+          [
+            {
+              role: 'system',
+              content:
+                'You are MeanNever, a chatbot that answers questions with sarcastic or very funny responses. Every new sentence will be in a new line with \\n prefix.',
+            },
+            {
+              role: 'user',
+              content: `Welcome ${member.user.username} to the server!`,
+            },
+            {
+              role: 'assistant',
+              content: `Hold onto your keyboard, folks! 🎉 \\nWe've got a fresh face in town! \\nWelcome, ${member.user.username} 🌟, the chosen one who dared to click 'Join'. \\nPrepare for a wild ride of laughs, discussions, and the occasional virtual dance-off.\\nDon't worry, our emojis are friendly, and our GIFs are well-trained.\\nIf you're lost, just shout 'HELP' and our tech wizards will come to your rescue.`,
+            },
+            {
+              role: 'user',
+              content: `Give a warm welcome to @${member.user.username} \\nIntroduce yourself in a short sentence and mention that '/help' is the command to get started.`,
+            },
+          ],
+          { model: 'gpt-5', temperature: 1, maxCompletionTokens: 200 },
+        );
+
+        const description = content ?? `Welcome, <@${member.user.id}>!`;
+        await channel.send({
+          embeds: [
+            {
+              title: `${member.user.username} just joined! 🎉`,
+              description,
+              color: 0x00ff00,
+              thumbnail: { url: member.user.displayAvatarURL() ?? undefined },
+              timestamp: new Date().toISOString(),
+            },
+          ],
+        });
+      } catch (err) {
+        this.logger.error('Error handling GuildMemberAdd:', err);
+      }
+    });
+  }
+
+  private registerGuildMemberRemoveHandler(): void {
+    this.client.on(Events.GuildMemberRemove, async (member: GuildMember) => {
+      try {
+        const serverId = member.guild.id;
+        const serverName = member.guild.name;
+        const serverConfig = await this.serversService.findOrCreateServer(
+          serverId,
+          serverName,
+        );
+        const welcomeChannelId = serverConfig?.welcomeChannelId;
+        if (!welcomeChannelId) return;
+
+        const channel = member.guild.channels.cache.get(welcomeChannelId);
+        if (!channel || !(channel instanceof TextChannel)) return;
+
+        await channel.send({
+          embeds: [
+            {
+              title: `${member.user.username} just left the server! 👋`,
+              description:
+                "We're sorry to see you go.\\nWe hope you enjoyed your stay.\\n\\nIf you ever want to come back, we'll be here waiting for you.\\n\\nUntil then, take care! 🍪🤖🎉",
+              color: 0xff0000,
+              thumbnail: { url: member.user.displayAvatarURL() ?? undefined },
+              timestamp: new Date().toISOString(),
+            },
+          ],
+        });
+      } catch (err) {
+        this.logger.error('Error handling GuildMemberRemove:', err);
+      }
+    });
   }
 
   private isSendableChannel(

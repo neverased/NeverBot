@@ -10,9 +10,11 @@ import { DiscordService } from './discord/discord.service';
 import { TasksModule } from './tasks/tasks.module';
 import { UsersModule } from './users/users.module';
 import { ServersModule } from './servers/servers.module';
+import { AppConfigModule } from './core/config/config.module';
 
 @Module({
   imports: [
+    AppConfigModule,
     UsersModule,
     ServersModule,
     MongooseModule.forRoot(

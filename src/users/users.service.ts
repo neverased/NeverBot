@@ -9,7 +9,7 @@ import { User, UserDocument } from './schemas/users.schema';
 @Injectable()
 export class UsersService {
   constructor(
-    @InjectModel(User.name) private readonly usersModel: Model<User>,
+    @InjectModel(User.name) private readonly usersModel: Model<UserDocument>,
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<UserDocument> {
@@ -37,7 +37,9 @@ export class UsersService {
     serverName?: string,
     serverId?: string,
   ): Promise<UserDocument> {
-    let userDoc = await this.usersModel.findOne({ discordUserId }).exec();
+    let userDoc: UserDocument | null = await this.usersModel
+      .findOne({ discordUserId })
+      .exec();
     if (!userDoc) {
       const createUserDto: CreateUserDto = {
         discordUserId,
@@ -45,7 +47,7 @@ export class UsersService {
         serverId: serverId || 'N/A',
         registeredAt: new Date(),
         subscription: 'free',
-        tasks: [],
+        tasks: {},
       };
       userDoc = await this.create(createUserDto);
     }

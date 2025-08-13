@@ -50,8 +50,27 @@ export class User {
   @Prop({ type: String, default: '' })
   personalitySummary: string;
 
-  @Prop({ type: mongoose.Schema.Types.Mixed, default: {} })
-  tasks: mongoose.Schema.Types.Mixed;
+  @Prop({
+    type: {
+      enabledChannels: { type: [String], default: [] },
+      welcome_channel_id: { type: String, required: false },
+      trap: {
+        time: { type: String, required: false },
+        start_day: { type: String, required: false },
+        notification_channel_id: { type: String, required: false },
+      },
+    },
+    default: {},
+  })
+  tasks: {
+    enabledChannels?: string[];
+    welcome_channel_id?: string;
+    trap?: {
+      time?: string;
+      start_day?: string;
+      notification_channel_id?: string;
+    };
+  };
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
