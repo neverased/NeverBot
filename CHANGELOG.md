@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.10.0](https://github.com/neverased/NeverBot/compare/never-bot-v3.9.0...never-bot-v3.10.0) (2025-08-14)
+
+
+### Features
+
+* add observability, resilience & api hardening ([390da45](https://github.com/neverased/NeverBot/commit/390da45a3fc2548c03f5ac409b1876f54472c679))
+
 ## [3.9.0](https://github.com/neverased/NeverBot/compare/never-bot-v3.8.0...never-bot-v3.9.0) (2025-08-13)
 
 
