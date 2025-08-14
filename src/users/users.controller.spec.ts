@@ -1,9 +1,8 @@
-import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
-import { User } from 'discord.js';
 
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
+import { UserMessagesService } from './messages/messages.service';
 
 describe('UsersController', () => {
   let controller: UsersController;
@@ -12,8 +11,8 @@ describe('UsersController', () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [UsersController],
       providers: [
-        UsersService,
-        { provide: getModelToken(User.name), useValue: {} },
+        { provide: UsersService, useValue: {} },
+        { provide: UserMessagesService, useValue: {} },
       ],
     }).compile();
 
