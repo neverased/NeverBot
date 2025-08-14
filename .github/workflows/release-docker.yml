@@ -34,11 +34,18 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Extract lowercase repo name
+        id: repo-name
+        run: |
+          REPO_NAME=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
+          echo "repo_name=$REPO_NAME" >> $GITHUB_OUTPUT
+
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: docker.io/${{ vars.DOCKERHUB_REPOSITORY }}
+          # docker.io/<dockerhub-username>/<repo>
+          images: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/${{ steps.repo-name.outputs.repo_name }}
           tags: |
             type=semver,pattern={{version}},value=${{ steps.version.outputs.version }}
             type=raw,value=latest
