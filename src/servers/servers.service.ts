@@ -13,7 +13,10 @@ export class ServersService {
     discordServerId: string,
     serverName?: string,
   ): Promise<Server> {
-    let serverDoc = await this.serversModel.findOne({ discordServerId }).exec();
+    let serverDoc = (await this.serversModel
+      .findOne({ discordServerId })
+      .lean<Server>()
+      .exec()) as any;
     if (!serverDoc) {
       serverDoc = await this.serversModel.create({
         discordServerId,
@@ -35,6 +38,9 @@ export class ServersService {
   async findOneByDiscordServerId(
     discordServerId: string,
   ): Promise<Server | null> {
-    return this.serversModel.findOne({ discordServerId }).exec();
+    return this.serversModel
+      .findOne({ discordServerId })
+      .lean<Server>()
+      .exec() as any;
   }
 }

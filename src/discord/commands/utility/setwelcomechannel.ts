@@ -5,6 +5,7 @@ import {
 } from 'discord.js';
 
 import { ServersService } from '../../../servers/servers.service';
+import { setDiscordResilience } from '../../decorators/discord-resilience.decorator';
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -27,6 +28,10 @@ module.exports = {
     _usersService: unknown,
     serversService: ServersService,
   ) {
+    setDiscordResilience(module.exports.execute, {
+      timeoutMs: 15000,
+      retries: 0,
+    });
     if (
       !interaction.memberPermissions?.has(PermissionFlagsBits.Administrator) &&
       !interaction.memberPermissions?.has(PermissionFlagsBits.ManageGuild)

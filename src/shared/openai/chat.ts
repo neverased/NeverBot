@@ -1,6 +1,7 @@
 import OpenAI from 'openai';
 
 import openai from '../../utils/openai-client';
+import { openaiErrors } from '../../core/metrics/metrics-registry';
 
 export interface ChatMessageParam {
   role: 'system' | 'user' | 'assistant';
@@ -32,7 +33,7 @@ export async function callChatCompletion(
     maxCompletionTokens = 1024,
     frequencyPenalty = 0,
     presencePenalty = 0,
-    model = 'gpt-5',
+    model = 'gpt-4o-mini',
     retryCount = 2,
   } = options;
 
@@ -50,14 +51,26 @@ export async function callChatCompletion(
       if (temperature === 1) {
         payload.temperature = temperature;
       }
-      const completion = await openai.chat.completions.create(payload);
-      return {
-        content: completion.choices[0]?.message?.content?.trim() ?? null,
-      };
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 30_000);
+      try {
+        const completion = await openai.chat.completions.create(payload, {
+          signal: controller.signal,
+        });
+        return {
+          content: completion.choices[0]?.message?.content?.trim() ?? null,
+        };
+      } finally {
+        clearTimeout(timeout);
+      }
     } catch (error) {
+      try {
+        openaiErrors.inc({ type: 'error' });
+      } catch {}
       lastError = error;
       // Exponential backoff: 250ms, 500ms, 1000ms ...
-      const delayMs = 250 * Math.pow(2, attempt);
+      const jitter = Math.random() * 100;
+      const delayMs = 250 * Math.pow(2, attempt) + jitter;
       await new Promise((r) => setTimeout(r, delayMs));
     }
   }

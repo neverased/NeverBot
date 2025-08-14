@@ -175,7 +175,7 @@ Generate the personality summary:`;
           },
           { role: 'user', content: prompt },
         ],
-        { model: 'gpt-5', temperature: 1, maxCompletionTokens: 150 },
+        { model: 'gpt-4o-mini', temperature: 0.7, maxCompletionTokens: 150 },
       );
 
       return content || null;

@@ -45,11 +45,17 @@ export class UserMessagesService {
   }
 
   async findAllByUserId(userId: string): Promise<UserMessage[]> {
-    return this.userMessageModel.find({ userId }).exec();
+    return this.userMessageModel
+      .find({ userId })
+      .lean<UserMessage[]>()
+      .exec() as any;
   }
 
   async findOne(userId: string, messageId: string): Promise<UserMessage> {
-    return this.userMessageModel.findOne({ userId, messageId }).exec();
+    return this.userMessageModel
+      .findOne({ userId, messageId })
+      .lean<UserMessage>()
+      .exec() as any;
   }
 
   async update(
@@ -76,6 +82,7 @@ export class UserMessagesService {
       .find({ userId })
       .sort({ timestamp: -1 })
       .limit(limit)
-      .exec();
+      .lean<UserMessage[]>()
+      .exec() as any;
   }
 }

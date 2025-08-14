@@ -2,6 +2,7 @@ import { SlashCommandBuilder } from 'discord.js';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { callChatCompletion } from '../../../shared/openai/chat';
+import { setDiscordResilience } from '../../decorators/discord-resilience.decorator';
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -12,6 +13,10 @@ module.exports = {
    * @param {import('discord.js').ChatInputCommandInteraction} interaction
    */
   async execute(interaction) {
+    setDiscordResilience(module.exports.execute, {
+      timeoutMs: 20000,
+      retries: 1,
+    });
     await interaction.deferReply();
     try {
       let changelogContent: string | null = null;

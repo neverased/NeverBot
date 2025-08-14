@@ -30,3 +30,4 @@ export class Server {
 }
 
 export const ServerSchema = SchemaFactory.createForClass(Server);
+ServerSchema.index({ welcomeChannelId: 1 });

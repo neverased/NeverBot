@@ -74,3 +74,5 @@ export class User {
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
+UserSchema.index({ lastSeen: -1 });
+UserSchema.index({ serverId: 1 });

@@ -7,6 +7,7 @@ import {
   StringSelectMenuOptionBuilder,
 } from 'discord.js';
 import { ServersService } from '../../../servers/servers.service';
+import { setDiscordResilience } from '../../decorators/discord-resilience.decorator';
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -19,6 +20,10 @@ module.exports = {
     _usersService,
     serversService: ServersService,
   ) {
+    setDiscordResilience(module.exports.execute, {
+      timeoutMs: 30000,
+      retries: 0,
+    });
     const selectTime = new StringSelectMenuBuilder()
       .setCustomId('select_time')
       .setPlaceholder('Select a time (UTC)')

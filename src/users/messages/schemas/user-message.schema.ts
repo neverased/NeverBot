@@ -36,3 +36,5 @@ export class UserMessage {
 }
 
 export const UserMessageSchema = SchemaFactory.createForClass(UserMessage);
+UserMessageSchema.index({ userId: 1, timestamp: -1 });
+UserMessageSchema.index({ guildId: 1, channelId: 1, timestamp: -1 });

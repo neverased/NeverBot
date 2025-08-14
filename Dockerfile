@@ -1,5 +1,5 @@
 # Use Node.js latest as the base image
-FROM node:latest AS base
+FROM node:24-alpine AS base
 
 # Set up PNPM environment variables
 ENV PNPM_HOME="/pnpm"
@@ -39,8 +39,10 @@ COPY --from=build /app/dist /app/dist
 # Copy the CHANGELOG.md file
 COPY CHANGELOG.md /app/CHANGELOG.md
 
-# Expose port 8000
-EXPOSE 8000
+ENV NODE_ENV=production
+
+# Expose port 3500 (matches app default PORT)
+EXPOSE 3500
 
 # Run the application in production
 CMD [ "pnpm", "run", "start:prod" ]

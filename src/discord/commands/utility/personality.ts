@@ -8,6 +8,7 @@ import {
 import { User as UserModel } from '../../../users/entities/user.entity';
 import { UserMessagesService } from '../../../users/messages/messages.service';
 import { UsersService } from '../../../users/users.service';
+import { setDiscordResilience } from '../../decorators/discord-resilience.decorator';
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -25,6 +26,10 @@ module.exports = {
     _userMessagesService?: UserMessagesService,
     usersService?: UsersService,
   ) {
+    setDiscordResilience(module.exports.execute, {
+      timeoutMs: 8000,
+      retries: 0,
+    });
     await interaction.deferReply();
 
     if (!usersService) {

@@ -30,8 +30,10 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4.2.2
-      - name: Run npm install
-        run: npm install
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4.1.0
+        with:
+          run_install: true
       # Runs the ESlint code analysis
       - name: Run ESLint
         # eslint exits 1 if it finds anything to report

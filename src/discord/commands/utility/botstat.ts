@@ -1,6 +1,7 @@
 //slash command to display bot stats and server stats
 import axios from 'axios';
 import { EmbedBuilder, SlashCommandBuilder } from 'discord.js';
+import { setDiscordResilience } from '../../decorators/discord-resilience.decorator';
 //import os-utils to get system stats
 import * as os from 'os';
 
@@ -21,6 +22,10 @@ module.exports = {
     .setName('botstat')
     .setDescription('Display bot stats and server stats'),
   async execute(interaction) {
+    setDiscordResilience(module.exports.execute, {
+      timeoutMs: 5000,
+      retries: 0,
+    });
     await interaction.deferReply();
 
     let dbConnection: string = 'Not Connected';

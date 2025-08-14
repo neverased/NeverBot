@@ -1,5 +1,3 @@
-import 'dotenv/config';
-
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import {
   ActivityType,
@@ -35,6 +33,10 @@ import { textFromImage } from './translator/cv_scrape';
 import { translateText } from './translator/translate';
 import { discordFlagToLanguageCode } from './translator/translate';
 import { callChatCompletion } from '../shared/openai/chat';
+import { DiscordClientProvider } from './discord-client.provider';
+import { CommandRegistry } from './command-registry';
+import { InteractionHandler } from './interaction-handler';
+import { discordRateLimitHits } from '../core/metrics/metrics-registry';
 import { WikiSearchService } from '../wikis/wikisearch.service';
 
 interface Command {
@@ -77,11 +79,13 @@ export class DiscordService implements OnModuleInit {
     private readonly userMessagesService: UserMessagesService,
     private readonly serversService: ServersService,
     private readonly wikiSearchService: WikiSearchService,
+    private readonly discordClientProvider: DiscordClientProvider,
+    private readonly commandRegistry: CommandRegistry,
+    private readonly interactionHandler: InteractionHandler,
   ) {
     this.validateToken();
-    this.client = this.initializeClient();
+    this.client = this.discordClientProvider.create();
     this.client.commands = new Collection<string, Command>();
-    this.loadCommands();
   }
 
   private validateToken(): void {
@@ -92,53 +96,14 @@ export class DiscordService implements OnModuleInit {
   }
 
   private initializeClient(): Client {
-    return new Client({
-      intents: [
-        GatewayIntentBits.Guilds,
-        GatewayIntentBits.GuildMessages,
-        GatewayIntentBits.GuildMessageReactions,
-        GatewayIntentBits.GuildMembers,
-        GatewayIntentBits.MessageContent,
-      ],
-      partials: [
-        Partials.Reaction,
-        Partials.Message,
-        Partials.User,
-        Partials.Channel,
-        Partials.GuildMember,
-      ],
-    });
+    return this.discordClientProvider.create();
   }
 
   private async loadCommands(): Promise<void> {
     const foldersPath = path.join(__dirname, 'commands');
-    try {
-      await fs.access(foldersPath);
-    } catch (error) {
-      this.logger.warn(`Commands folder not found at path: ${foldersPath}`);
-      return;
-    }
-
-    const commandFolders = await fs.readdir(foldersPath);
-
-    for (const folder of commandFolders) {
-      const commandsPath = path.join(foldersPath, folder);
-      const commandFiles = (await fs.readdir(commandsPath)).filter((file) =>
-        file.endsWith('.js'),
-      );
-
-      for (const file of commandFiles) {
-        const filePath = path.join(commandsPath, file);
-        const command: Command = await import(filePath);
-        if (command.data && command.execute) {
-          this.client.commands.set(command.data.name, command);
-        } else {
-          this.logger.warn(
-            `The command at ${filePath} is missing a required "data" or "execute" property.`,
-          );
-        }
-      }
-    }
+    await this.commandRegistry.loadFromFolder(foldersPath);
+    // Mirror registry into client.commands for existing usage
+    this.client.commands = this.commandRegistry.get();
   }
 
   async onModuleInit(): Promise<void> {
@@ -152,87 +117,16 @@ export class DiscordService implements OnModuleInit {
   }
 
   private registerInteractionCreateHandler(): void {
-    this.client.on(
-      Events.InteractionCreate,
-      async (interaction: Interaction) => {
-        if (!interaction.isChatInputCommand()) {
-          if (interaction.isCommand() && !interaction.isChatInputCommand()) {
-            this.logger.warn(
-              `Received non-chat input command: ${interaction.commandName}`,
-            );
-          }
-          return;
-        }
-        const command = this.client.commands.get(interaction.commandName);
-
-        if (!command) {
-          this.logger.error(
-            `No command matching ${interaction.commandName} was found.`,
-          );
-          return;
-        }
-
-        try {
-          let userProfile: UserModel | undefined = undefined;
-          let serverConfig: any = undefined;
-          if (interaction.user) {
-            try {
-              if (interaction.guild) {
-                serverConfig = await this.serversService.findOrCreateServer(
-                  interaction.guild.id,
-                  interaction.guild.name,
-                );
-              }
-              userProfile = await this.usersService.findOrCreateUser(
-                interaction.user.id,
-                interaction.guild?.name,
-                interaction.guild?.id,
-              );
-            } catch (err) {
-              this.logger.error(
-                `Error fetching user/server profile for ${interaction.user.id}:`,
-                err,
-              );
-            }
-          }
-          // Channel enablement check (servers collection)
-          if (
-            interaction.guild &&
-            serverConfig &&
-            Array.isArray(serverConfig.enabledChannels) &&
-            serverConfig.enabledChannels.length > 0
-          ) {
-            if (!serverConfig.enabledChannels.includes(interaction.channelId)) {
-              await interaction.reply({
-                content: 'This command is not enabled in this channel.',
-                ephemeral: true,
-              });
-              return;
-            }
-          }
-          await command.execute(
-            interaction,
-            userProfile,
-            this.userMessagesService,
-            this.usersService,
-            this.serversService,
-            this.wikiSearchService,
-          );
-        } catch (error) {
-          this.logger.error(
-            `Error executing command ${interaction.commandName}:`,
-            error,
-          );
-          await this.handleError(interaction);
-        }
-      },
-    );
+    this.client.on(Events.InteractionCreate, (i: Interaction) => {
+      void this.interactionHandler.handle(i);
+    });
   }
 
   private registerClientReadyHandler(): void {
     this.client.on(Events.ClientReady, () => {
       this.logger.log('Client is ready!');
       this.setClientActivity();
+      this.registerRateLimitHandler();
     });
   }
 
@@ -842,6 +736,19 @@ export class DiscordService implements OnModuleInit {
       await this.client.login(this.token);
     } catch (error) {
       this.logger.error('Error logging in the Discord client:', error);
+    }
+  }
+
+  // Optionally capture rate limit events for metrics or logging
+  private registerRateLimitHandler(): void {
+    const anyClient = this.client as any;
+    if (anyClient?.rest && typeof anyClient.rest.on === 'function') {
+      anyClient.rest.on('rateLimited', (info: unknown) => {
+        this.logger.warn(`[Discord] Rate limit hit: ${JSON.stringify(info)}`);
+        try {
+          discordRateLimitHits.inc();
+        } catch {}
+      });
     }
   }
 }

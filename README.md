@@ -27,15 +27,25 @@ Set these in your shell or a `.env` file:
 BOT_TOKEN=your_discord_bot_token
 DISCORD_APPLICATION_ID=your_discord_app_id
 GPT_KEY=your_openai_api_key
-MONGO_USER=your_mongodb_user
-MONGO_PW=your_mongodb_password
+
+# Preferred: single MongoDB connection string
+MONGO_URI=mongodb+srv://user:pass@cluster.example.mongodb.net/dbname
+
+# Legacy (optional fallback):
+# MONGO_USER=your_mongodb_user
+# MONGO_PW=your_mongodb_password
+
 # Optional
+PORT=3500
 API_URL=http://localhost:3500/
 GOOGLE_CLOUD_CREDENTIALS_PATH=./sos-aio-bot-40e1568bd219.json
 NODE_ENV=development
+# Metrics
+# If you want to allow higher-cardinality labels in metrics (use with care)
+METRICS_HIGH_CARD=false
 ```
 
-Mongo is configured in `src/app.module.ts` to use the Atlas connection with `MONGO_USER`/`MONGO_PW`.
+Mongo is configured in `src/app.module.ts` to prefer `MONGO_URI`. If not set, it will fall back to `MONGO_USER`/`MONGO_PW`.
 
 ## Install
 
@@ -71,6 +81,27 @@ pnpm build && pnpm start:prod
 ```
 
 The Nest API starts on `http://localhost:3500` (see `src/main.ts`).
+
+### API Docs
+
+- Swagger is available only in non‑production environments at `http://localhost:3500/api/docs`.
+- Global API prefix is `/api` (e.g., `GET /api`).
+
+### Health Endpoints
+
+- Liveness: `GET /api/health` → `ok`
+- Readiness: `GET /api/ready` → `ready`
+- Prometheus metrics: `GET /api/metrics`
+
+## Metrics & Observability
+
+- Prometheus endpoint at `/api/metrics` with:
+  - `discord_command_latency_ms` (histogram with `command` label)
+  - `discord_command_success_total`, `discord_command_errors_total`
+  - `openai_request_errors_total`, `discord_rate_limit_hits_total`
+- Optional `METRICS_HIGH_CARD` to allow higher-card labels (off by default).
+- Starter Grafana dashboard: `docs/metrics-grafana-dashboard.json` (set your Prometheus datasource UID in `DS_PROM`).
+ - Example Prometheus alerting rules: `docs/prometheus-rules.yml`
 
 ## State of Survival Wiki Ingestion (RAG)
 
@@ -129,6 +160,35 @@ pnpm test:cov
 ## Deployment
 
 Use the provided `Dockerfile` and scripts to containerize. Ensure all env vars are provided in the runtime environment. For production, register commands once per deploy when commands change.
+
+## Operations
+
+- Prometheus scrape
+  - Ensure Prometheus can reach the service (default `PORT=3500`). Example scrape config:
+    ```yaml
+    scrape_configs:
+      - job_name: 'neverbot'
+        metrics_path: /api/metrics
+        static_configs:
+          - targets: ['neverbot:3500']
+    ```
+  - If running behind a reverse proxy, expose `/api/metrics` accordingly.
+
+- Grafana dashboard
+  - Import `docs/metrics-grafana-dashboard.json`.
+  - Set your Prometheus datasource UID in the dashboard variable `DS_PROM`.
+
+- Alerts
+  - Load `docs/prometheus-rules.yml` in Prometheus:
+    ```yaml
+    rule_files:
+      - /etc/prometheus/rules/prometheus-rules.yml
+    ```
+  - Adjust thresholds to your latency/error budgets.
+
+- Metrics cardinality
+  - `METRICS_HIGH_CARD=false` by default to avoid label explosion.
+  - If you enable it, keep labels limited (e.g., per-command), do not include user or channel IDs.
 
 ## Troubleshooting
 

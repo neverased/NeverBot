@@ -1,0 +1,31 @@
+groups:
+  - name: neverbot.rules
+    interval: 30s
+    rules:
+      - alert: NeverBotHighCommandLatencyP95
+        expr: |
+          histogram_quantile(0.95, sum(rate(discord_command_latency_ms_bucket[5m])) by (le)) > 1.5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "NeverBot command latency p95 high"
+          description: "p95 of command latency > 1.5s for 5m"
+
+      - alert: NeverBotOpenAIErrorRate
+        expr: sum(rate(openai_request_errors_total[5m])) > 0.2
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "OpenAI error rate elevated"
+          description: ">0.2 errors/sec over 5m"
+
+      - alert: NeverBotDiscordRateLimitSpikes
+        expr: sum(rate(discord_rate_limit_hits_total[5m])) > 0.1
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Discord rate limit hits increasing"
+          description: ">0.1 hits/sec over 10m"

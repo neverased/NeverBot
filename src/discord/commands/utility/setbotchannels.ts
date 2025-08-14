@@ -7,6 +7,7 @@ import {
   ComponentType,
 } from 'discord.js';
 import { ServersService } from '../../../servers/servers.service';
+import { setDiscordResilience } from '../../decorators/discord-resilience.decorator';
 
 const CUSTOM_ID = 'setbotchannels_select';
 
@@ -32,6 +33,10 @@ module.exports = {
     _usersService,
     serversService,
   ) {
+    setDiscordResilience(module.exports.execute, {
+      timeoutMs: 30000,
+      retries: 0,
+    });
     if (
       !interaction.memberPermissions?.has(PermissionFlagsBits.Administrator) &&
       !interaction.memberPermissions?.has(PermissionFlagsBits.ManageGuild)

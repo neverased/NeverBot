@@ -3,6 +3,7 @@ import 'dotenv/config';
 // import axios from 'axios'; // No longer needed for b64_json
 import { SlashCommandBuilder } from 'discord.js';
 import * as fs from 'fs/promises';
+import { setDiscordResilience } from '../../decorators/discord-resilience.decorator';
 
 import openai from '../../../utils/openai-client';
 
@@ -14,6 +15,11 @@ module.exports = {
       option.setName('question').setDescription('Provide a prompt to imagine'),
     ),
   async execute(interaction) {
+    // Image generation can take a bit; allow longer timeout and a single retry
+    setDiscordResilience(module.exports.execute, {
+      timeoutMs: 45000,
+      retries: 1,
+    });
     await interaction.deferReply();
     const question = interaction.options.getString('question');
 

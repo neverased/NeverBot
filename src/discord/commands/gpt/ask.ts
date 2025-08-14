@@ -5,6 +5,7 @@ import { User as UserModel } from '../../../users/entities/user.entity';
 import { UserMessagesService } from '../../../users/messages/messages.service';
 import { generateOpenAiReply, splitTextIntoParts } from '../../gpt/gpt-logic'; // Corrected path
 import { WikiSearchService } from '../../../wikis/wikisearch.service';
+import { setDiscordResilience } from '../../decorators/discord-resilience.decorator';
 
 // function splitText(text, maxLength) { ... } // Removed, using splitTextIntoParts from gpt-logic
 
@@ -23,6 +24,11 @@ module.exports = {
     _serversService?: unknown,
     wikiSearchService?: WikiSearchService,
   ) {
+    // Allow a longer timeout for LLM responses; modest retry
+    setDiscordResilience(module.exports.execute, {
+      timeoutMs: 30000,
+      retries: 1,
+    });
     await interaction.deferReply();
     const question = interaction.options.getString('question');
     const userName = interaction.user.globalName || interaction.user.username;
