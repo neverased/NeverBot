@@ -101,7 +101,7 @@ The Nest API starts on `http://localhost:3500` (see `src/main.ts`).
   - `openai_request_errors_total`, `discord_rate_limit_hits_total`
 - Optional `METRICS_HIGH_CARD` to allow higher-card labels (off by default).
 - Starter Grafana dashboard: `docs/metrics-grafana-dashboard.json` (set your Prometheus datasource UID in `DS_PROM`).
- - Example Prometheus alerting rules: `docs/prometheus-rules.yml`
+- Example Prometheus alerting rules: `docs/prometheus-rules.yml`
 
 ## State of Survival Wiki Ingestion (RAG)
 
@@ -165,6 +165,7 @@ Use the provided `Dockerfile` and scripts to containerize. Ensure all env vars a
 
 - Prometheus scrape
   - Ensure Prometheus can reach the service (default `PORT=3500`). Example scrape config:
+
     ```yaml
     scrape_configs:
       - job_name: 'neverbot'
@@ -172,6 +173,7 @@ Use the provided `Dockerfile` and scripts to containerize. Ensure all env vars a
         static_configs:
           - targets: ['neverbot:3500']
     ```
+
   - If running behind a reverse proxy, expose `/api/metrics` accordingly.
 
 - Grafana dashboard
@@ -180,10 +182,12 @@ Use the provided `Dockerfile` and scripts to containerize. Ensure all env vars a
 
 - Alerts
   - Load `docs/prometheus-rules.yml` in Prometheus:
+
     ```yaml
     rule_files:
       - /etc/prometheus/rules/prometheus-rules.yml
     ```
+
   - Adjust thresholds to your latency/error budgets.
 
 - Metrics cardinality

@@ -2,13 +2,11 @@
 
 ## [3.10.0](https://github.com/neverased/NeverBot/compare/never-bot-v3.9.0...never-bot-v3.10.0) (2025-08-14)
 
-
 ### Features
 
 * add observability, resilience & api hardening ([390da45](https://github.com/neverased/NeverBot/commit/390da45a3fc2548c03f5ac409b1876f54472c679))
 
 ## [3.9.0](https://github.com/neverased/NeverBot/compare/never-bot-v3.8.0...never-bot-v3.9.0) (2025-08-13)
-
 
 ### Features
 
@@ -16,20 +14,17 @@
 
 ## [3.8.0](https://github.com/neverased/NeverBot/compare/never-bot-v3.7.0...never-bot-v3.8.0) (2025-08-13)
 
-
 ### Features
 
 * add env toggle for RAG citations ([fedf064](https://github.com/neverased/NeverBot/commit/fedf064eeaf8a3224174ce85ccce30db7cc681fc))
 
 ## [3.7.0](https://github.com/neverased/NeverBot/compare/never-bot-v3.6.0...never-bot-v3.7.0) (2025-08-13)
 
-
 ### Features
 
 * keep witty persona with sources ([13fc4c2](https://github.com/neverased/NeverBot/commit/13fc4c2d0858460a06cea99f063b02f963400c44))
 
 ## [3.6.0](https://github.com/neverased/NeverBot/compare/never-bot-v3.5.0...never-bot-v3.6.0) (2025-08-13)
-
 
 ### Features
 
