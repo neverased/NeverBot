@@ -28,7 +28,7 @@ export async function callChatCompletion(
   options: ChatRequestOptions = {},
 ): Promise<ChatResponse> {
   const {
-    temperature = 0.7,
+    temperature = 1,
     maxCompletionTokens = 1024,
     frequencyPenalty = 0,
     presencePenalty = 0,
@@ -39,14 +39,18 @@ export async function callChatCompletion(
   let lastError: unknown = undefined;
   for (let attempt = 0; attempt <= retryCount; attempt++) {
     try {
-      const completion = await openai.chat.completions.create({
+      const payload: any = {
         model,
         messages,
-        temperature,
         max_completion_tokens: maxCompletionTokens,
         frequency_penalty: frequencyPenalty,
         presence_penalty: presencePenalty,
-      });
+      };
+      // Some models only allow default temperature; omit if not 1
+      if (temperature === 1) {
+        payload.temperature = temperature;
+      }
+      const completion = await openai.chat.completions.create(payload);
       return {
         content: completion.choices[0]?.message?.content?.trim() ?? null,
       };

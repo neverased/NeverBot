@@ -198,7 +198,7 @@ export async function generateOpenAiReply(
   try {
     const response = await callChatCompletion(messagesForOpenAI, {
       model: 'gpt-5',
-      temperature: 0.7,
+      temperature: 1,
       maxCompletionTokens: 8192,
       frequencyPenalty: 0,
       presencePenalty: 0,
