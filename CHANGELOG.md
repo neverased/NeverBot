@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.11.0](https://github.com/neverased/NeverBot/compare/never-bot-v3.10.0...never-bot-v3.11.0) (2025-08-16)
+
+
+### Features
+
+* refine GPT style & load TS commands ([947afa5](https://github.com/neverased/NeverBot/commit/947afa5042d26376c412bd5ce19f0dde7a695ee0))
+
 ## [3.10.0](https://github.com/neverased/NeverBot/compare/never-bot-v3.9.0...never-bot-v3.10.0) (2025-08-14)
 
 ### Features
