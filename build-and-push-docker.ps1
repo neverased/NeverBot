@@ -1,4 +1,9 @@
 # Exit on error
+
+param(
+    [string]$BuilderName = "desktop-linux"
+)
+
 $ErrorActionPreference = "Stop"
 
 # --- Configuration ---
@@ -23,24 +28,26 @@ if ($dockerInfo -notmatch "Username:") {
 
 # Ensure buildx builder is available and in use
 $buildxList = docker buildx ls
-if ($buildxList -notmatch "mybuilder.*running") {
-    Write-Host "Setting up Docker buildx builder 'mybuilder'..."
-    if ($buildxList -match "mybuilder") {
-        docker buildx use mybuilder
-    }
-    else {
-        docker buildx create --use --name mybuilder
-    }
-    docker buildx inspect mybuilder --bootstrap
+$builderNamePattern = "^\s*$([regex]::Escape($BuilderName))\*?\s"
+if ($buildxList -match $builderNamePattern -and $buildxList -match "$BuilderName.*running") {
+    Write-Host "Using existing buildx builder '$BuilderName'."
+    docker buildx use $BuilderName
 }
 else {
-    Write-Host "Using existing buildx builder 'mybuilder'."
-    docker buildx use mybuilder
+    Write-Host "Setting up Docker buildx builder '$BuilderName'..."
+    if ($buildxList -match $builderNamePattern) {
+        docker buildx use $BuilderName
+    }
+    else {
+        docker buildx create --use --name $BuilderName
+    }
+    docker buildx inspect $BuilderName --bootstrap
 }
 
-Write-Host "Starting multi-platform build and push for ${FULL_IMAGE_NAME}:${TAG} and ${FULL_IMAGE_NAME}:latest..."
+Write-Host "Starting multi-platform build and push for ${FULL_IMAGE_NAME}:${TAG} and ${FULL_IMAGE_NAME}:latest using builder '$BuilderName'..."
 
 docker buildx build `
+    --builder "$BuilderName" `
     --platform "$PLATFORMS" `
     -t "${FULL_IMAGE_NAME}:${TAG}" `
     -t "${FULL_IMAGE_NAME}:latest" `
