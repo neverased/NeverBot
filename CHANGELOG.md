@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.12.0](https://github.com/neverased/NeverBot/compare/never-bot-v3.11.0...never-bot-v3.12.0) (2025-08-16)
+
+
+### Features
+
+* make docker builder configurable ([94a3cd1](https://github.com/neverased/NeverBot/commit/94a3cd14da669d27b5298268005740ba4ec23379))
+
 ## [3.11.0](https://github.com/neverased/NeverBot/compare/never-bot-v3.10.0...never-bot-v3.11.0) (2025-08-16)
 
 
