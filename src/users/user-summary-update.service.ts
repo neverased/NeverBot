@@ -151,7 +151,11 @@ export class UserSummaryUpdateService {
         sentimentOverview = 'generally negative';
     }
 
-    const prompt = `Based on the following user data and recent messages, generate a concise and insightful personality summary (2-3 sentences) for a Discord bot to understand the user better. Focus on their typical communication style, recurring themes in their messages, and main interests. Do not address the user directly.
+    const prompt = `Based on the following user data and recent messages, generate a concise, actionable personality summary (2-3 sentences) for a Discord bot to adapt tone and initiative. Capture:
+1) communication style (pace, humor level, directness),
+2) recurring topics/interests,
+3) guidance on how the bot should respond (be decisive, avoid numbered options, how playful/sarcastic to be).
+Do not address the user directly.
 
 User Data:
 - Topics of Interest (derived from keywords): ${topics}
@@ -161,7 +165,7 @@ User Data:
 Recent Message Samples (last 20):
 - ${messageSamples || 'No recent messages available.'}
 
-Example Summary: "This user is generally positive, frequently discusses gaming and music, and their recent messages show an inquisitive and sometimes humorous communication style. They seem to enjoy detailed explanations."
+Example Summary: "Mostly upbeat and concise; enjoys playful sarcasm. Talks about gaming and music; likes clear next steps over questions. Prefer decisive, short replies; add a witty aside occasionally and only one emoji if any."
 
 Generate the personality summary:`;
 
@@ -171,11 +175,11 @@ Generate the personality summary:`;
           {
             role: 'system',
             content:
-              'You are an AI assistant that generates insightful personality summaries based on user data and message content. Your summaries should be nuanced and capture communication style as well as topics.',
+              'You generate concise, actionable personality summaries for adapting chatbot tone. Include style cues and decision guidance; no greetings or bullet lists, just 2-3 sentences.',
           },
           { role: 'user', content: prompt },
         ],
-        { model: 'gpt-4o-mini', temperature: 0.7, maxCompletionTokens: 150 },
+        { model: 'gpt-4o-mini', temperature: 0.7, maxCompletionTokens: 220 },
       );
 
       return content || null;

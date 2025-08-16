@@ -113,6 +113,7 @@ export class DiscordService implements OnModuleInit {
     this.registerMessageCreateHandler();
     this.registerGuildMemberAddHandler();
     this.registerGuildMemberRemoveHandler();
+    await this.loadCommands();
     await this.loginClient();
   }
 

@@ -30,14 +30,24 @@ export class CommandRegistry {
     const commandFolders = await fs.readdir(folder);
     for (const sub of commandFolders) {
       const commandsPath = path.join(folder, sub);
-      const files = (await fs.readdir(commandsPath)).filter((f) =>
-        f.endsWith('.js'),
-      );
+      const files = (await fs.readdir(commandsPath)).filter((f) => {
+        if (f.endsWith('.d.ts')) return false;
+        return f.endsWith('.js') || f.endsWith('.ts');
+      });
       for (const file of files) {
         const filePath = path.join(commandsPath, file);
-        const command: Command = await import(filePath);
+        const importedModule: any = await import(filePath);
+        const command: Command | undefined =
+          importedModule?.default &&
+          importedModule.default.data &&
+          importedModule.default.execute
+            ? (importedModule.default as Command)
+            : importedModule?.data && importedModule.execute
+              ? (importedModule as Command)
+              : undefined;
         if (command?.data?.name && command?.execute) {
           this.commands.set(command.data.name, command);
+          this.logger.log(`Loaded command: ${command.data.name}`);
         } else {
           this.logger.warn(
             `The command at ${filePath} is missing a required "data" or "execute" property.`,

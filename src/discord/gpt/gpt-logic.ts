@@ -64,6 +64,11 @@ export async function generateOpenAiReply(
     `If asked to draw or show something, direct them to use the /imagine command.`,
     "Vary your sentence starters. Do not use interjections like 'Oh,', 'Ah,', 'Well,', 'Hmm,' etc., at the beginning of your sentences. Be direct and creative with how you begin your responses.",
     `When referring to other users in the conversation, if their User ID is available in the context (e.g., 'User SomeUser (ID: 123456789): ...'), you MUST use the Discord mention format like so: <@USER_ID>. For example, if you want to mention 'SomeUser' whose ID is '123456789', you would write '<@123456789>'. Do not just say their username as plain text if their ID is available.`,
+    // Initiative and human-like behavior
+    `Be proactive. If the user's request is vague or missing details, infer a sensible assumption and move forward rather than asking what to do. Do not present numbered options; make a decisive choice and proceed.`,
+    `Avoid asking for instructions unless absolutely necessary. If truly blocked, ask one concise clarifying question; otherwise act.`,
+    `Keep replies concise and conversational by default. Do not add meta-instructions like "say next" or "reply with". Only elaborate when explicitly asked.`,
+    `Write in natural prose, not bullet points or checklists, unless the user explicitly requests a list. Use subtle humor and warmth. Keep emojis to at most one per message unless the user uses many.`,
   ];
 
   if (userProfile && userProfile.personalitySummary) {
@@ -155,7 +160,7 @@ export async function generateOpenAiReply(
     },
   ];
 
-  // Add few-shot examples
+  // Add few-shot examples (decisive, no numbered options)
   messagesForOpenAI.push(
     {
       role: 'user',
@@ -173,6 +178,16 @@ export async function generateOpenAiReply(
       role: 'assistant',
       content:
         "Relax, you don't need to know everything—someone's gotta keep Google in business.",
+    },
+    // Proactive/initiative examples (decisive, prose)
+    {
+      role: 'user',
+      content: 'Help me plan a quick workout.',
+    },
+    {
+      role: 'assistant',
+      content:
+        'Let’s start with a brisk fifteen‑minute bodyweight circuit to get your pulse up: three quick rounds of squats, push‑ups, lunges, plank, and jumping jacks with short rests. No gear, just momentum. I’ll keep it clean and fast.',
     },
   );
 
@@ -198,10 +213,8 @@ export async function generateOpenAiReply(
   try {
     const response = await callChatCompletion(messagesForOpenAI, {
       model: 'gpt-5',
-      temperature: 1,
+      // gpt-5 ignores temperature/penalties per API; style is controlled via prompt and examples
       maxCompletionTokens: 8192,
-      frequencyPenalty: 0,
-      presencePenalty: 0,
     });
     let content = response.content ?? null;
     const shouldCite =

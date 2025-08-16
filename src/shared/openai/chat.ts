@@ -40,15 +40,16 @@ export async function callChatCompletion(
   let lastError: unknown = undefined;
   for (let attempt = 0; attempt <= retryCount; attempt++) {
     try {
+      const isGpt5: boolean =
+        typeof model === 'string' && model.toLowerCase().startsWith('gpt-5');
       const payload: any = {
         model,
         messages,
         max_completion_tokens: maxCompletionTokens,
-        frequency_penalty: frequencyPenalty,
-        presence_penalty: presencePenalty,
       };
-      // Some models only allow default temperature; omit if not 1
-      if (temperature === 1) {
+      if (!isGpt5) {
+        payload.frequency_penalty = frequencyPenalty;
+        payload.presence_penalty = presencePenalty;
         payload.temperature = temperature;
       }
       const controller = new AbortController();

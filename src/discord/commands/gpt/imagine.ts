@@ -20,6 +20,7 @@ module.exports = {
       timeoutMs: 45000,
       retries: 1,
     });
+    const startedAt = Date.now();
     await interaction.deferReply();
     const question = interaction.options.getString('question');
 
@@ -30,6 +31,12 @@ module.exports = {
     const tempImagePath = 'imagined.png';
 
     try {
+      console.log(
+        `[Imagine] Start | user=${interaction.user?.id} guild=${interaction.guild?.id ?? 'DM'} question="${question}"`,
+      );
+      console.log(
+        '[Imagine] Calling OpenAI images.generate | model=gpt-image-1 size=1024x1024',
+      );
       const imageResponse = await openai.images.generate({
         model: 'gpt-image-1', // Using gpt-image-1
         prompt: question,
@@ -39,7 +46,15 @@ module.exports = {
       });
 
       // const image_url = image.data[0].url; // Old URL logic
-      const image_base64 = imageResponse.data[0].b64_json; // New b64_json logic
+      const imageCount = Array.isArray((imageResponse as any)?.data)
+        ? (imageResponse as any).data.length
+        : 0;
+      const image_base64 = (imageResponse as any)?.data?.[0]?.b64_json; // New b64_json logic
+      console.log(
+        `[Imagine] OpenAI response received | images=${imageCount} hasB64=${Boolean(
+          image_base64,
+        )}`,
+      );
 
       if (!image_base64) {
         throw new Error(
@@ -64,13 +79,25 @@ module.exports = {
       // Decode base64 and write to file
       const image_bytes = Buffer.from(image_base64, 'base64');
       await fs.writeFile(tempImagePath, image_bytes);
+      console.log(
+        `[Imagine] Wrote image | path=${tempImagePath} sizeBytes=${image_bytes.length}`,
+      );
 
       await interaction.editReply({
         content: 'Prompt: ' + question,
         files: [tempImagePath],
       });
+      console.log(`[Imagine] Reply sent | elapsedMs=${Date.now() - startedAt}`);
     } catch (error) {
-      console.error('Error executing imagine command:', error);
+      const elapsed = Date.now() - startedAt;
+      // Try to surface OpenAI API details when present
+      const status = (error as any)?.response?.status;
+      const apiMsg = (error as any)?.response?.data?.error?.message;
+      console.error(
+        `[Imagine] Error | elapsedMs=${elapsed} status=${status ?? 'n/a'} message=${
+          (error as Error)?.message
+        } details=${apiMsg ?? 'n/a'}`,
+      );
       let errorMessage =
         'Sorry, I ran into a problem trying to imagine that. Is the prompt too wild?';
       if (
@@ -99,6 +126,7 @@ module.exports = {
     } finally {
       try {
         await fs.unlink(tempImagePath);
+        console.log(`[Imagine] Cleaned up | deleted ${tempImagePath}`);
       } catch (unlinkError) {
         // Log only if the error is not ENOENT (file not found), as it might not have been created
         if (unlinkError.code !== 'ENOENT') {
