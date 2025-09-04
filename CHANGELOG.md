@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.0.0](https://github.com/neverased/NeverBot/compare/never-bot-v3.11.0...never-bot-v4.0.0) (2025-09-04)
+
+
+### ⚠ BREAKING CHANGES
+
+* add convo memory, tracing & new metrics
+
+### Features
+
+* add convo memory, tracing & new metrics ([1975eb1](https://github.com/neverased/NeverBot/commit/1975eb14189f5215c199eae784ad43f912fdd5ae))
+* make docker builder configurable ([94a3cd1](https://github.com/neverased/NeverBot/commit/94a3cd14da669d27b5298268005740ba4ec23379))
+
 ## [3.11.0](https://github.com/neverased/NeverBot/compare/never-bot-v3.10.0...never-bot-v3.11.0) (2025-08-16)
 
 
