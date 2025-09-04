@@ -1,7 +1,12 @@
 import OpenAI from 'openai';
 
 import openai from '../../utils/openai-client';
-import { openaiErrors } from '../../core/metrics/metrics-registry';
+import {
+  openaiErrors,
+  responsesInputTokens,
+  responsesOutputTokens,
+  openaiHttpErrors,
+} from '../../core/metrics/metrics-registry';
 
 export interface ChatMessageParam {
   role: 'system' | 'user' | 'assistant';
@@ -15,10 +20,13 @@ export interface ChatRequestOptions {
   presencePenalty?: number;
   model?: string;
   retryCount?: number;
+  conversation?: 'auto' | { id: string };
+  enableWebSearch?: boolean;
 }
 
 export interface ChatResponse {
   content: string | null;
+  conversationId?: string;
 }
 
 /**
@@ -35,32 +43,96 @@ export async function callChatCompletion(
     presencePenalty = 0,
     model = 'gpt-4o-mini',
     retryCount = 2,
+    conversation,
   } = options;
+
+  // Map ChatCompletion-style messages to Responses API fields
+  // - Aggregate system messages into a single `instructions` string
+  // - Map user/assistant messages into structured `input` items
+  const systemInstructions: string = messages
+    .filter((m) => m.role === 'system' && typeof m.content === 'string')
+    .map((m) => String(m.content))
+    .join('\n');
+
+  const nonSystem = messages.filter((m) => m.role !== 'system');
+
+  // Build a plain text conversation input to avoid schema mismatches.
+  const conversationText: string = nonSystem
+    .map((m) => {
+      const prefix = m.role === 'assistant' ? 'Assistant' : 'User';
+      const text: string =
+        typeof m.content === 'string'
+          ? m.content
+          : Array.isArray(m.content)
+            ? m.content
+                .map((c: any) => (typeof c === 'string' ? c : (c?.text ?? '')))
+                .join('\n')
+            : String(m.content ?? '');
+      return `${prefix}: ${text}`;
+    })
+    .join('\n');
 
   let lastError: unknown = undefined;
   for (let attempt = 0; attempt <= retryCount; attempt++) {
     try {
       const isGpt5: boolean =
         typeof model === 'string' && model.toLowerCase().startsWith('gpt-5');
-      const payload: any = {
+
+      const payload: Record<string, unknown> = {
         model,
-        messages,
-        max_completion_tokens: maxCompletionTokens,
+        // Only include instructions if any system content exists
+        ...(systemInstructions ? { instructions: systemInstructions } : {}),
+        input: conversationText || undefined,
+        // Prefer the Responses naming for token limits
+        max_output_tokens: maxCompletionTokens,
+        // Only include conversation if a valid id is provided
+        ...(conversation &&
+        typeof conversation === 'object' &&
+        'id' in conversation
+          ? { conversation }
+          : {}),
+        ...(options.enableWebSearch ||
+        String(process.env.WEB_SEARCH_ENABLED).toLowerCase() === 'true'
+          ? {
+              tool_choice: 'auto',
+              tools: [{ type: 'web_search' }],
+            }
+          : {}),
       };
+
+      // Some models (e.g., gpt-5) ignore sampling parameters; match prior behavior
       if (!isGpt5) {
-        payload.frequency_penalty = frequencyPenalty;
-        payload.presence_penalty = presencePenalty;
-        payload.temperature = temperature;
+        Object.assign(payload, {
+          temperature,
+          frequency_penalty: frequencyPenalty,
+          presence_penalty: presencePenalty,
+        });
       }
+
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 30_000);
       try {
-        const completion = await openai.chat.completions.create(payload, {
+        const response = await openai.responses.create(payload as any, {
           signal: controller.signal,
         });
-        return {
-          content: completion.choices[0]?.message?.content?.trim() ?? null,
-        };
+        // Prefer `output_text` if populated; otherwise try to extract first text output
+        const content: string | null =
+          (response as any)?.output_text?.trim?.() ??
+          extractFirstTextFromResponse(response);
+        const convId: string | undefined =
+          (response as any)?.conversation?.id ?? undefined;
+        try {
+          const usage = (response as any)?.usage ?? {};
+          const input = Number(usage.input_tokens ?? usage.input ?? 0);
+          const output = Number(usage.output_tokens ?? usage.output ?? 0);
+          if (!Number.isNaN(input) && input > 0) {
+            responsesInputTokens.inc({ model }, input);
+          }
+          if (!Number.isNaN(output) && output > 0) {
+            responsesOutputTokens.inc({ model }, output);
+          }
+        } catch {}
+        return { content, conversationId: convId };
       } finally {
         clearTimeout(timeout);
       }
@@ -68,13 +140,48 @@ export async function callChatCompletion(
       try {
         openaiErrors.inc({ type: 'error' });
       } catch {}
+      try {
+        const status =
+          (error as any)?.status || (error as any)?.response?.status;
+        if (status) openaiHttpErrors.inc({ status: String(status) });
+      } catch {}
       lastError = error;
-      // Exponential backoff: 250ms, 500ms, 1000ms ...
       const jitter = Math.random() * 100;
       const delayMs = 250 * Math.pow(2, attempt) + jitter;
       await new Promise((r) => setTimeout(r, delayMs));
     }
   }
-  // Bubble up after retries
   throw lastError;
+}
+
+function extractFirstTextFromResponse(res: any): string | null {
+  try {
+    if (res?.output_text) {
+      return typeof res.output_text === 'string'
+        ? res.output_text.trim()
+        : String(res.output_text);
+    }
+    // Fallback: walk typical Responses shapes to find first text segment
+    const outputs = res?.output ?? res?.response?.output ?? undefined;
+    if (Array.isArray(outputs) && outputs.length > 0) {
+      for (const item of outputs) {
+        if (item?.content && Array.isArray(item.content)) {
+          for (const part of item.content) {
+            if (
+              part?.type === 'output_text' &&
+              typeof part?.text === 'string'
+            ) {
+              return part.text.trim();
+            }
+            if (typeof part?.text === 'string') {
+              return part.text.trim();
+            }
+          }
+        }
+      }
+    }
+  } catch {
+    // ignore
+  }
+  return null;
 }

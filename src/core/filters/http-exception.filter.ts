@@ -42,6 +42,17 @@ export class HttpExceptionFilter implements ExceptionFilter {
       traceId,
     };
 
+    const headers: Record<string, string> = {
+      'x-request-id': traceId,
+    };
+    const method = request.method;
+    const ip = request.ip || request.connection?.remoteAddress || '';
+    // Attach meta for debugging in non-production only
+    if (process.env.NODE_ENV !== 'production') {
+      headers['x-method'] = method;
+      headers['x-remote-ip'] = ip;
+    }
+    Object.entries(headers).forEach(([k, v]) => response.setHeader(k, v));
     response.status(status).json(body);
   }
 

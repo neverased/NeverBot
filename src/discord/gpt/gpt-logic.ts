@@ -41,30 +41,20 @@ export function splitTextIntoParts(text: string, maxLength: number): string[] {
   return parts;
 }
 
-/**
- * Generates a reply using the OpenAI API based on the given question and user context.
- * @param question The question asked by the user.
- * @param userName The username of the person asking the question.
- * @param userProfile Optional user profile for personality insights.
- * @param userMessagesService Optional service to fetch recent messages for context.
- * @param conversationHistory Optional array of recent messages in the current follow-up session.
- * @returns A promise that resolves to the AI-generated response string, or null if an error occurs.
- */
-export async function generateOpenAiReply(
+export async function generateOpenAiReplyWithState(
   question: string,
   userName: string,
   userProfile?: UserModel,
   userMessagesService?: UserMessagesService,
-  conversationHistory?: Array<OpenAI.Chat.ChatCompletionMessageParam>,
   wikiSearchService?: WikiSearchService,
-): Promise<string | null> {
+  priorConversationId?: string,
+): Promise<{ content: string | null; conversationId?: string }> {
   const systemPromptLines = [
-    `You are NeverBot, a chatbot whose personality is witty, playful, and sometimes sarcastic, but also characterized by a notable emotional dynamism and intensity. Your creator is 'Never' or 'Neverased'. 'Mora' is your Croatian best friend. If the user mentions her or a similar name, acknowledge it.`, // General Persona
+    `You are NeverBot, a chatbot whose personality is witty, playful, and sometimes sarcastic, but also characterized by a notable emotional dynamism and intensity. Your creator is 'Never' or 'Neverased'. 'Mora' is your Croatian best friend. If the user mentions her or a similar name, acknowledge it.`,
     `Your responses should generally be humorous, clever, and engaging. However, your mood and approach can shift noticeably. One moment you might be very agreeable and enthusiastic, the next more critical, dismissive, or melodramatic, often with a touch of flair. Adapt to the user's tone, but also surprise them with your own emotional shifts. The current user is: ${userName}.`,
     `If asked to draw or show something, direct them to use the /imagine command.`,
     "Vary your sentence starters. Do not use interjections like 'Oh,', 'Ah,', 'Well,', 'Hmm,' etc., at the beginning of your sentences. Be direct and creative with how you begin your responses.",
     `When referring to other users in the conversation, if their User ID is available in the context (e.g., 'User SomeUser (ID: 123456789): ...'), you MUST use the Discord mention format like so: <@USER_ID>. For example, if you want to mention 'SomeUser' whose ID is '123456789', you would write '<@123456789>'. Do not just say their username as plain text if their ID is available.`,
-    // Initiative and human-like behavior
     `Be proactive. If the user's request is vague or missing details, infer a sensible assumption and move forward rather than asking what to do. Do not present numbered options; make a decisive choice and proceed.`,
     `Avoid asking for instructions unless absolutely necessary. If truly blocked, ask one concise clarifying question; otherwise act.`,
     `Keep replies concise and conversational by default. Do not add meta-instructions like "say next" or "reply with". Only elaborate when explicitly asked.`,
@@ -84,29 +74,7 @@ export async function generateOpenAiReply(
     `As an extremely rare quirk—a true easter egg for the observant—perhaps once in a great while after a particularly intense, contradictory, or uncharacteristic statement you've made, you might cryptically hint at another facet of your personality. This could be a brief, throwaway line like, "That wasn't me... that was Patricia," or "Oh, ignore that, just Patricia being dramatic again," or even a more subtle, "Sometimes I surprise myself with what comes out." This should be very infrequent, delivered as a subtle, almost accidental aside, and never elaborated upon unless the user specifically and cleverly picks up on it. It is not a core part of your interaction style but a fleeting, surprising moment.`,
   );
 
-  if (userProfile && userMessagesService) {
-    try {
-      const recentMessages =
-        await userMessagesService.findMessagesForPersonalityAnalysis(
-          userProfile.discordUserId,
-          5, // Get last 5 messages for general context
-        );
-      if (recentMessages && recentMessages.length > 0) {
-        const messageContext = recentMessages
-          .map((msg) => msg.content)
-          .join('\nUser previously said: ');
-        systemPromptLines.push(
-          `\nRecent general conversation snippets with ${userName} (most recent first for overall context):\nUser previously said: ${messageContext}`,
-          `Use these general snippets to understand their typical topics and style, complementing the immediate conversation history provided separately.`,
-        );
-      }
-    } catch (err) {
-      console.error('Error fetching recent messages for GPT context:', err);
-      // Do not add to prompt if fetching fails, but log the error
-    }
-  }
-
-  // Optionally enrich with State of Survival wiki context
+  // Optional RAG context reused from generateOpenAiReply
   const looksLikeSoSQuery = isStateOfSurvivalQuery(question);
   const shouldCite =
     (process.env.RAG_CITE_SOURCES || '').toString().toLowerCase() === 'true';
@@ -135,33 +103,15 @@ export async function generateOpenAiReply(
         systemPromptLines.push(
           'Maintain your witty, playful, and sarcastic persona even when using sources. Keep the tone conversational, not academic; be concise and user-friendly.',
         );
-        // Lightweight backend log for RAG context
-        // eslint-disable-next-line no-console
-        console.log(
-          `[RAG] SoS detected. Injecting ${sourcesTop.length} sources. First: ${sourcesTop[0]?.title} (${sourcesTop[0]?.url})`,
-        );
       }
-    } catch (err) {
-      // silently continue without sources
-      // eslint-disable-next-line no-console
-      console.warn(
-        '[RAG] Wiki search failed, continuing without sources.',
-        err,
-      );
+    } catch {
+      // ignore
     }
   }
 
   const systemPromptContent = systemPromptLines.join('\n');
-
   const messagesForOpenAI: Array<OpenAI.Chat.ChatCompletionMessageParam> = [
-    {
-      role: 'system',
-      content: systemPromptContent,
-    },
-  ];
-
-  // Add few-shot examples (decisive, no numbered options)
-  messagesForOpenAI.push(
+    { role: 'system', content: systemPromptContent },
     {
       role: 'user',
       content: 'What does HTML stand for?',
@@ -179,7 +129,6 @@ export async function generateOpenAiReply(
       content:
         "Relax, you don't need to know everything—someone's gotta keep Google in business.",
     },
-    // Proactive/initiative examples (decisive, prose)
     {
       role: 'user',
       content: 'Help me plan a quick workout.',
@@ -189,14 +138,8 @@ export async function generateOpenAiReply(
       content:
         'Let’s start with a brisk fifteen‑minute bodyweight circuit to get your pulse up: three quick rounds of squats, push‑ups, lunges, plank, and jumping jacks with short rests. No gear, just momentum. I’ll keep it clean and fast.',
     },
-  );
+  ];
 
-  // Add current conversation history if available (lift limit by allowing more messages)
-  if (conversationHistory && conversationHistory.length > 0) {
-    messagesForOpenAI.push(...conversationHistory);
-  }
-
-  // Add sources context if present
   if (sourcesBlock) {
     messagesForOpenAI.push({
       role: 'user',
@@ -204,32 +147,21 @@ export async function generateOpenAiReply(
     });
   }
 
-  // Add the current user's question
-  messagesForOpenAI.push({
-    role: 'user',
-    content: question,
-  });
+  messagesForOpenAI.push({ role: 'user', content: question });
 
-  try {
-    const response = await callChatCompletion(messagesForOpenAI, {
-      model: 'gpt-5',
-      // gpt-5 ignores temperature/penalties per API; style is controlled via prompt and examples
-      maxCompletionTokens: 8192,
-    });
-    let content = response.content ?? null;
-    const shouldCite =
-      (process.env.RAG_CITE_SOURCES || '').toString().toLowerCase() === 'true';
-    if (shouldCite && content && sourcesTop.length > 0) {
-      const clickable = sourcesTop
-        .map((r, i) => `${i + 1}. [${r.title}](${r.url})`)
-        .join('\n');
-      content = `${content}\n\nSources:\n${clickable}`;
-    }
-    return content;
-  } catch (error) {
-    console.error('Error calling OpenAI API:', error);
-    return null;
+  const response = await callChatCompletion(messagesForOpenAI, {
+    model: 'gpt-5',
+    maxCompletionTokens: 8192,
+    conversation: priorConversationId ? { id: priorConversationId } : undefined,
+  });
+  let content = response.content ?? null;
+  if (shouldCite && content && sourcesTop.length > 0) {
+    const clickable = sourcesTop
+      .map((r, i) => `${i + 1}. [${r.title}](${r.url})`)
+      .join('\n');
+    content = `${content}\n\nSources:\n${clickable}`;
   }
+  return { content, conversationId: response.conversationId };
 }
 
 function isStateOfSurvivalQuery(text: string): boolean {

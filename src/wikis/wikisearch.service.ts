@@ -25,7 +25,11 @@ export class WikiSearchService {
     console.log(`[RAG] Searching wiki for: ${query}`);
     const { vector } = await createEmbedding(query);
     // Naive similarity in MongoDB: fetch candidate subset, then compute cosine similarity in app
-    const candidates = await this.chunkModel.find().limit(500).lean();
+    const candidateLimit = Number(process.env.WIKI_SEARCH_CANDIDATES || 500);
+    const candidates = await this.chunkModel
+      .find()
+      .limit(candidateLimit)
+      .lean();
     const withScore = candidates.map((c) => ({
       url: c.url,
       title: c.title,

@@ -4,14 +4,37 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import { HttpExceptionFilter } from './core/filters/http-exception.filter';
 import { LoggingInterceptor } from './core/interceptors/logging.interceptor';
+import { randomUUID } from 'crypto';
 
 import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.setGlobalPrefix('api');
+  app.use((req: any, res: any, next: () => void) => {
+    const rid = req?.headers?.['x-request-id'] || randomUUID();
+    res.setHeader('x-request-id', rid);
+    if (req && req.headers) req.headers['x-request-id'] = rid;
+    next();
+  });
   app.use(helmet());
-  app.enableCors();
+  if (process.env.NODE_ENV === 'production') {
+    const allowed = (process.env.ALLOWED_ORIGINS || '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    app.enableCors({
+      origin: (origin, cb) => {
+        if (!origin) return cb(null, true);
+        if (allowed.length === 0 || allowed.includes(origin))
+          return cb(null, true);
+        return cb(new Error('Not allowed by CORS'), false);
+      },
+      credentials: true,
+    });
+  } else {
+    app.enableCors();
+  }
   app.enableShutdownHooks();
   app.useGlobalPipes(
     new ValidationPipe({

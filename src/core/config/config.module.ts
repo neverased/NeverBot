@@ -29,7 +29,10 @@ import * as Joi from 'joi';
           .optional(),
         WIKI_INDEX_MAX_PAGES: Joi.number().integer().min(1).default(1000),
         WIKI_INDEX_CONCURRENCY: Joi.number().integer().min(1).default(4),
+        WIKI_SEARCH_CANDIDATES: Joi.number().integer().min(10).default(500),
         METRICS_HIGH_CARD: Joi.boolean().default(false),
+        WEB_SEARCH_ENABLED: Joi.boolean().default(false),
+        ALLOWED_ORIGINS: Joi.string().optional(),
         PORT: Joi.number().integer().min(1).max(65535).default(3500),
         NODE_ENV: Joi.string()
           .valid('development', 'test', 'production')

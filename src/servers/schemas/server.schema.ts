@@ -14,6 +14,12 @@ export class Server {
   @Prop({ type: String })
   welcomeChannelId: string;
 
+  @Prop({ type: Map, of: String, default: {} })
+  channelConversations?: Record<string, string>;
+
+  @Prop({ type: Map, of: Number, default: {} })
+  channelConversationsUpdatedAt?: Record<string, number>;
+
   @Prop({
     type: {
       time: { type: String },

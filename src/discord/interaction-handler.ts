@@ -11,6 +11,7 @@ import { getDiscordResilience } from './decorators/discord-resilience.decorator'
 import {
   commandErrors,
   commandSuccess,
+  commandStarts,
 } from '../core/metrics/metrics-registry';
 
 @Injectable()
@@ -89,6 +90,9 @@ export class InteractionHandler {
         : { command: interaction.commandName };
       const endTimer = this.metrics.commandLatency.startTimer(labels);
       try {
+        try {
+          commandStarts.inc({ command: interaction.commandName });
+        } catch {}
         const resilience = getDiscordResilience(command.execute) || {};
         const safe = withSafeInteraction(
           interaction as ChatInputCommandInteraction,

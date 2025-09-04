@@ -25,3 +25,5 @@ export class WikiChunk {
 }
 
 export const WikiChunkSchema = SchemaFactory.createForClass(WikiChunk);
+WikiChunkSchema.index({ url: 1 });
+WikiChunkSchema.index({ pageId: 1, order: 1 });

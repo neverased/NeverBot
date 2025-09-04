@@ -28,7 +28,10 @@ import { CreateUserMessageDto } from '../users/messages/dto/create-user-message.
 import { UserMessagesService } from '../users/messages/messages.service';
 import { UsersService } from '../users/users.service';
 import { ServersService } from '../servers/servers.service';
-import { generateOpenAiReply, splitTextIntoParts } from './gpt/gpt-logic';
+import {
+  generateOpenAiReplyWithState,
+  splitTextIntoParts,
+} from './gpt/gpt-logic';
 import { textFromImage } from './translator/cv_scrape';
 import { translateText } from './translator/translate';
 import { discordFlagToLanguageCode } from './translator/translate';
@@ -56,6 +59,7 @@ interface ConversationContext {
   lastBotReplyTimestamp: number;
   lastBotMessageId?: string; // Optional: to fetch bot's own last message for context
   lastUserMessageId: string; // The user message that the bot last replied to or was a follow-up to
+  conversationId?: string; // Responses API conversation id for server-managed state
 }
 
 declare module 'discord.js' {
@@ -244,7 +248,6 @@ export class DiscordService implements OnModuleInit {
     message: Message,
     user: UserModel,
     gptQuestion: string,
-    conversationHistory?: Array<OpenAI.Chat.ChatCompletionMessageParam>,
   ) {
     if (this.isSendableChannel(message.channel)) {
       await message.channel.sendTyping();
@@ -252,16 +255,56 @@ export class DiscordService implements OnModuleInit {
     this.logger.log(
       `[GPT] Incoming question from ${message.author.username}: "${gptQuestion}"`,
     );
-    const gptResponse = await generateOpenAiReply(
-      gptQuestion,
-      message.author.globalName || message.author.username,
-      user,
-      this.userMessagesService,
-      conversationHistory,
-      this.wikiSearchService,
-    );
-
     const cacheKey = `${message.channel.id}-${message.author.id}`;
+    const cached = this.conversationContextCache.get(cacheKey);
+    let priorConversationId = cached?.conversationId;
+    try {
+      // Load persisted per-channel conversation if not cached
+      if (!priorConversationId && message.guild) {
+        priorConversationId =
+          await this.serversService.getChannelConversationId(
+            message.guild.id,
+            message.channel.id,
+          );
+      }
+    } catch (e) {
+      this.logger.warn(
+        `Failed to load channel conversation for ${message.guild?.id}/${message.channel.id}: ${(e as Error).message}`,
+      );
+    }
+
+    let historyText = '';
+    if (this.isSendableChannel(message.channel)) {
+      try {
+        const history = await message.channel.messages.fetch({
+          limit: 15,
+          before: message.id,
+        });
+        historyText = history
+          .reverse()
+          .map(
+            (m) =>
+              `User ${m.author.username} (ID: ${m.author.id}): ${m.content}`,
+          )
+          .join('\n');
+      } catch (e) {
+        this.logger.warn(
+          `Failed to fetch message history for channel ${message.channel.id}: ${(e as Error).message}`,
+        );
+      }
+    }
+
+    const fullQuestion = `Here is the recent conversation history in this channel. Your response should continue the conversation naturally as a participant named NeverBot.\n\n${historyText}\n\nUser ${message.author.username} (ID: ${message.author.id}): ${gptQuestion}`;
+
+    const { content: gptResponse, conversationId } =
+      await generateOpenAiReplyWithState(
+        fullQuestion,
+        message.author.globalName || message.author.username,
+        user,
+        this.userMessagesService,
+        this.wikiSearchService,
+        priorConversationId,
+      );
 
     if (gptResponse) {
       const maxDiscordMessageLength = 2000;
@@ -315,11 +358,33 @@ export class DiscordService implements OnModuleInit {
       }
       // Update conversation context cache
       if (botReplyMessage) {
+        const newConversationId = conversationId ?? priorConversationId;
         this.conversationContextCache.set(cacheKey, {
           lastBotReplyTimestamp: Date.now(),
           lastBotMessageId: botReplyMessage.id,
           lastUserMessageId: message.id,
+          conversationId: newConversationId,
         });
+        // Persist per-channel conversation id for the guild
+        if (newConversationId && message.guild) {
+          try {
+            await this.serversService.setChannelConversationId(
+              message.guild.id,
+              message.channel.id,
+              newConversationId,
+            );
+            // Periodically prune stale entries
+            await this.serversService.pruneStaleChannelConversations(
+              message.guild.id,
+              7 * 24 * 60 * 60 * 1000, // 7 days
+              300, // keep most recent 300 channels per guild
+            );
+          } catch (e) {
+            this.logger.warn(
+              `Failed to persist channel conversation id: ${(e as Error).message}`,
+            );
+          }
+        }
         this.logger.log(
           `[GPT] Replied to ${message.author.username}. Message ID: ${botReplyMessage.id}`,
         );
@@ -345,6 +410,7 @@ export class DiscordService implements OnModuleInit {
           lastBotReplyTimestamp: Date.now(),
           lastBotMessageId: botErrorReplyMessage.id,
           lastUserMessageId: message.id,
+          conversationId: cached?.conversationId,
         });
       }
       this.logger.warn('[GPT] No response generated; sent error fallback.');
@@ -609,52 +675,8 @@ export class DiscordService implements OnModuleInit {
         }
 
         try {
-          const currentConversationHistory: Array<OpenAI.Chat.ChatCompletionMessageParam> =
-            [];
-          if (
-            isFollowUp &&
-            cachedContext &&
-            this.isSendableChannel(message.channel)
-          ) {
-            try {
-              const fetchedMessages = await message.channel.messages.fetch({
-                limit: 20, // adjusted per request
-                before: message.id,
-              });
-              // Convert collection to array, then reverse. No longer filtering by author.
-              const relevantMessages = Array.from(
-                fetchedMessages.values(),
-              ).reverse();
-
-              for (const msg of relevantMessages) {
-                currentConversationHistory.push({
-                  role:
-                    msg.author.id === this.client.user?.id
-                      ? 'assistant'
-                      : 'user',
-                  // Prepend username and ID if message is not from the interacting user or the bot, for clarity in context
-                  content:
-                    msg.author.id !== message.author.id &&
-                    msg.author.id !== this.client.user?.id
-                      ? `User ${msg.author.username} (ID: ${msg.author.id}): ${msg.content}`
-                      : msg.content,
-                });
-              }
-              this.logger.log(
-                `Constructed follow-up history with ${currentConversationHistory.length} messages (includes other users).`,
-              );
-            } catch (fetchError) {
-              this.logger.warn(
-                `Could not fetch message history for follow-up context: ${fetchError.message}`,
-              );
-            }
-          }
-          await this.handleGptResponse(
-            message,
-            user,
-            message.content,
-            currentConversationHistory,
-          );
+          // Do not construct local follow-up history; rely on Responses conversation state.
+          await this.handleGptResponse(message, user, message.content);
         } catch (replyError) {
           this.logger.error(
             `Error in handleGptResponse for message ${message.id}: ${replyError.message}`,

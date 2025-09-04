@@ -28,10 +28,21 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
   @IsString()
   discordUserId?: string;
 
-  registeredAt: Date;
-  serverName: string;
-  serverId: string;
-  subscription: string;
+  @IsOptional()
+  @IsDate()
+  registeredAt?: Date;
+
+  @IsOptional()
+  @IsString()
+  serverName?: string;
+
+  @IsOptional()
+  @IsString()
+  serverId?: string;
+
+  @IsOptional()
+  @IsString()
+  subscription?: string;
   @IsOptional()
   tasks?: {
     enabledChannels?: string[];

@@ -23,6 +23,13 @@ export const openaiErrors = new Counter({
   labelNames: ['type'],
 });
 
+export const openaiHttpErrors = new Counter({
+  name: 'openai_responses_http_errors_total',
+  help: 'Count of OpenAI Responses HTTP errors by status',
+  registers: [registry],
+  labelNames: ['status'],
+});
+
 export const discordRateLimitHits = new Counter({
   name: 'discord_rate_limit_hits_total',
   help: 'Count of rate limit hits reported by Discord.js',
@@ -41,4 +48,25 @@ export const commandErrors = new Counter({
   help: 'Count of Discord command execution errors',
   registers: [registry],
   labelNames: ['command', 'type'],
+});
+
+export const commandStarts = new Counter({
+  name: 'discord_command_starts_total',
+  help: 'Count of Discord command invocations (start)',
+  registers: [registry],
+  labelNames: ['command'],
+});
+
+export const responsesInputTokens = new Counter({
+  name: 'openai_responses_input_tokens_total',
+  help: 'Total input tokens used by OpenAI Responses API',
+  registers: [registry],
+  labelNames: ['model'],
+});
+
+export const responsesOutputTokens = new Counter({
+  name: 'openai_responses_output_tokens_total',
+  help: 'Total output tokens used by OpenAI Responses API',
+  registers: [registry],
+  labelNames: ['model'],
 });

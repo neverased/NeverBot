@@ -3,9 +3,13 @@ import { ChatInputCommandInteraction, SlashCommandBuilder } from 'discord.js';
 // import openai from '../../../utils/openai-client'; - Removed, OpenAI client is in gpt-logic
 import { User as UserModel } from '../../../users/entities/user.entity';
 import { UserMessagesService } from '../../../users/messages/messages.service';
-import { generateOpenAiReply, splitTextIntoParts } from '../../gpt/gpt-logic'; // Corrected path
+import {
+  generateOpenAiReplyWithState,
+  splitTextIntoParts,
+} from '../../gpt/gpt-logic'; // Corrected path
 import { WikiSearchService } from '../../../wikis/wikisearch.service';
 import { setDiscordResilience } from '../../decorators/discord-resilience.decorator';
+import { ServersService } from '../../../servers/servers.service';
 
 // function splitText(text, maxLength) { ... } // Removed, using splitTextIntoParts from gpt-logic
 
@@ -21,7 +25,7 @@ module.exports = {
     userProfile?: UserModel,
     userMessagesService?: UserMessagesService,
     _usersService?: unknown,
-    _serversService?: unknown,
+    serversService?: ServersService,
     wikiSearchService?: WikiSearchService,
   ) {
     // Allow a longer timeout for LLM responses; modest retry
@@ -37,19 +41,34 @@ module.exports = {
       return await interaction.editReply('Please provide a question!');
     }
 
-    // System prompt generation and OpenAI call are now in generateOpenAiReply
-    // let systemPromptLines = [ ... ]; // Removed
-    // const systemPromptContent = systemPromptLines.join('\n'); // Removed
-
     try {
-      const gptResponse = await generateOpenAiReply(
-        question,
-        userName,
-        userProfile,
-        userMessagesService,
-        undefined,
-        wikiSearchService,
-      );
+      let priorConversationId: string | undefined = undefined;
+      if (interaction.guild && serversService) {
+        try {
+          priorConversationId = await serversService.getChannelConversationId(
+            interaction.guild.id,
+            interaction.channelId,
+          );
+        } catch {}
+      }
+      const { content: gptResponse, conversationId } =
+        await generateOpenAiReplyWithState(
+          question,
+          userName,
+          userProfile,
+          userMessagesService,
+          wikiSearchService,
+          priorConversationId,
+        );
+      if (conversationId && interaction.guild && serversService) {
+        try {
+          await serversService.setChannelConversationId(
+            interaction.guild.id,
+            interaction.channelId,
+            conversationId,
+          );
+        } catch {}
+      }
 
       if (!gptResponse) {
         await interaction.editReply(
@@ -58,7 +77,6 @@ module.exports = {
         return;
       }
 
-      // Directly use gptResponse, removing the Q: A: format
       const response = gptResponse;
       const maxDiscordMessageLength = 2000;
 
