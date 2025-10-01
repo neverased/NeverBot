@@ -64,9 +64,13 @@ export class UsersService {
     updateUserDto: UpdateUserDto,
   ): Promise<UserDocument | null> {
     return this.usersModel
-      .findOneAndUpdate({ discordUserId: discordUserId }, updateUserDto, {
-        new: true,
-      })
+      .findOneAndUpdate(
+        { discordUserId: discordUserId },
+        { $set: updateUserDto },
+        {
+          new: true,
+        },
+      )
       .exec();
   }
 

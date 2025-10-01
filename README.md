@@ -30,9 +30,6 @@ BOT_TOKEN=your_discord_bot_token
 DISCORD_APPLICATION_ID=your_discord_app_id
 GPT_KEY=your_openai_api_key
 
-# Preferred: single MongoDB connection string
-MONGO_URI=mongodb+srv://user:pass@cluster.example.mongodb.net/dbname
-
 # Legacy (optional fallback):
 # MONGO_USER=your_mongodb_user
 # MONGO_PW=your_mongodb_password
