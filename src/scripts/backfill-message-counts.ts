@@ -1,4 +1,3 @@
-
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from '../app.module';
 import { UsersService } from '../users/users.service';
@@ -6,7 +5,7 @@ import { UserMessagesService } from '../users/messages/messages.service';
 import { Logger } from '@nestjs/common';
 import { UpdateUserDto } from '../users/dto/update-user.dto';
 
-async function backfillMessageCounts() {
+async function backfillMessageCounts(): Promise<void> {
   const logger = new Logger('BackfillMessageCounts');
   logger.log('Starting backfill process for user message counts...');
 

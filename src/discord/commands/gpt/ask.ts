@@ -1,17 +1,13 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder } from 'discord.js';
 
-// import openai from '../../../utils/openai-client'; - Removed, OpenAI client is in gpt-logic
 import { User as UserModel } from '../../../users/entities/user.entity';
 import { UserMessagesService } from '../../../users/messages/messages.service';
 import {
   generateOpenAiReplyWithState,
   splitTextIntoParts,
-} from '../../gpt/gpt-logic'; // Corrected path
-import { WikiSearchService } from '../../../wikis/wikisearch.service';
+} from '../../gpt/gpt-logic';
 import { setDiscordResilience } from '../../decorators/discord-resilience.decorator';
 import { ServersService } from '../../../servers/servers.service';
-
-// function splitText(text, maxLength) { ... } // Removed, using splitTextIntoParts from gpt-logic
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -26,7 +22,6 @@ module.exports = {
     userMessagesService?: UserMessagesService,
     _usersService?: unknown,
     serversService?: ServersService,
-    wikiSearchService?: WikiSearchService,
   ) {
     // Allow a longer timeout for LLM responses; modest retry
     setDiscordResilience(module.exports.execute, {
@@ -57,7 +52,6 @@ module.exports = {
           userName,
           userProfile,
           userMessagesService,
-          wikiSearchService,
           priorConversationId,
         );
       if (conversationId && interaction.guild && serversService) {

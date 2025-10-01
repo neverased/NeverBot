@@ -12,7 +12,6 @@ import { TasksModule } from './tasks/tasks.module';
 import { UsersModule } from './users/users.module';
 import { ServersModule } from './servers/servers.module';
 import { AppConfigModule } from './core/config/config.module';
-import { WikisModule } from './wikis/wikis.module';
 import { MetricsModule } from './core/metrics/metrics.module';
 
 @Module({
@@ -49,7 +48,6 @@ import { MetricsModule } from './core/metrics/metrics.module';
       },
     ]),
     TasksModule,
-    WikisModule,
     DiscordModule,
     MetricsModule,
   ],

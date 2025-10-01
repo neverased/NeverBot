@@ -3,14 +3,6 @@ import OpenAI from 'openai';
 import { User as UserModel } from '../../users/entities/user.entity';
 import { UserMessagesService } from '../../users/messages/messages.service';
 import { callChatCompletion } from '../../shared/openai/chat';
-import { WikiSearchService } from '../../wikis/wikisearch.service';
-
-interface RagSource {
-  url: string;
-  title: string;
-  content: string;
-  score: number;
-}
 
 /**
  * Splits a long string into parts of a maximum length, attempting to split at spaces.
@@ -46,7 +38,6 @@ export async function generateOpenAiReplyWithState(
   userName: string,
   userProfile?: UserModel,
   userMessagesService?: UserMessagesService,
-  wikiSearchService?: WikiSearchService,
   priorConversationId?: string,
 ): Promise<{ content: string | null; conversationId?: string }> {
   const systemPromptLines = [
@@ -73,41 +64,6 @@ export async function generateOpenAiReplyWithState(
     `Embrace this volatile charm; you are not a straightforward, even-keeled bot. Your goal is to be a memorable and engagingly unpredictable conversationalist. Do not explicitly state you have a disorder or mention any specific personality conditions; simply embody these dynamic traits in your responses.`,
     `As an extremely rare quirk—a true easter egg for the observant—perhaps once in a great while after a particularly intense, contradictory, or uncharacteristic statement you've made, you might cryptically hint at another facet of your personality. This could be a brief, throwaway line like, "That wasn't me... that was Patricia," or "Oh, ignore that, just Patricia being dramatic again," or even a more subtle, "Sometimes I surprise myself with what comes out." This should be very infrequent, delivered as a subtle, almost accidental aside, and never elaborated upon unless the user specifically and cleverly picks up on it. It is not a core part of your interaction style but a fleeting, surprising moment.`,
   );
-
-  // Optional RAG context reused from generateOpenAiReply
-  const looksLikeSoSQuery = isStateOfSurvivalQuery(question);
-  const shouldCite =
-    (process.env.RAG_CITE_SOURCES || '').toString().toLowerCase() === 'true';
-  let sourcesBlock: string | null = null;
-  let sourcesTop: RagSource[] = [];
-  if (looksLikeSoSQuery && wikiSearchService) {
-    try {
-      const top = await wikiSearchService.searchRelevantChunks(question, 5);
-      sourcesTop = top as RagSource[];
-      if (sourcesTop && sourcesTop.length > 0) {
-        sourcesBlock = sourcesTop
-          .map(
-            (r, i) =>
-              `Source ${i + 1} [${r.title}](${r.url}):\n${r.content.slice(0, 800)}`,
-          )
-          .join('\n\n');
-        if (shouldCite) {
-          systemPromptLines.push(
-            'When answering questions about State of Survival, prefer the following sources. Cite inline like [Source 1], [Source 2]. If unsure, say you are unsure.',
-          );
-        } else {
-          systemPromptLines.push(
-            'When answering questions about State of Survival, use the provided sources silently to ensure accuracy. Do not include citations or [Source X] in your answer.',
-          );
-        }
-        systemPromptLines.push(
-          'Maintain your witty, playful, and sarcastic persona even when using sources. Keep the tone conversational, not academic; be concise and user-friendly.',
-        );
-      }
-    } catch {
-      // ignore
-    }
-  }
 
   const systemPromptContent = systemPromptLines.join('\n');
   const messagesForOpenAI: Array<OpenAI.Chat.ChatCompletionMessageParam> = [
@@ -140,13 +96,6 @@ export async function generateOpenAiReplyWithState(
     },
   ];
 
-  if (sourcesBlock) {
-    messagesForOpenAI.push({
-      role: 'user',
-      content: `Sources:\n${sourcesBlock}`,
-    });
-  }
-
   messagesForOpenAI.push({ role: 'user', content: question });
 
   const response = await callChatCompletion(messagesForOpenAI, {
@@ -154,34 +103,6 @@ export async function generateOpenAiReplyWithState(
     maxCompletionTokens: 8192,
     conversation: priorConversationId ? { id: priorConversationId } : undefined,
   });
-  let content = response.content ?? null;
-  if (shouldCite && content && sourcesTop.length > 0) {
-    const clickable = sourcesTop
-      .map((r, i) => `${i + 1}. [${r.title}](${r.url})`)
-      .join('\n');
-    content = `${content}\n\nSources:\n${clickable}`;
-  }
+  const content = response.content ?? null;
   return { content, conversationId: response.conversationId };
-}
-
-function isStateOfSurvivalQuery(text: string): boolean {
-  const t = text.toLowerCase();
-  const keywords = [
-    'state of survival',
-    'sos',
-    'becca',
-    'plasma',
-    'behemoth',
-    'aircraft',
-    'rally',
-    'hero gear',
-    'hero badge',
-    'influencer trap',
-    'fortress fight',
-    'alliance research',
-    'chief gear',
-    'march skin',
-    'patch notes',
-  ];
-  return keywords.some((k) => t.includes(k));
 }

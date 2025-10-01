@@ -5,11 +5,10 @@ import { CommandRegistry } from './command-registry';
 import { InteractionHandler } from './interaction-handler';
 import { UsersModule } from '../users/users.module';
 import { ServersModule } from '../servers/servers.module';
-import { WikisModule } from '../wikis/wikis.module';
 import { MetricsModule } from '../core/metrics/metrics.module';
 
 @Module({
-  imports: [UsersModule, ServersModule, WikisModule, MetricsModule],
+  imports: [UsersModule, ServersModule, MetricsModule],
   providers: [
     DiscordService,
     DiscordClientProvider,

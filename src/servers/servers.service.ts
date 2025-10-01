@@ -13,10 +13,10 @@ export class ServersService {
     discordServerId: string,
     serverName?: string,
   ): Promise<Server> {
-    let serverDoc = (await this.serversModel
+    let serverDoc = await this.serversModel
       .findOne({ discordServerId })
       .lean<Server>()
-      .exec()) as any;
+      .exec();
     if (!serverDoc) {
       serverDoc = await this.serversModel.create({
         discordServerId,
@@ -43,9 +43,7 @@ export class ServersService {
       .findOne({ discordServerId })
       .lean<Server>()
       .exec();
-    const map = (doc as any)?.channelConversations as
-      | Record<string, string>
-      | undefined;
+    const map = doc?.channelConversations;
     return map?.[channelId];
   }
 
@@ -74,10 +72,10 @@ export class ServersService {
     maxAgeMs: number,
     maxEntries: number = 200,
   ): Promise<void> {
-    const doc = (await this.serversModel
+    const doc = await this.serversModel
       .findOne({ discordServerId })
       .lean<Server>()
-      .exec()) as any;
+      .exec();
     if (!doc) return;
     const updated: Record<string, number> =
       doc.channelConversationsUpdatedAt || {};
@@ -98,8 +96,8 @@ export class ServersService {
     if (toDelete.length === 0) return;
     const unset: Record<string, ''> = {};
     for (const ch of toDelete) {
-      unset[`channelConversations.${ch}`] = '' as any;
-      unset[`channelConversationsUpdatedAt.${ch}`] = '' as any;
+      unset[`channelConversations.${ch}`] = '';
+      unset[`channelConversationsUpdatedAt.${ch}`] = '';
     }
     await this.serversModel
       .updateOne({ discordServerId }, { $unset: unset }, { upsert: false })
@@ -109,9 +107,6 @@ export class ServersService {
   async findOneByDiscordServerId(
     discordServerId: string,
   ): Promise<Server | null> {
-    return this.serversModel
-      .findOne({ discordServerId })
-      .lean<Server>()
-      .exec() as any;
+    return this.serversModel.findOne({ discordServerId }).lean<Server>().exec();
   }
 }

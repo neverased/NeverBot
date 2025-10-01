@@ -78,9 +78,12 @@ export function withSafeInteraction(
   ]);
 
   // Proxy to wrap selected methods with timeout + retry
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const proxy = new Proxy(interaction as any, {
-    get(target: any, prop: PropertyKey, receiver: any): any {
+  const proxy = new Proxy(interaction, {
+    get(
+      target: ChatInputCommandInteraction,
+      prop: PropertyKey,
+      receiver: unknown,
+    ): unknown {
       const original = Reflect.get(target, prop, receiver);
       if (
         typeof prop === 'string' &&
@@ -94,5 +97,5 @@ export function withSafeInteraction(
     },
   });
 
-  return proxy as ChatInputCommandInteraction;
+  return proxy;
 }

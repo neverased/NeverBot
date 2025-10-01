@@ -2,12 +2,19 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ChatInputCommandInteraction, Collection } from 'discord.js';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import { User as UserModel } from '../users/entities/user.entity';
+import { UserMessagesService } from '../users/messages/messages.service';
+import { UsersService } from '../users/users.service';
+import { ServersService } from '../servers/servers.service';
 
 export interface Command {
   data: { name: string; description?: string };
   execute: (
     interaction: ChatInputCommandInteraction,
-    ...args: any[]
+    userProfile?: UserModel,
+    userMessagesService?: UserMessagesService,
+    usersService?: UsersService,
+    serversService?: ServersService,
   ) => Promise<void>;
 }
 
@@ -36,7 +43,8 @@ export class CommandRegistry {
       });
       for (const file of files) {
         const filePath = path.join(commandsPath, file);
-        const importedModule: any = await import(filePath);
+        const importedModule: { default?: Command } & Partial<Command> =
+          (await import(filePath)) as { default?: Command } & Partial<Command>;
         const command: Command | undefined =
           importedModule?.default &&
           importedModule.default.data &&

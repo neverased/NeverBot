@@ -65,7 +65,9 @@ export async function callChatCompletion(
           ? m.content
           : Array.isArray(m.content)
             ? m.content
-                .map((c: any) => (typeof c === 'string' ? c : (c?.text ?? '')))
+                .map((c: string | { text?: string }) =>
+                  typeof c === 'string' ? c : (c?.text ?? ''),
+                )
                 .join('\n')
             : String(m.content ?? '');
       return `${prefix}: ${text}`;
@@ -112,17 +114,18 @@ export async function callChatCompletion(
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 30_000);
       try {
-        const response = await openai.responses.create(payload as any, {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const response: any = await openai.responses.create(payload as any, {
           signal: controller.signal,
         });
         // Prefer `output_text` if populated; otherwise try to extract first text output
         const content: string | null =
-          (response as any)?.output_text?.trim?.() ??
+          response?.output_text?.trim?.() ??
           extractFirstTextFromResponse(response);
         const convId: string | undefined =
-          (response as any)?.conversation?.id ?? undefined;
+          response?.conversation?.id ?? undefined;
         try {
-          const usage = (response as any)?.usage ?? {};
+          const usage = response?.usage ?? {};
           const input = Number(usage.input_tokens ?? usage.input ?? 0);
           const output = Number(usage.output_tokens ?? usage.output ?? 0);
           if (!Number.isNaN(input) && input > 0) {
@@ -154,6 +157,7 @@ export async function callChatCompletion(
   throw lastError;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function extractFirstTextFromResponse(res: any): string | null {
   try {
     if (res?.output_text) {

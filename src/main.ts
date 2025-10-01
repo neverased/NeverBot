@@ -5,16 +5,20 @@ import helmet from 'helmet';
 import { HttpExceptionFilter } from './core/filters/http-exception.filter';
 import { LoggingInterceptor } from './core/interceptors/logging.interceptor';
 import { randomUUID } from 'crypto';
+import { Request, Response, NextFunction } from 'express';
 
 import { AppModule } from './app.module';
 
-async function bootstrap() {
+async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
   app.setGlobalPrefix('api');
-  app.use((req: any, res: any, next: () => void) => {
-    const rid = req?.headers?.['x-request-id'] || randomUUID();
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    const rid =
+      (req?.headers?.['x-request-id'] as string | undefined) || randomUUID();
     res.setHeader('x-request-id', rid);
-    if (req && req.headers) req.headers['x-request-id'] = rid;
+    if (req && req.headers) {
+      (req.headers as Record<string, string>)['x-request-id'] = rid;
+    }
     next();
   });
   app.use(helmet());

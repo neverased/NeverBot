@@ -4,7 +4,6 @@ import { ChatInputCommandInteraction, Interaction } from 'discord.js';
 import { UsersService } from '../users/users.service';
 import { UserMessagesService } from '../users/messages/messages.service';
 import { ServersService } from '../servers/servers.service';
-import { WikiSearchService } from '../wikis/wikisearch.service';
 import { CommandRegistry } from './command-registry';
 import { withSafeInteraction } from './safe-discord';
 import { getDiscordResilience } from './decorators/discord-resilience.decorator';
@@ -13,6 +12,8 @@ import {
   commandSuccess,
   commandStarts,
 } from '../core/metrics/metrics-registry';
+import { User as UserModel } from '../users/entities/user.entity';
+import { Server } from '../servers/schemas/server.schema';
 
 @Injectable()
 export class InteractionHandler {
@@ -23,7 +24,6 @@ export class InteractionHandler {
     private readonly usersService: UsersService,
     private readonly userMessagesService: UserMessagesService,
     private readonly serversService: ServersService,
-    private readonly wikiSearchService: WikiSearchService,
     private readonly metrics: MetricsService,
   ) {}
 
@@ -46,8 +46,8 @@ export class InteractionHandler {
     }
 
     try {
-      let userProfile: any | undefined = undefined;
-      let serverConfig: any = undefined;
+      let userProfile: UserModel | undefined = undefined;
+      let serverConfig: Server | undefined = undefined;
       if (interaction.user) {
         try {
           if (interaction.guild) {
@@ -105,7 +105,6 @@ export class InteractionHandler {
           this.userMessagesService,
           this.usersService,
           this.serversService,
-          this.wikiSearchService,
         );
         try {
           commandSuccess.inc({ command: interaction.commandName });

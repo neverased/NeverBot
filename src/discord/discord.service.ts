@@ -24,6 +24,7 @@ import OpenAI from 'openai';
 import * as path from 'path';
 
 import { User as UserModel } from '../users/entities/user.entity';
+import { Server } from '../servers/schemas/server.schema';
 import { CreateUserMessageDto } from '../users/messages/dto/create-user-message.dto';
 import { UserMessagesService } from '../users/messages/messages.service';
 import { UsersService } from '../users/users.service';
@@ -40,7 +41,6 @@ import { DiscordClientProvider } from './discord-client.provider';
 import { CommandRegistry } from './command-registry';
 import { InteractionHandler } from './interaction-handler';
 import { discordRateLimitHits } from '../core/metrics/metrics-registry';
-import { WikiSearchService } from '../wikis/wikisearch.service';
 
 interface Command {
   data: { name: string; description?: string };
@@ -50,7 +50,6 @@ interface Command {
     userMessagesService?: UserMessagesService,
     usersService?: UsersService,
     serversService?: ServersService,
-    wikiSearchService?: WikiSearchService,
   ) => Promise<void>;
 }
 
@@ -82,7 +81,6 @@ export class DiscordService implements OnModuleInit {
     private readonly usersService: UsersService,
     private readonly userMessagesService: UserMessagesService,
     private readonly serversService: ServersService,
-    private readonly wikiSearchService: WikiSearchService,
     private readonly discordClientProvider: DiscordClientProvider,
     private readonly commandRegistry: CommandRegistry,
     private readonly interactionHandler: InteractionHandler,
@@ -234,7 +232,7 @@ export class DiscordService implements OnModuleInit {
   }
 
   private isSendableChannel(
-    channel: any,
+    channel: unknown,
   ): channel is TextChannel | NewsChannel | ThreadChannel | DMChannel {
     return (
       channel instanceof TextChannel ||
@@ -302,7 +300,6 @@ export class DiscordService implements OnModuleInit {
         message.author.globalName || message.author.username,
         user,
         this.userMessagesService,
-        this.wikiSearchService,
         priorConversationId,
       );
 
@@ -438,7 +435,7 @@ export class DiscordService implements OnModuleInit {
       const alternativeBotNameLower = 'never';
 
       let user: UserModel;
-      let serverConfig: any = undefined;
+      let serverConfig: Server | undefined = undefined;
       try {
         user = await this.usersService.findOrCreateUser(
           discordUserId,
@@ -474,7 +471,7 @@ export class DiscordService implements OnModuleInit {
       // --- NLP and Message Saving Logic (existing, ensure it runs for all user messages) ---
       // ... (This part remains, ensure it executes before response logic)
       let sentimentScore: number;
-      let sentimentAnalysis: any;
+      let sentimentComparative: number;
       let sentimentCategory: string;
       let significantTopics: string[] = [];
       let sentimentTokens: string[] = [];
@@ -490,8 +487,10 @@ export class DiscordService implements OnModuleInit {
           stemmer,
           'afinn',
         );
-        sentimentAnalysis = sentimentAnalyzer.getSentiment(sentimentTokens);
+        const sentimentAnalysis =
+          sentimentAnalyzer.getSentiment(sentimentTokens);
         sentimentScore = parseFloat(sentimentAnalysis.toFixed(4));
+        sentimentComparative = sentimentScore;
         if (isNaN(sentimentScore)) {
           this.logger.warn(
             `Sentiment score was NaN for message ${messageId}. Defaulting to 0. Tokens: ${JSON.stringify(sentimentTokens)}`,
@@ -539,7 +538,7 @@ export class DiscordService implements OnModuleInit {
           nlpError.stack,
         );
         sentimentScore = 0;
-        sentimentAnalysis = { score: 0, comparative: 0, tokens: [], words: [] };
+        sentimentComparative = 0;
         sentimentCategory = 'neutral';
         significantTopics = [];
       }
@@ -553,10 +552,7 @@ export class DiscordService implements OnModuleInit {
           timestamp: message.createdAt,
           sentiment: {
             score: sentimentScore,
-            comparative:
-              sentimentAnalysis.comparative === undefined
-                ? sentimentScore
-                : sentimentAnalysis.comparative,
+            comparative: sentimentComparative,
             tokens: sentimentTokens,
             words: wordsForMessageDto,
           },
@@ -574,7 +570,20 @@ export class DiscordService implements OnModuleInit {
         score: sentimentScore,
         timestamp: new Date(),
       };
-      const updatePayload: any = {
+      interface MongoUpdatePayload {
+        $set: { lastSeen: Date };
+        $inc: { messageCount: number };
+        $push: {
+          sentimentHistory: {
+            $each: Array<{ sentiment: string; score: number; timestamp: Date }>;
+            $slice: number;
+          };
+        };
+        $addToSet?: {
+          topicsOfInterest: { $each: string[] };
+        };
+      }
+      const updatePayload: MongoUpdatePayload = {
         $set: { lastSeen: new Date() },
         $inc: { messageCount: 1 },
         $push: {
@@ -589,9 +598,10 @@ export class DiscordService implements OnModuleInit {
           topicsOfInterest: { $each: significantTopics },
         };
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await this.usersService.updateUserByDiscordUserId(
         discordUserId,
-        updatePayload,
+        updatePayload as any,
       );
       // --- End of NLP and Message Saving Logic ---
 
