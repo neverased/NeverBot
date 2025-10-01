@@ -7,40 +7,36 @@ import {
   CommandInteraction,
   DMChannel,
   Events,
-  GatewayIntentBits,
+  GuildMember,
   Interaction,
   Message,
   MessageReaction,
   NewsChannel,
-  Partials,
   TextChannel,
   ThreadChannel,
-  GuildMember,
   User as DiscordUserType,
 } from 'discord.js';
-import * as fs from 'fs/promises';
 import * as natural from 'natural';
-import OpenAI from 'openai';
 import * as path from 'path';
 
-import { User as UserModel } from '../users/entities/user.entity';
+import { discordRateLimitHits } from '../core/metrics/metrics-registry';
 import { Server } from '../servers/schemas/server.schema';
+import { ServersService } from '../servers/servers.service';
+import { callChatCompletion } from '../shared/openai/chat';
+import { User as UserModel } from '../users/entities/user.entity';
 import { CreateUserMessageDto } from '../users/messages/dto/create-user-message.dto';
 import { UserMessagesService } from '../users/messages/messages.service';
 import { UsersService } from '../users/users.service';
-import { ServersService } from '../servers/servers.service';
+import { CommandRegistry } from './command-registry';
+import { DiscordClientProvider } from './discord-client.provider';
 import {
   generateOpenAiReplyWithState,
   splitTextIntoParts,
 } from './gpt/gpt-logic';
+import { InteractionHandler } from './interaction-handler';
 import { textFromImage } from './translator/cv_scrape';
 import { translateText } from './translator/translate';
 import { discordFlagToLanguageCode } from './translator/translate';
-import { callChatCompletion } from '../shared/openai/chat';
-import { DiscordClientProvider } from './discord-client.provider';
-import { CommandRegistry } from './command-registry';
-import { InteractionHandler } from './interaction-handler';
-import { discordRateLimitHits } from '../core/metrics/metrics-registry';
 
 interface Command {
   data: { name: string; description?: string };
@@ -162,22 +158,14 @@ export class DiscordService implements OnModuleInit {
             {
               role: 'system',
               content:
-                'You are MeanNever, a chatbot that answers questions with sarcastic or very funny responses. Every new sentence will be in a new line with \\n prefix.',
+                "You're NeverBot, chatting naturally on Discord. You're welcoming a new person. Be casual and friendly, not over-the-top. Keep it short—2-3 sentences max.",
             },
             {
               role: 'user',
-              content: `Welcome ${member.user.username} to the server!`,
-            },
-            {
-              role: 'assistant',
-              content: `Hold onto your keyboard, folks! 🎉 \\nWe've got a fresh face in town! \\nWelcome, ${member.user.username} 🌟, the chosen one who dared to click 'Join'. \\nPrepare for a wild ride of laughs, discussions, and the occasional virtual dance-off.\\nDon't worry, our emojis are friendly, and our GIFs are well-trained.\\nIf you're lost, just shout 'HELP' and our tech wizards will come to your rescue.`,
-            },
-            {
-              role: 'user',
-              content: `Give a warm welcome to @${member.user.username} \\nIntroduce yourself in a short sentence and mention that '/help' is the command to get started.`,
+              content: `Someone new just joined: ${member.user.username}. Welcome them briefly and mention /help exists if they need it.`,
             },
           ],
-          { model: 'gpt-5', temperature: 1, maxCompletionTokens: 200 },
+          { model: 'gpt-5', temperature: 1, maxCompletionTokens: 150 },
         );
 
         const description = content ?? `Welcome, <@${member.user.id}>!`;
@@ -598,10 +586,11 @@ export class DiscordService implements OnModuleInit {
           topicsOfInterest: { $each: significantTopics },
         };
       }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       await this.usersService.updateUserByDiscordUserId(
         discordUserId,
-        updatePayload as any,
+        // @ts-expect-error - MongoDB update operators don't match UpdateUserDto
+        updatePayload,
       );
       // --- End of NLP and Message Saving Logic ---
 
@@ -774,13 +763,20 @@ export class DiscordService implements OnModuleInit {
 
   // Optionally capture rate limit events for metrics or logging
   private registerRateLimitHandler(): void {
-    const anyClient = this.client as any;
-    if (anyClient?.rest && typeof anyClient.rest.on === 'function') {
-      anyClient.rest.on('rateLimited', (info: unknown) => {
+    interface ClientWithRest {
+      rest?: {
+        on?: (event: string, listener: (info: unknown) => void) => void;
+      };
+    }
+    const clientWithRest = this.client as ClientWithRest;
+    if (clientWithRest?.rest && typeof clientWithRest.rest.on === 'function') {
+      clientWithRest.rest.on('rateLimited', (info: unknown) => {
         this.logger.warn(`[Discord] Rate limit hit: ${JSON.stringify(info)}`);
         try {
           discordRateLimitHits.inc();
-        } catch {}
+        } catch {
+          // Ignore metric errors
+        }
       });
     }
   }

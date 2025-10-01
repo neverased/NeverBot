@@ -1,4 +1,5 @@
 import { PermissionFlagsBits, SlashCommandBuilder } from 'discord.js';
+
 import { ServersService } from '../../../servers/servers.service';
 import { setDiscordResilience } from '../../decorators/discord-resilience.decorator';
 
@@ -41,7 +42,7 @@ module.exports = {
       await interaction.editReply(
         'Conversation state for this channel has been reset.',
       );
-    } catch (e) {
+    } catch {
       await interaction.editReply('Failed to reset conversation state.');
     }
   },

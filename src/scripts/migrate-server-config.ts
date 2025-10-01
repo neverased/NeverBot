@@ -1,8 +1,9 @@
-import { NestFactory } from '@nestjs/core';
-import { AppModule } from '../app.module';
-import { UsersService } from '../users/users.service';
-import { ServersService } from '../servers/servers.service';
 import { Logger } from '@nestjs/common';
+import { NestFactory } from '@nestjs/core';
+
+import { AppModule } from '../app.module';
+import { ServersService } from '../servers/servers.service';
+import { UsersService } from '../users/users.service';
 
 async function migrateServerConfig() {
   const logger = new Logger('MigrateServerConfig');
@@ -29,7 +30,13 @@ async function migrateServerConfig() {
         const serverId = user.serverId;
         const serverName = user.serverName || 'N/A';
         // Extract server config fields
-        const tasks = user.tasks as Record<string, any> | undefined;
+        interface UserTasks {
+          enabledChannels?: string[];
+          welcome_channel_id?: string;
+          welcomeChannelId?: string;
+          [key: string]: unknown;
+        }
+        const tasks = user.tasks as UserTasks | undefined;
         const enabledChannels = tasks?.enabledChannels || [];
         const welcomeChannelId =
           tasks?.welcome_channel_id || tasks?.welcomeChannelId || '';

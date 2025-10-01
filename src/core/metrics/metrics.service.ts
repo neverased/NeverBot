@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Counter, Histogram } from 'prom-client';
+
 import {
   commandLatency,
   discordRateLimitHits,

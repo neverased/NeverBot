@@ -1,4 +1,5 @@
 import { SlashCommandBuilder } from 'discord.js';
+
 import { setDiscordResilience } from '../../decorators/discord-resilience.decorator';
 
 module.exports = {

@@ -1,9 +1,10 @@
-import { NestFactory } from '@nestjs/core';
-import { AppModule } from '../app.module';
-import { UsersService } from '../users/users.service';
-import { UserMessagesService } from '../users/messages/messages.service';
 import { Logger } from '@nestjs/common';
+import { NestFactory } from '@nestjs/core';
+
+import { AppModule } from '../app.module';
 import { UpdateUserDto } from '../users/dto/update-user.dto';
+import { UserMessagesService } from '../users/messages/messages.service';
+import { UsersService } from '../users/users.service';
 
 async function backfillMessageCounts(): Promise<void> {
   const logger = new Logger('BackfillMessageCounts');

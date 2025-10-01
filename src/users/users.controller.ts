@@ -8,7 +8,6 @@ import {
   Param,
   Patch,
   Post,
-  Query,
 } from '@nestjs/common';
 import { mongo } from 'mongoose';
 
@@ -35,7 +34,7 @@ export class UsersController {
   }
 
   @Get()
-  findAll(@Query() _paginationQuery) {
+  findAll() {
     return this.usersService.findAll();
   }
 

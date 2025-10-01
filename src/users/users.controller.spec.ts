@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
+import { UserMessagesService } from './messages/messages.service';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
-import { UserMessagesService } from './messages/messages.service';
 
 describe('UsersController', () => {
   let controller: UsersController;

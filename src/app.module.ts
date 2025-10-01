@@ -6,13 +6,12 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { DiscordService } from './discord/discord.service';
-import { DiscordModule } from './discord/discord.module';
-import { TasksModule } from './tasks/tasks.module';
-import { UsersModule } from './users/users.module';
-import { ServersModule } from './servers/servers.module';
 import { AppConfigModule } from './core/config/config.module';
 import { MetricsModule } from './core/metrics/metrics.module';
+import { DiscordModule } from './discord/discord.module';
+import { ServersModule } from './servers/servers.module';
+import { TasksModule } from './tasks/tasks.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [

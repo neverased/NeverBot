@@ -1,11 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { DiscordService } from './discord.service';
-import { UsersService } from '../users/users.service';
-import { UserMessagesService } from '../users/messages/messages.service';
 import { ServersService } from '../servers/servers.service';
-import { DiscordClientProvider } from './discord-client.provider';
+import { UserMessagesService } from '../users/messages/messages.service';
+import { UsersService } from '../users/users.service';
 import { CommandRegistry } from './command-registry';
+import { DiscordService } from './discord.service';
+import { DiscordClientProvider } from './discord-client.provider';
 import { InteractionHandler } from './interaction-handler';
 
 describe('DiscordService', () => {

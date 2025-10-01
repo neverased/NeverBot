@@ -1,17 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
-import * as mongoose from 'mongoose';
-
-@Schema()
-export class Welcome {
-  @Prop({ type: String })
-  welcome_channel_id: string;
-
-  @Prop({ type: String })
-  welcome_message: string;
-}
-
-const _schemaWelcome = SchemaFactory.createForClass(Welcome);
 
 export type UserDocument = HydratedDocument<User>;
 

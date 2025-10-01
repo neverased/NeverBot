@@ -1,9 +1,10 @@
 //slash command to display bot stats and server stats
 import axios from 'axios';
 import { EmbedBuilder, SlashCommandBuilder } from 'discord.js';
-import { setDiscordResilience } from '../../decorators/discord-resilience.decorator';
 //import os-utils to get system stats
 import * as os from 'os';
+
+import { setDiscordResilience } from '../../decorators/discord-resilience.decorator';
 
 const toHHMMSS = (secs: number) => {
   const sec_num = parseInt(secs.toString(), 10);

@@ -3,9 +3,9 @@ import 'dotenv/config';
 // import axios from 'axios'; // No longer needed for b64_json
 import { SlashCommandBuilder } from 'discord.js';
 import * as fs from 'fs/promises';
-import { setDiscordResilience } from '../../decorators/discord-resilience.decorator';
 
 import openai from '../../../utils/openai-client';
+import { setDiscordResilience } from '../../decorators/discord-resilience.decorator';
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -46,10 +46,14 @@ module.exports = {
       });
 
       // const image_url = image.data[0].url; // Old URL logic
-      const imageCount = Array.isArray((imageResponse as any)?.data)
-        ? (imageResponse as any).data.length
+      interface ImageResponseData {
+        data?: Array<{ b64_json?: string }>;
+      }
+      const responseData = imageResponse as ImageResponseData;
+      const imageCount = Array.isArray(responseData?.data)
+        ? responseData.data.length
         : 0;
-      const image_base64 = (imageResponse as any)?.data?.[0]?.b64_json; // New b64_json logic
+      const image_base64 = responseData?.data?.[0]?.b64_json; // New b64_json logic
       console.log(
         `[Imagine] OpenAI response received | images=${imageCount} hasB64=${Boolean(
           image_base64,
@@ -91,8 +95,20 @@ module.exports = {
     } catch (error) {
       const elapsed = Date.now() - startedAt;
       // Try to surface OpenAI API details when present
-      const status = (error as any)?.response?.status;
-      const apiMsg = (error as any)?.response?.data?.error?.message;
+      interface ErrorResponse {
+        response?: {
+          status?: number;
+          data?: {
+            error?: {
+              message?: string;
+            };
+          };
+        };
+        message?: string;
+      }
+      const errorWithResponse = error as ErrorResponse;
+      const status = errorWithResponse?.response?.status;
+      const apiMsg = errorWithResponse?.response?.data?.error?.message;
       console.error(
         `[Imagine] Error | elapsedMs=${elapsed} status=${status ?? 'n/a'} message=${
           (error as Error)?.message
@@ -101,14 +117,14 @@ module.exports = {
       let errorMessage =
         'Sorry, I ran into a problem trying to imagine that. Is the prompt too wild?';
       if (
-        error.response &&
-        error.response.data &&
-        error.response.data.error &&
-        error.response.data.error.message
+        errorWithResponse.response &&
+        errorWithResponse.response.data &&
+        errorWithResponse.response.data.error &&
+        errorWithResponse.response.data.error.message
       ) {
-        errorMessage = `Sorry, I couldn't imagine that: ${error.response.data.error.message}`;
-      } else if (error.message) {
-        errorMessage = `Sorry, I couldn't imagine that: ${error.message}`;
+        errorMessage = `Sorry, I couldn't imagine that: ${errorWithResponse.response.data.error.message}`;
+      } else if (errorWithResponse.message) {
+        errorMessage = `Sorry, I couldn't imagine that: ${errorWithResponse.message}`;
       }
 
       if (interaction.replied || interaction.deferred) {
@@ -129,7 +145,10 @@ module.exports = {
         console.log(`[Imagine] Cleaned up | deleted ${tempImagePath}`);
       } catch (unlinkError) {
         // Log only if the error is not ENOENT (file not found), as it might not have been created
-        if (unlinkError.code !== 'ENOENT') {
+        interface NodeError extends Error {
+          code?: string;
+        }
+        if ((unlinkError as NodeError).code !== 'ENOENT') {
           console.error(
             `Failed to delete temporary image ${tempImagePath}:`,
             unlinkError,

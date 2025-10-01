@@ -1,8 +1,9 @@
-import { NestFactory } from '@nestjs/core';
-import { AppModule } from '../app.module';
-import { UsersService } from '../users/users.service';
-import { UserSummaryUpdateService } from '../users/user-summary-update.service';
 import { Logger } from '@nestjs/common';
+import { NestFactory } from '@nestjs/core';
+
+import { AppModule } from '../app.module';
+import { UserSummaryUpdateService } from '../users/user-summary-update.service';
+import { UsersService } from '../users/users.service';
 
 async function forceUpdateAllSummaries() {
   const logger = new Logger('ForceUpdateAllSummaries');

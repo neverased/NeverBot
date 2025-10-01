@@ -1,6 +1,7 @@
 //Bot command to het the list of available commands.
 
 import { SlashCommandBuilder } from 'discord.js';
+
 import { setDiscordResilience } from '../../decorators/discord-resilience.decorator';
 
 module.exports = {

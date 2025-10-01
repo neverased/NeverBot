@@ -1,12 +1,12 @@
 import {
-  SlashCommandBuilder,
-  PermissionFlagsBits,
-  ChannelType,
   ActionRowBuilder,
   ChannelSelectMenuBuilder,
+  ChannelType,
   ComponentType,
+  PermissionFlagsBits,
+  SlashCommandBuilder,
 } from 'discord.js';
-import { ServersService } from '../../../servers/servers.service';
+
 import { setDiscordResilience } from '../../decorators/discord-resilience.decorator';
 
 const CUSTOM_ID = 'setbotchannels_select';

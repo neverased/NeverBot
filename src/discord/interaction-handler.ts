@@ -1,19 +1,20 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { MetricsService } from '../core/metrics/metrics.service';
 import { ChatInputCommandInteraction, Interaction } from 'discord.js';
-import { UsersService } from '../users/users.service';
-import { UserMessagesService } from '../users/messages/messages.service';
-import { ServersService } from '../servers/servers.service';
-import { CommandRegistry } from './command-registry';
-import { withSafeInteraction } from './safe-discord';
-import { getDiscordResilience } from './decorators/discord-resilience.decorator';
+
+import { MetricsService } from '../core/metrics/metrics.service';
 import {
   commandErrors,
-  commandSuccess,
   commandStarts,
+  commandSuccess,
 } from '../core/metrics/metrics-registry';
-import { User as UserModel } from '../users/entities/user.entity';
 import { Server } from '../servers/schemas/server.schema';
+import { ServersService } from '../servers/servers.service';
+import { User as UserModel } from '../users/entities/user.entity';
+import { UserMessagesService } from '../users/messages/messages.service';
+import { UsersService } from '../users/users.service';
+import { CommandRegistry } from './command-registry';
+import { getDiscordResilience } from './decorators/discord-resilience.decorator';
+import { withSafeInteraction } from './safe-discord';
 
 @Injectable()
 export class InteractionHandler {
@@ -92,7 +93,9 @@ export class InteractionHandler {
       try {
         try {
           commandStarts.inc({ command: interaction.commandName });
-        } catch {}
+        } catch {
+          // Ignore metric errors
+        }
         const resilience = getDiscordResilience(command.execute) || {};
         const safe = withSafeInteraction(
           interaction as ChatInputCommandInteraction,
@@ -108,7 +111,9 @@ export class InteractionHandler {
         );
         try {
           commandSuccess.inc({ command: interaction.commandName });
-        } catch {}
+        } catch {
+          // Ignore metric errors
+        }
       } finally {
         endTimer();
       }
@@ -124,13 +129,17 @@ export class InteractionHandler {
             : 'unknown',
           type: (error as Error)?.name || 'Error',
         });
-      } catch {}
+      } catch {
+        // Ignore metric errors
+      }
       try {
         await (interaction as ChatInputCommandInteraction).reply({
           content: 'An error occurred while executing this command.',
           ephemeral: true,
         });
-      } catch {}
+      } catch {
+        // Ignore reply errors
+      }
     }
   }
 }

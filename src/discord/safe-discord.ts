@@ -1,5 +1,6 @@
 import { Logger } from '@nestjs/common';
 import { ChatInputCommandInteraction } from 'discord.js';
+
 import { ResilienceOptions } from './decorators/discord-resilience.decorator';
 
 interface BackoffOptions {

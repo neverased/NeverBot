@@ -1,7 +1,7 @@
 import { Controller, Get } from '@nestjs/common';
-import { MetricsService } from './core/metrics/metrics.service';
 
 import { AppService } from './app.service';
+import { MetricsService } from './core/metrics/metrics.service';
 
 @Controller()
 export class AppController {

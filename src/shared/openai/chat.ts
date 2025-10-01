@@ -1,12 +1,12 @@
 import OpenAI from 'openai';
 
-import openai from '../../utils/openai-client';
 import {
   openaiErrors,
+  openaiHttpErrors,
   responsesInputTokens,
   responsesOutputTokens,
-  openaiHttpErrors,
 } from '../../core/metrics/metrics-registry';
+import openai from '../../utils/openai-client';
 
 export interface ChatMessageParam {
   role: 'system' | 'user' | 'assistant';
@@ -134,7 +134,9 @@ export async function callChatCompletion(
           if (!Number.isNaN(output) && output > 0) {
             responsesOutputTokens.inc({ model }, output);
           }
-        } catch {}
+        } catch {
+          // Ignore metric errors
+        }
         return { content, conversationId: convId };
       } finally {
         clearTimeout(timeout);
@@ -142,12 +144,21 @@ export async function callChatCompletion(
     } catch (error) {
       try {
         openaiErrors.inc({ type: 'error' });
-      } catch {}
+      } catch {
+        // Ignore metric errors
+      }
       try {
+        interface ErrorWithStatus {
+          status?: number;
+          response?: { status?: number };
+        }
+        const errorWithStatus = error as ErrorWithStatus;
         const status =
-          (error as any)?.status || (error as any)?.response?.status;
+          errorWithStatus?.status || errorWithStatus?.response?.status;
         if (status) openaiHttpErrors.inc({ status: String(status) });
-      } catch {}
+      } catch {
+        // Ignore metric errors
+      }
       lastError = error;
       const jitter = Math.random() * 100;
       const delayMs = 250 * Math.pow(2, attempt) + jitter;

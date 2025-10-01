@@ -1,13 +1,13 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder } from 'discord.js';
 
+import { ServersService } from '../../../servers/servers.service';
 import { User as UserModel } from '../../../users/entities/user.entity';
 import { UserMessagesService } from '../../../users/messages/messages.service';
+import { setDiscordResilience } from '../../decorators/discord-resilience.decorator';
 import {
   generateOpenAiReplyWithState,
   splitTextIntoParts,
 } from '../../gpt/gpt-logic';
-import { setDiscordResilience } from '../../decorators/discord-resilience.decorator';
-import { ServersService } from '../../../servers/servers.service';
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -44,7 +44,9 @@ module.exports = {
             interaction.guild.id,
             interaction.channelId,
           );
-        } catch {}
+        } catch {
+          // Ignore errors fetching conversation ID
+        }
       }
       const { content: gptResponse, conversationId } =
         await generateOpenAiReplyWithState(
@@ -61,7 +63,9 @@ module.exports = {
             interaction.channelId,
             conversationId,
           );
-        } catch {}
+        } catch {
+          // Ignore errors saving conversation ID
+        }
       }
 
       if (!gptResponse) {

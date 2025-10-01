@@ -23,16 +23,18 @@ export class UsersService {
   }
 
   async findAll(): Promise<UserDocument[]> {
-    return this.usersModel.find().lean<UserDocument[]>({}).exec() as any;
+    const result = await this.usersModel.find().lean<UserDocument[]>({}).exec();
+    return result as UserDocument[];
   }
 
   async findOneByDiscordUserId(
     discordUserId: string,
   ): Promise<UserDocument | null> {
-    return this.usersModel
+    const result = await this.usersModel
       .findOne({ discordUserId: discordUserId })
       .lean<UserDocument>({})
-      .exec() as any;
+      .exec();
+    return result as UserDocument | null;
   }
 
   async findOrCreateUser(

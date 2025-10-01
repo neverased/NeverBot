@@ -2,10 +2,11 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ChatInputCommandInteraction, Collection } from 'discord.js';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+
+import { ServersService } from '../servers/servers.service';
 import { User as UserModel } from '../users/entities/user.entity';
 import { UserMessagesService } from '../users/messages/messages.service';
 import { UsersService } from '../users/users.service';
-import { ServersService } from '../servers/servers.service';
 
 export interface Command {
   data: { name: string; description?: string };
