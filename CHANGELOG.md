@@ -1,5 +1,21 @@
 # Changelog
 
+## [5.0.0](https://github.com/neverased/NeverBot/compare/never-bot-v4.0.0...never-bot-v5.0.0) (2025-10-01)
+
+
+### ⚠ BREAKING CHANGES
+
+* remove RAG and wiki ingestion
+
+### Features
+
+* refresh bot persona and harden typings ([aeacd32](https://github.com/neverased/NeverBot/commit/aeacd32ba1a20b4156018ec0218432ef608c7a3e))
+
+
+### Refactoring
+
+* remove RAG and wiki ingestion ([7eb5b78](https://github.com/neverased/NeverBot/commit/7eb5b78da002291e1c679b346ef43ca45567628f))
+
 ## [4.0.0](https://github.com/neverased/NeverBot/compare/never-bot-v3.11.0...never-bot-v4.0.0) (2025-09-04)
 
 
