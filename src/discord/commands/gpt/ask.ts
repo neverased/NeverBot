@@ -1,13 +1,11 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder } from 'discord.js';
 
 import { ServersService } from '../../../servers/servers.service';
+import { splitTextIntoParts } from '../../../shared/utils/text-splitter';
 import { User as UserModel } from '../../../users/entities/user.entity';
 import { UserMessagesService } from '../../../users/messages/messages.service';
 import { setDiscordResilience } from '../../decorators/discord-resilience.decorator';
-import {
-  generateOpenAiReplyWithState,
-  splitTextIntoParts,
-} from '../../gpt/gpt-logic';
+import { generateOpenAiReplyWithState } from '../../gpt/gpt-logic';
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -69,8 +67,14 @@ module.exports = {
       }
 
       if (!gptResponse) {
+        const errorReplies = [
+          'my brain just blue-screened. give me a sec and try again?',
+          'took too long to think of something clever. ask me again?',
+          'connection timed out on my end. hit me up again in a minute',
+          'brain.exe has stopped responding. try that again?',
+        ];
         await interaction.editReply(
-          "Sorry, I had a moment of existential dread and couldn't come up with a response. Try again?",
+          errorReplies[Math.floor(Math.random() * errorReplies.length)],
         );
         return;
       }
@@ -93,8 +97,13 @@ module.exports = {
       }
     } catch (error) {
       console.error('Error executing ask command:', error);
+      const errorReplies = [
+        'something went sideways on my end. try asking again?',
+        "yeah that didn't work. give it another shot?",
+        'hit a snag there. mind trying that again?',
+      ];
       await interaction.editReply(
-        'Sorry, I ran into a problem trying to answer that. Maybe ask something less complicated?',
+        errorReplies[Math.floor(Math.random() * errorReplies.length)],
       );
     }
   },

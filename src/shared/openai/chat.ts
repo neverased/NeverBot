@@ -22,6 +22,8 @@ export interface ChatRequestOptions {
   retryCount?: number;
   conversation?: 'auto' | { id: string };
   enableWebSearch?: boolean;
+  reasoning?: { effort: 'low' | 'medium' | 'high' };
+  text?: { verbosity: 'low' | 'medium' | 'high' };
 }
 
 export interface ChatResponse {
@@ -41,9 +43,11 @@ export async function callChatCompletion(
     maxCompletionTokens = 1024,
     frequencyPenalty = 0,
     presencePenalty = 0,
-    model = 'gpt-4o-mini',
+    model = 'gpt-5',
     retryCount = 2,
     conversation,
+    reasoning,
+    text,
   } = options;
 
   // Map ChatCompletion-style messages to Responses API fields
@@ -93,6 +97,8 @@ export async function callChatCompletion(
         'id' in conversation
           ? { conversation }
           : {}),
+        ...(reasoning ? { reasoning } : {}),
+        ...(text ? { text } : {}),
         ...(options.enableWebSearch ||
         String(process.env.WEB_SEARCH_ENABLED).toLowerCase() === 'true'
           ? {
@@ -112,7 +118,7 @@ export async function callChatCompletion(
       }
 
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 30_000);
+      const timeout = setTimeout(() => controller.abort(), 60_000);
       try {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const response: any = await openai.responses.create(payload as any, {

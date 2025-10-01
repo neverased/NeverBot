@@ -51,7 +51,12 @@ Summary:`;
           { role: 'system', content: 'You are a helpful assistant.' },
           { role: 'user', content: prompt },
         ],
-        { model: 'gpt-5', temperature: 0.7, maxCompletionTokens: 1024 },
+        {
+          model: 'gpt-5',
+          maxCompletionTokens: 1024,
+          reasoning: { effort: 'medium' },
+          text: { verbosity: 'medium' },
+        },
       );
       if (!summary) {
         await interaction.editReply(

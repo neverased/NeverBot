@@ -138,7 +138,12 @@ Generate the personality summary:`;
           },
           { role: 'user', content: prompt },
         ],
-        { model: 'gpt-4o-mini', temperature: 0.7, maxCompletionTokens: 150 },
+        {
+          model: 'gpt-5',
+          maxCompletionTokens: 150,
+          reasoning: { effort: 'low' },
+          text: { verbosity: 'low' },
+        },
       );
 
       const summary = generated?.trim() || 'Could not generate summary.';

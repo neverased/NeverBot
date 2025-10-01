@@ -23,16 +23,14 @@ import { discordRateLimitHits } from '../core/metrics/metrics-registry';
 import { Server } from '../servers/schemas/server.schema';
 import { ServersService } from '../servers/servers.service';
 import { callChatCompletion } from '../shared/openai/chat';
+import { splitTextIntoParts } from '../shared/utils/text-splitter';
 import { User as UserModel } from '../users/entities/user.entity';
 import { CreateUserMessageDto } from '../users/messages/dto/create-user-message.dto';
 import { UserMessagesService } from '../users/messages/messages.service';
 import { UsersService } from '../users/users.service';
 import { CommandRegistry } from './command-registry';
 import { DiscordClientProvider } from './discord-client.provider';
-import {
-  generateOpenAiReplyWithState,
-  splitTextIntoParts,
-} from './gpt/gpt-logic';
+import { generateOpenAiReplyWithState } from './gpt/gpt-logic';
 import { InteractionHandler } from './interaction-handler';
 import { textFromImage } from './translator/cv_scrape';
 import { translateText } from './translator/translate';
@@ -165,7 +163,12 @@ export class DiscordService implements OnModuleInit {
               content: `Someone new just joined: ${member.user.username}. Welcome them briefly and mention /help exists if they need it.`,
             },
           ],
-          { model: 'gpt-5', temperature: 1, maxCompletionTokens: 150 },
+          {
+            model: 'gpt-5',
+            maxCompletionTokens: 150,
+            reasoning: { effort: 'low' },
+            text: { verbosity: 'low' },
+          },
         );
 
         const description = content ?? `Welcome, <@${member.user.id}>!`;
@@ -375,8 +378,14 @@ export class DiscordService implements OnModuleInit {
         );
       }
     } else {
+      const errorReplies = [
+        'my brain just blue-screened. give me a sec and try again?',
+        'took too long to think of something clever. ask me again?',
+        'connection timed out on my end. hit me up again in a minute',
+        'brain.exe has stopped responding. try that again?',
+      ];
       const errorReply =
-        'I tried to think of something witty, but my circuits are fried. Ask again later?';
+        errorReplies[Math.floor(Math.random() * errorReplies.length)];
       let botErrorReplyMessage: Message | undefined;
       if (this.isSendableChannel(message.channel)) {
         const messages = await message.channel.messages.fetch({ limit: 1 });

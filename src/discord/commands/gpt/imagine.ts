@@ -115,16 +115,16 @@ module.exports = {
         } details=${apiMsg ?? 'n/a'}`,
       );
       let errorMessage =
-        'Sorry, I ran into a problem trying to imagine that. Is the prompt too wild?';
+        "couldn't generate that image. maybe the prompt's too wild or something broke on my end?";
       if (
         errorWithResponse.response &&
         errorWithResponse.response.data &&
         errorWithResponse.response.data.error &&
         errorWithResponse.response.data.error.message
       ) {
-        errorMessage = `Sorry, I couldn't imagine that: ${errorWithResponse.response.data.error.message}`;
+        errorMessage = `couldn't generate that: ${errorWithResponse.response.data.error.message}`;
       } else if (errorWithResponse.message) {
-        errorMessage = `Sorry, I couldn't imagine that: ${errorWithResponse.message}`;
+        errorMessage = `couldn't generate that: ${errorWithResponse.message}`;
       }
 
       if (interaction.replied || interaction.deferred) {

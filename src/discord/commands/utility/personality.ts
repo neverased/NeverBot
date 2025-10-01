@@ -87,7 +87,7 @@ module.exports = {
         error,
       );
       await interaction.editReply(
-        'Sorry, I ran into a problem trying to fetch that personality summary.',
+        "couldn't grab that personality summary. something broke on my end.",
       );
     }
   },
