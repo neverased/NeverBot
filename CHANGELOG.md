@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.1.0](https://github.com/neverased/NeverBot/compare/never-bot-v5.0.0...never-bot-v5.1.0) (2025-10-01)
+
+
+### Features
+
+* migrate to gpt-5 + verbosity/effort knobs ([4748c4c](https://github.com/neverased/NeverBot/commit/4748c4cb3fa41b1d5ee2074b3d83d4b80a1a81cd))
+
 ## [5.0.0](https://github.com/neverased/NeverBot/compare/never-bot-v4.0.0...never-bot-v5.0.0) (2025-10-01)
 
 
