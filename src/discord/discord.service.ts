@@ -558,12 +558,21 @@ export class DiscordService implements OnModuleInit {
         significantTopics = [];
       }
       try {
+        // Use fallback content for image-only messages
+        let messageContent = message.content;
+        if (!messageContent || messageContent.trim() === '') {
+          const imageCount = message.attachments.filter((a) =>
+            a.contentType?.startsWith('image/'),
+          ).size;
+          messageContent = imageCount > 0 ? '[image]' : '[empty message]';
+        }
+
         const createUserMessageDto: CreateUserMessageDto = {
           userId: discordUserId,
           messageId: messageId,
           channelId: channelId,
           guildId: serverId, // Use optional guildId
-          content: message.content,
+          content: messageContent,
           timestamp: message.createdAt,
           sentiment: {
             score: sentimentScore,

@@ -80,8 +80,13 @@ export async function generateOpenAiReplyWithState(
     const contentParts: Array<
       | { type: 'text'; text: string }
       | { type: 'image_url'; image_url: { url: string } }
-    > = [{ type: 'text', text: question }];
+    > = [];
 
+    // Add text content if present, otherwise use placeholder for image-only messages
+    const textContent = question.trim() || 'What do you think?';
+    contentParts.push({ type: 'text', text: textContent });
+
+    // Add all images
     for (const imageUrl of imageUrls) {
       contentParts.push({
         type: 'image_url',

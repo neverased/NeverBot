@@ -60,7 +60,102 @@ export async function callChatCompletion(
 
   const nonSystem = messages.filter((m) => m.role !== 'system');
 
-  // Build a plain text conversation input to avoid schema mismatches.
+  // Check if any messages contain images
+  const hasImages = nonSystem.some(
+    (m) =>
+      Array.isArray(m.content) &&
+      m.content.some(
+        (part: any) => part?.type === 'image_url' && part?.image_url?.url,
+      ),
+  );
+
+  // If there are images, use Chat Completions API which has native vision support
+  if (hasImages) {
+    const chatCompletionMessages = messages.filter(
+      (m) => m.role !== 'system',
+    ) as OpenAI.Chat.ChatCompletionMessageParam[];
+
+    const allMessages: Array<OpenAI.Chat.ChatCompletionMessageParam> = [];
+    if (systemInstructions) {
+      allMessages.push({ role: 'system', content: systemInstructions });
+    }
+    allMessages.push(...chatCompletionMessages);
+
+    // Use a vision-capable chat model. If caller passed a gpt-4* model, use it; otherwise default to gpt-4o
+    const visionModel =
+      typeof model === 'string' && model.toLowerCase().startsWith('gpt-4')
+        ? model
+        : 'gpt-4o';
+
+    let lastError: unknown = undefined;
+    for (let attempt = 0; attempt <= retryCount; attempt++) {
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 60_000);
+        try {
+          // Use Chat Completions API for vision
+          const response = await openai.chat.completions.create(
+            {
+              model: visionModel,
+              messages: allMessages,
+              max_tokens: maxCompletionTokens, // Chat Completions expects max_tokens
+              temperature,
+              frequency_penalty: frequencyPenalty,
+              presence_penalty: presencePenalty,
+            },
+            { signal: controller.signal },
+          );
+
+          const content: string | null =
+            response.choices[0]?.message?.content || null;
+
+          try {
+            const usage: any = response?.usage ?? {};
+            const input = Number(usage.prompt_tokens ?? 0);
+            const output = Number(usage.completion_tokens ?? 0);
+            if (!Number.isNaN(input) && input > 0) {
+              responsesInputTokens.inc({ model: visionModel }, input);
+            }
+            if (!Number.isNaN(output) && output > 0) {
+              responsesOutputTokens.inc({ model: visionModel }, output);
+            }
+          } catch {
+            // Ignore metric errors
+          }
+          // Chat Completions doesn't have conversation IDs, so we return undefined.
+          // Context is maintained by passing message history.
+          return { content, conversationId: undefined };
+        } finally {
+          clearTimeout(timeout);
+        }
+      } catch (error) {
+        try {
+          openaiErrors.inc({ type: 'error' });
+        } catch {
+          // Ignore metric errors
+        }
+        try {
+          interface ErrorWithStatus {
+            status?: number;
+            response?: { status?: number };
+          }
+          const errorWithStatus = error as ErrorWithStatus;
+          const status =
+            errorWithStatus?.status || errorWithStatus?.response?.status;
+          if (status) openaiHttpErrors.inc({ status: String(status) });
+        } catch {
+          // Ignore metric errors
+        }
+        lastError = error;
+        const jitter = Math.random() * 100;
+        const delayMs = 250 * Math.pow(2, attempt) + jitter;
+        await new Promise((r) => setTimeout(r, delayMs));
+      }
+    }
+    throw lastError;
+  }
+
+  // Build a plain text conversation input for TEXT-ONLY non-vision requests
   const conversationText: string = nonSystem
     .map((m) => {
       const prefix = m.role === 'assistant' ? 'Assistant' : 'User';
