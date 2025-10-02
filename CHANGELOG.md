@@ -1,5 +1,13 @@
 # Changelog
 
+## [5.2.0](https://github.com/neverased/NeverBot/compare/never-bot-v5.1.0...never-bot-v5.2.0) (2025-10-02)
+
+
+### Features
+
+* add image roasting for attachments ([f67d6ed](https://github.com/neverased/NeverBot/commit/f67d6edc13972cd28896955c4afd5ea2d14aff4b))
+* pivot bot to short roast-first persona ([5714d87](https://github.com/neverased/NeverBot/commit/5714d87463abcd03cc37af5259e3bb1488074bf0))
+
 ## [5.1.0](https://github.com/neverased/NeverBot/compare/never-bot-v5.0.0...never-bot-v5.1.0) (2025-10-01)
 
 
