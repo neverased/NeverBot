@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.3.0](https://github.com/neverased/NeverBot/compare/never-bot-v5.2.0...never-bot-v5.3.0) (2025-10-02)
+
+
+### Features
+
+* openai vision & image-only msg support ([460ed61](https://github.com/neverased/NeverBot/commit/460ed61d689a15fdf653e11bd7d0508c2c3c5f2c))
+
 ## [5.2.0](https://github.com/neverased/NeverBot/compare/never-bot-v5.1.0...never-bot-v5.2.0) (2025-10-02)
 
 
