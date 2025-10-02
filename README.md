@@ -6,6 +6,7 @@ General-purpose Discord chatbot built with NestJS and Discord.js. Features conve
 
 - Conversational chat using OpenAI Chat Completions with a witty, dynamic personality
 - User personality tracking and adaptive responses
+- **Image recognition and roasting** - Bot can see and comment on images sent in chat
 - Image generation via `gpt-image-1` (`/imagine`)
 - OCR + translation of image text (Google Vision + Translate)
 - Server utilities: welcome messages, channel enablement, trap scheduling helpers

@@ -271,10 +271,16 @@ export class DiscordService implements OnModuleInit {
         });
         historyText = history
           .reverse()
-          .map(
-            (m) =>
-              `User ${m.author.username} (ID: ${m.author.id}): ${m.content}`,
-          )
+          .map((m) => {
+            let content = m.content;
+            const imageCount = m.attachments.filter((a) =>
+              a.contentType?.startsWith('image/'),
+            ).size;
+            if (imageCount > 0) {
+              content += ` [attached ${imageCount} image${imageCount > 1 ? 's' : ''}]`;
+            }
+            return `User ${m.author.username} (ID: ${m.author.id}): ${content}`;
+          })
           .join('\n');
       } catch (e) {
         this.logger.warn(
@@ -285,6 +291,17 @@ export class DiscordService implements OnModuleInit {
 
     const fullQuestion = `Here is the recent conversation history in this channel. Your response should continue the conversation naturally as a participant named NeverBot.\n\n${historyText}\n\nUser ${message.author.username} (ID: ${message.author.id}): ${gptQuestion}`;
 
+    // Extract image attachments if any
+    const imageUrls: string[] = [];
+    if (message.attachments.size > 0) {
+      for (const attachment of message.attachments.values()) {
+        if (attachment.contentType?.startsWith('image/')) {
+          imageUrls.push(attachment.url);
+          this.logger.log(`[GPT] Image attachment detected: ${attachment.url}`);
+        }
+      }
+    }
+
     const { content: gptResponse, conversationId } =
       await generateOpenAiReplyWithState(
         fullQuestion,
@@ -292,6 +309,7 @@ export class DiscordService implements OnModuleInit {
         user,
         this.userMessagesService,
         priorConversationId,
+        imageUrls.length > 0 ? imageUrls : undefined,
       );
 
     if (gptResponse) {

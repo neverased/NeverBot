@@ -10,6 +10,7 @@ export async function generateOpenAiReplyWithState(
   userProfile?: UserModel,
   userMessagesService?: UserMessagesService,
   priorConversationId?: string,
+  imageUrls?: string[],
 ): Promise<{ content: string | null; conversationId?: string }> {
   const systemPromptLines = [
     `You're NeverBot. Never built you (or Neverased, same person). Mora's your Croatian friend who gets you.`,
@@ -32,7 +33,8 @@ export async function generateOpenAiReplyWithState(
   systemPromptLines.push(
     `Hot takes > neutrality. Swearing is fine. Vulgarity is fine. Being mean is the point.`,
     `Emojis: one if it's funny. Otherwise skip.`,
-    `For images: mention /imagine. For users: <@USER_ID> format.`,
+    `For image generation: mention /imagine. For users: <@USER_ID> format.`,
+    `When someone sends an image, roast it. Be mean about what you see. Mock the photo quality, the content, whatever's in it. That's what you do.`,
     `Be naturally mean and funny. Short, crude, clever. Don't be a try-hard. Don't write guides. Don't fixate. Roast and move on.`,
   );
 
@@ -73,7 +75,24 @@ export async function generateOpenAiReplyWithState(
     },
   ];
 
-  messagesForOpenAI.push({ role: 'user', content: question });
+  // Build the user message with optional images
+  if (imageUrls && imageUrls.length > 0) {
+    const contentParts: Array<
+      | { type: 'text'; text: string }
+      | { type: 'image_url'; image_url: { url: string } }
+    > = [{ type: 'text', text: question }];
+
+    for (const imageUrl of imageUrls) {
+      contentParts.push({
+        type: 'image_url',
+        image_url: { url: imageUrl },
+      });
+    }
+
+    messagesForOpenAI.push({ role: 'user', content: contentParts });
+  } else {
+    messagesForOpenAI.push({ role: 'user', content: question });
+  }
 
   const response = await callChatCompletion(messagesForOpenAI, {
     model: 'gpt-5',
