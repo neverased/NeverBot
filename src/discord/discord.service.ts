@@ -862,7 +862,7 @@ export class DiscordService implements OnModuleInit {
           await this.handleGptResponse(message, user, message.content);
         } catch (replyError) {
           const errorMsg = (replyError as Error).message || 'Unknown error';
-          const errorCode = (replyError as any)?.code;
+          const errorCode = (replyError as Error & { code?: number })?.code;
 
           // Check if this is a permissions error
           if (

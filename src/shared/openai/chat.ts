@@ -65,7 +65,15 @@ export async function callChatCompletion(
     (m) =>
       Array.isArray(m.content) &&
       m.content.some(
-        (part: any) => part?.type === 'image_url' && part?.image_url?.url,
+        (part: unknown) =>
+          typeof part === 'object' &&
+          part !== null &&
+          'type' in part &&
+          part.type === 'image_url' &&
+          'image_url' in part &&
+          typeof part.image_url === 'object' &&
+          part.image_url !== null &&
+          'url' in part.image_url,
       ),
   );
 
@@ -117,9 +125,10 @@ export async function callChatCompletion(
           }
 
           try {
-            const usage: any = response?.usage ?? {};
-            const input = Number(usage.prompt_tokens ?? 0);
-            const output = Number(usage.completion_tokens ?? 0);
+            const usage =
+              (response?.usage as unknown as Record<string, unknown>) ?? {};
+            const input = Number((usage.prompt_tokens as number) ?? 0);
+            const output = Number((usage.completion_tokens as number) ?? 0);
             if (!Number.isNaN(input) && input > 0) {
               responsesInputTokens.inc({ model: visionModel }, input);
             }
@@ -247,15 +256,16 @@ export async function callChatCompletion(
       const timeout = setTimeout(() => controller.abort(), 30_000); // Reduced from 60s to 30s
       try {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const response: any = await openai.responses.create(payload as any, {
+        const response = await openai.responses.create(payload as any, {
           signal: controller.signal,
         });
 
         // Check for API error in response
         if (response?.error) {
+          const error = response.error as unknown as Record<string, unknown>;
           const errorMsg =
-            response.error.message || JSON.stringify(response.error);
-          const errorType = response.error.type || 'unknown_error';
+            (error.message as string) || JSON.stringify(response.error);
+          const errorType = (error.type as string) || 'unknown_error';
           console.error(
             `[OpenAI] API returned error in response: ${errorType} - ${errorMsg}`,
           );
@@ -296,9 +306,14 @@ export async function callChatCompletion(
         }
 
         try {
-          const usage = response?.usage ?? {};
-          const input = Number(usage.input_tokens ?? usage.input ?? 0);
-          const output = Number(usage.output_tokens ?? usage.output ?? 0);
+          const usage =
+            (response?.usage as unknown as Record<string, unknown>) ?? {};
+          const input = Number(
+            (usage.input_tokens as number) ?? (usage.input as number) ?? 0,
+          );
+          const output = Number(
+            (usage.output_tokens as number) ?? (usage.output as number) ?? 0,
+          );
           if (!Number.isNaN(input) && input > 0) {
             responsesInputTokens.inc({ model }, input);
           }
