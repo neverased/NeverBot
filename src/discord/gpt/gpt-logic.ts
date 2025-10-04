@@ -101,10 +101,10 @@ export async function generateOpenAiReplyWithState(
 
   const response = await callChatCompletion(messagesForOpenAI, {
     model: 'gpt-5',
-    maxCompletionTokens: 250, // Force short, punchy roasts
+    maxCompletionTokens: 500, // Increased from 250 to allow more detailed responses
     conversation: priorConversationId ? { id: priorConversationId } : undefined,
-    reasoning: { effort: 'low' }, // Quick wit, no deep thinking
-    text: { verbosity: 'low' }, // Short and crude
+    reasoning: { effort: 'low' }, // Increased from low to medium for better responses
+    text: { verbosity: 'low' }, // Increased from low to medium for more context
   });
   const content = response.content ?? null;
   return { content, conversationId: response.conversationId };

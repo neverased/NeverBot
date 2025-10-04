@@ -40,7 +40,7 @@ export async function callChatCompletion(
 ): Promise<ChatResponse> {
   const {
     temperature = 1,
-    maxCompletionTokens = 1024,
+    maxCompletionTokens = 2048, // Increased default from 1024 to 2048
     frequencyPenalty = 0,
     presencePenalty = 0,
     model = 'gpt-5',
@@ -91,7 +91,7 @@ export async function callChatCompletion(
     for (let attempt = 0; attempt <= retryCount; attempt++) {
       try {
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 60_000);
+        const timeout = setTimeout(() => controller.abort(), 30_000); // Reduced from 60s to 30s
         try {
           // Use Chat Completions API for vision
           const response = await openai.chat.completions.create(
@@ -108,6 +108,13 @@ export async function callChatCompletion(
 
           const content: string | null =
             response.choices[0]?.message?.content || null;
+
+          // Log if we got an empty response
+          if (!content || content.trim() === '') {
+            console.warn(
+              `[OpenAI] Vision API received empty content. Completion ID: ${response.id}`,
+            );
+          }
 
           try {
             const usage: any = response?.usage ?? {};
@@ -129,6 +136,13 @@ export async function callChatCompletion(
           clearTimeout(timeout);
         }
       } catch (error) {
+        // Log the actual error details
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        const errorName = error instanceof Error ? error.name : 'UnknownError';
+        console.error(
+          `[OpenAI] Vision API attempt ${attempt + 1}/${retryCount + 1} failed: ${errorName} - ${errorMsg}`,
+        );
+
         try {
           openaiErrors.inc({ type: 'error' });
         } catch {
@@ -142,16 +156,33 @@ export async function callChatCompletion(
           const errorWithStatus = error as ErrorWithStatus;
           const status =
             errorWithStatus?.status || errorWithStatus?.response?.status;
-          if (status) openaiHttpErrors.inc({ status: String(status) });
+          if (status) {
+            openaiHttpErrors.inc({ status: String(status) });
+            console.error(`[OpenAI] Vision API HTTP Error status: ${status}`);
+          }
         } catch {
           // Ignore metric errors
         }
         lastError = error;
-        const jitter = Math.random() * 100;
-        const delayMs = 250 * Math.pow(2, attempt) + jitter;
-        await new Promise((r) => setTimeout(r, delayMs));
+
+        // Don't retry if this is the last attempt
+        if (attempt < retryCount) {
+          const jitter = Math.random() * 100;
+          const delayMs = 250 * Math.pow(2, attempt) + jitter;
+          console.log(
+            `[OpenAI] Vision API retrying in ${delayMs.toFixed(0)}ms...`,
+          );
+          await new Promise((r) => setTimeout(r, delayMs));
+        }
       }
     }
+
+    // Log final failure before throwing
+    const finalErrorMsg =
+      lastError instanceof Error ? lastError.message : String(lastError);
+    console.error(
+      `[OpenAI] Vision API all retry attempts exhausted. Final error: ${finalErrorMsg}`,
+    );
     throw lastError;
   }
 
@@ -213,18 +244,57 @@ export async function callChatCompletion(
       }
 
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 60_000);
+      const timeout = setTimeout(() => controller.abort(), 30_000); // Reduced from 60s to 30s
       try {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const response: any = await openai.responses.create(payload as any, {
           signal: controller.signal,
         });
+
+        // Check for API error in response
+        if (response?.error) {
+          const errorMsg =
+            response.error.message || JSON.stringify(response.error);
+          const errorType = response.error.type || 'unknown_error';
+          console.error(
+            `[OpenAI] API returned error in response: ${errorType} - ${errorMsg}`,
+          );
+          throw new Error(`OpenAI API Error: ${errorType} - ${errorMsg}`);
+        }
+
+        // Check response status
+        if (response?.status && response.status !== 'completed') {
+          console.warn(
+            `[OpenAI] Response status is '${response.status}', not 'completed'. This may indicate an incomplete response.`,
+          );
+          if (response.status === 'failed') {
+            const errorMsg =
+              response.incomplete_details?.reason ||
+              'Response failed without details';
+            throw new Error(`OpenAI response failed: ${errorMsg}`);
+          }
+        }
+
         // Prefer `output_text` if populated; otherwise try to extract first text output
         const content: string | null =
           response?.output_text?.trim?.() ??
           extractFirstTextFromResponse(response);
         const convId: string | undefined =
           response?.conversation?.id ?? undefined;
+
+        // Log if we got an empty response
+        if (!content || content.trim() === '') {
+          console.warn(
+            `[OpenAI] Received empty content. Response status: ${response?.status || 'unknown'}, Response keys: ${Object.keys(response).join(', ')}`,
+          );
+          // Log more details about the response structure
+          if (response?.output) {
+            console.warn(
+              `[OpenAI] Output structure: ${JSON.stringify(response.output).substring(0, 500)}`,
+            );
+          }
+        }
+
         try {
           const usage = response?.usage ?? {};
           const input = Number(usage.input_tokens ?? usage.input ?? 0);
@@ -243,6 +313,13 @@ export async function callChatCompletion(
         clearTimeout(timeout);
       }
     } catch (error) {
+      // Log the actual error details
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      const errorName = error instanceof Error ? error.name : 'UnknownError';
+      console.error(
+        `[OpenAI] Attempt ${attempt + 1}/${retryCount + 1} failed: ${errorName} - ${errorMsg}`,
+      );
+
       try {
         openaiErrors.inc({ type: 'error' });
       } catch {
@@ -256,16 +333,31 @@ export async function callChatCompletion(
         const errorWithStatus = error as ErrorWithStatus;
         const status =
           errorWithStatus?.status || errorWithStatus?.response?.status;
-        if (status) openaiHttpErrors.inc({ status: String(status) });
+        if (status) {
+          openaiHttpErrors.inc({ status: String(status) });
+          console.error(`[OpenAI] HTTP Error status: ${status}`);
+        }
       } catch {
         // Ignore metric errors
       }
       lastError = error;
-      const jitter = Math.random() * 100;
-      const delayMs = 250 * Math.pow(2, attempt) + jitter;
-      await new Promise((r) => setTimeout(r, delayMs));
+
+      // Don't retry if this is the last attempt
+      if (attempt < retryCount) {
+        const jitter = Math.random() * 100;
+        const delayMs = 250 * Math.pow(2, attempt) + jitter;
+        console.log(`[OpenAI] Retrying in ${delayMs.toFixed(0)}ms...`);
+        await new Promise((r) => setTimeout(r, delayMs));
+      }
     }
   }
+
+  // Log final failure before throwing
+  const finalErrorMsg =
+    lastError instanceof Error ? lastError.message : String(lastError);
+  console.error(
+    `[OpenAI] All retry attempts exhausted. Final error: ${finalErrorMsg}`,
+  );
   throw lastError;
 }
 

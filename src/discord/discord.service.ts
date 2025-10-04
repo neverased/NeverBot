@@ -70,6 +70,12 @@ export class DiscordService implements OnModuleInit {
   private conversationContextCache: Map<string, ConversationContext> =
     new Map();
   private readonly CONVERSATION_TIMEOUT_MS = 2 * 60 * 1000; // 2 minutes
+  // Rate limiting: key is userId, value is array of timestamps
+  private userRateLimits: Map<string, number[]> = new Map();
+  private readonly RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
+  private readonly MAX_REQUESTS_PER_WINDOW = 10;
+  // Message processing queue to prevent race conditions
+  private processingMessages: Set<string> = new Set();
 
   constructor(
     private readonly usersService: UsersService,
@@ -111,6 +117,7 @@ export class DiscordService implements OnModuleInit {
     this.registerGuildMemberRemoveHandler();
     await this.loadCommands();
     await this.loginClient();
+    this.startCacheCleanupInterval();
   }
 
   private registerInteractionCreateHandler(): void {
@@ -233,6 +240,75 @@ export class DiscordService implements OnModuleInit {
     );
   }
 
+  private startCacheCleanupInterval(): void {
+    // Clean up old conversation contexts every 5 minutes
+    setInterval(
+      () => {
+        const now = Date.now();
+        let removedCount = 0;
+        for (const [key, context] of this.conversationContextCache.entries()) {
+          if (
+            now - context.lastBotReplyTimestamp >
+            this.CONVERSATION_TIMEOUT_MS
+          ) {
+            this.conversationContextCache.delete(key);
+            removedCount++;
+          }
+        }
+        if (removedCount > 0) {
+          this.logger.debug(
+            `[Cache Cleanup] Removed ${removedCount} expired conversation contexts`,
+          );
+        }
+        // Clean up old rate limit entries
+        let rateLimitRemoved = 0;
+        for (const [userId, timestamps] of this.userRateLimits.entries()) {
+          const validTimestamps = timestamps.filter(
+            (ts) => now - ts < this.RATE_LIMIT_WINDOW_MS,
+          );
+          if (validTimestamps.length === 0) {
+            this.userRateLimits.delete(userId);
+            rateLimitRemoved++;
+          } else if (validTimestamps.length !== timestamps.length) {
+            this.userRateLimits.set(userId, validTimestamps);
+          }
+        }
+        if (rateLimitRemoved > 0) {
+          this.logger.debug(
+            `[Cache Cleanup] Removed ${rateLimitRemoved} expired rate limit entries`,
+          );
+        }
+      },
+      5 * 60 * 1000,
+    ); // Every 5 minutes
+  }
+
+  private checkRateLimit(userId: string): boolean {
+    const now = Date.now();
+    const userTimestamps = this.userRateLimits.get(userId) || [];
+    const recentTimestamps = userTimestamps.filter(
+      (ts) => now - ts < this.RATE_LIMIT_WINDOW_MS,
+    );
+    if (recentTimestamps.length >= this.MAX_REQUESTS_PER_WINDOW) {
+      return false;
+    }
+    recentTimestamps.push(now);
+    this.userRateLimits.set(userId, recentTimestamps);
+    return true;
+  }
+
+  private isMessageBeingProcessed(messageId: string): boolean {
+    return this.processingMessages.has(messageId);
+  }
+
+  private markMessageAsProcessing(messageId: string): void {
+    this.processingMessages.add(messageId);
+  }
+
+  private markMessageAsProcessed(messageId: string): void {
+    this.processingMessages.delete(messageId);
+  }
+
   private async handleGptResponse(
     message: Message,
     user: UserModel,
@@ -302,8 +378,11 @@ export class DiscordService implements OnModuleInit {
       }
     }
 
-    const { content: gptResponse, conversationId } =
-      await generateOpenAiReplyWithState(
+    let gptResponse: string | null = null;
+    let conversationId: string | undefined = undefined;
+
+    try {
+      const response = await generateOpenAiReplyWithState(
         fullQuestion,
         message.author.globalName || message.author.username,
         user,
@@ -311,6 +390,14 @@ export class DiscordService implements OnModuleInit {
         priorConversationId,
         imageUrls.length > 0 ? imageUrls : undefined,
       );
+      gptResponse = response.content;
+      conversationId = response.conversationId;
+    } catch (gptError) {
+      this.logger.error(
+        `[GPT] Failed to generate response for ${message.author.username}: ${(gptError as Error).message}`,
+        (gptError as Error).stack,
+      );
+    }
 
     if (gptResponse) {
       const maxDiscordMessageLength = 2000;
@@ -483,8 +570,45 @@ export class DiscordService implements OnModuleInit {
         }
       }
 
-      // --- NLP and Message Saving Logic (existing, ensure it runs for all user messages) ---
-      // ... (This part remains, ensure it executes before response logic)
+      // Check if message is already being processed (prevent race conditions)
+      if (this.isMessageBeingProcessed(messageId)) {
+        this.logger.debug(
+          `[Race Condition] Message ${messageId} is already being processed. Skipping.`,
+        );
+        return;
+      }
+
+      // Check rate limit
+      const mentionsBotItself =
+        messageContentLower.includes(botNameLower) ||
+        message.mentions.has(this.client.user.id);
+      const mentionsNever = messageContentLower.includes(
+        alternativeBotNameLower,
+      );
+      const isBotMentioned = mentionsBotItself || mentionsNever;
+
+      if (isBotMentioned && !this.checkRateLimit(discordUserId)) {
+        this.logger.warn(
+          `[Rate Limit] User ${message.author.username} (${discordUserId}) exceeded rate limit`,
+        );
+        try {
+          await message.reply(
+            'Whoa, slow down there champ. Give me a sec to breathe. Try again in a minute.',
+          );
+        } catch (e) {
+          this.logger.warn(
+            `Failed to send rate limit message: ${(e as Error).message}`,
+          );
+        }
+        // Don't mark as processing since we're not processing it
+        return;
+      }
+
+      // Mark message as being processed
+      this.markMessageAsProcessing(messageId);
+
+      // --- NLP and Message Saving Logic (NON-BLOCKING) ---
+      // Process in background to avoid blocking response
       let sentimentScore: number;
       let sentimentComparative: number;
       let sentimentCategory: string;
@@ -557,86 +681,96 @@ export class DiscordService implements OnModuleInit {
         sentimentCategory = 'neutral';
         significantTopics = [];
       }
-      try {
-        // Use fallback content for image-only messages
-        let messageContent = message.content;
-        if (!messageContent || messageContent.trim() === '') {
-          const imageCount = message.attachments.filter((a) =>
-            a.contentType?.startsWith('image/'),
-          ).size;
-          messageContent = imageCount > 0 ? '[image]' : '[empty message]';
-        }
+      // Save message and update user stats in background (non-blocking)
+      void (async () => {
+        try {
+          // Use fallback content for image-only messages
+          let messageContent = message.content;
+          if (!messageContent || messageContent.trim() === '') {
+            const imageCount = message.attachments.filter((a) =>
+              a.contentType?.startsWith('image/'),
+            ).size;
+            messageContent = imageCount > 0 ? '[image]' : '[empty message]';
+          }
 
-        const createUserMessageDto: CreateUserMessageDto = {
-          userId: discordUserId,
-          messageId: messageId,
-          channelId: channelId,
-          guildId: serverId, // Use optional guildId
-          content: messageContent,
-          timestamp: message.createdAt,
-          sentiment: {
-            score: sentimentScore,
-            comparative: sentimentComparative,
-            tokens: sentimentTokens,
-            words: wordsForMessageDto,
-          },
-          keywords: significantTopics,
-        };
-        await this.userMessagesService.create(createUserMessageDto);
-      } catch (saveError) {
-        this.logger.error(
-          `Error saving message ${messageId} for user ${discordUserId} to DB: ${saveError.message}`,
-          saveError.stack,
-        );
-      }
-      const currentSentiment = {
-        sentiment: sentimentCategory,
-        score: sentimentScore,
-        timestamp: new Date(),
-      };
-      interface MongoUpdatePayload {
-        $set: { lastSeen: Date };
-        $inc: { messageCount: number };
-        $push: {
-          sentimentHistory: {
-            $each: Array<{ sentiment: string; score: number; timestamp: Date }>;
-            $slice: number;
+          const createUserMessageDto: CreateUserMessageDto = {
+            userId: discordUserId,
+            messageId: messageId,
+            channelId: channelId,
+            guildId: serverId, // Use optional guildId
+            content: messageContent,
+            timestamp: message.createdAt,
+            sentiment: {
+              score: sentimentScore,
+              comparative: sentimentComparative,
+              tokens: sentimentTokens,
+              words: wordsForMessageDto,
+            },
+            keywords: significantTopics,
           };
-        };
-        $addToSet?: {
-          topicsOfInterest: { $each: string[] };
-        };
-      }
-      const updatePayload: MongoUpdatePayload = {
-        $set: { lastSeen: new Date() },
-        $inc: { messageCount: 1 },
-        $push: {
-          sentimentHistory: {
-            $each: [currentSentiment],
-            $slice: -100,
-          },
-        },
-      };
-      if (significantTopics.length > 0) {
-        updatePayload.$addToSet = {
-          topicsOfInterest: { $each: significantTopics },
-        };
-      }
+          await this.userMessagesService.create(createUserMessageDto);
+        } catch (saveError) {
+          this.logger.error(
+            `Error saving message ${messageId} for user ${discordUserId} to DB: ${(saveError as Error).message}`,
+            (saveError as Error).stack,
+          );
+        }
+      })();
 
-      await this.usersService.updateUserByDiscordUserId(
-        discordUserId,
-        // @ts-expect-error - MongoDB update operators don't match UpdateUserDto
-        updatePayload,
-      );
+      // Update user stats in background (non-blocking)
+      void (async () => {
+        try {
+          const currentSentiment = {
+            sentiment: sentimentCategory,
+            score: sentimentScore,
+            timestamp: new Date(),
+          };
+          interface MongoUpdatePayload {
+            $set: { lastSeen: Date };
+            $inc: { messageCount: number };
+            $push: {
+              sentimentHistory: {
+                $each: Array<{
+                  sentiment: string;
+                  score: number;
+                  timestamp: Date;
+                }>;
+                $slice: number;
+              };
+            };
+            $addToSet?: {
+              topicsOfInterest: { $each: string[] };
+            };
+          }
+          const updatePayload: MongoUpdatePayload = {
+            $set: { lastSeen: new Date() },
+            $inc: { messageCount: 1 },
+            $push: {
+              sentimentHistory: {
+                $each: [currentSentiment],
+                $slice: -100,
+              },
+            },
+          };
+          if (significantTopics.length > 0) {
+            updatePayload.$addToSet = {
+              topicsOfInterest: { $each: significantTopics },
+            };
+          }
+
+          await this.usersService.updateUserByDiscordUserId(
+            discordUserId,
+            // @ts-expect-error - MongoDB update operators don't match UpdateUserDto
+            updatePayload,
+          );
+        } catch (updateError) {
+          this.logger.error(
+            `Error updating user ${discordUserId} stats: ${(updateError as Error).message}`,
+            (updateError as Error).stack,
+          );
+        }
+      })();
       // --- End of NLP and Message Saving Logic ---
-
-      const mentionsBotItself =
-        messageContentLower.includes(botNameLower) ||
-        message.mentions.has(this.client.user.id);
-      const mentionsNever = messageContentLower.includes(
-        alternativeBotNameLower,
-      );
-      const isBotMentioned = mentionsBotItself || mentionsNever;
       const cacheKey = `${channelId}-${discordUserId}`;
       const cachedContext = this.conversationContextCache.get(cacheKey);
       let isFollowUp = false;
@@ -660,9 +794,21 @@ export class DiscordService implements OnModuleInit {
             await message.react('🤔');
           }
         } catch (reactError) {
-          this.logger.warn(
-            `Failed to react to message ${message.id}: ${reactError.message}`,
-          );
+          const errorName = (reactError as Error).name || 'Unknown';
+          const errorMsg = (reactError as Error).message || 'Unknown error';
+          // Don't log permission errors at WARN level to reduce noise
+          if (
+            errorMsg.includes('Missing Permissions') ||
+            errorMsg.includes('Missing Access')
+          ) {
+            this.logger.debug(
+              `[Permissions] Cannot react to message ${message.id}: ${errorMsg}. Check bot permissions in this channel.`,
+            );
+          } else {
+            this.logger.warn(
+              `Failed to react to message ${message.id}: ${errorName} - ${errorMsg}`,
+            );
+          }
         }
       }
 
@@ -703,9 +849,11 @@ export class DiscordService implements OnModuleInit {
             await message.reply(randomReply);
           } catch (e) {
             this.logger.warn(
-              `Failed to send stop acknowledgement: ${e.message}`,
+              `Failed to send stop acknowledgement: ${(e as Error).message}`,
             );
           }
+          // Mark as processed before returning
+          this.markMessageAsProcessed(messageId);
           return; // End processing for this message
         }
 
@@ -713,26 +861,49 @@ export class DiscordService implements OnModuleInit {
           // Do not construct local follow-up history; rely on Responses conversation state.
           await this.handleGptResponse(message, user, message.content);
         } catch (replyError) {
-          this.logger.error(
-            `Error in handleGptResponse for message ${message.id}: ${replyError.message}`,
-            replyError.stack,
-          );
-          // Fallback error reply if handleGptResponse itself fails critically
-          try {
-            await message
-              .reply('Something went very sideways. My apologies!')
-              .catch((replyError) =>
-                this.logger.error(
-                  'Really failed to send error: ' + replyError.message,
-                ),
-              );
-          } catch {
-            /* Already logged or intentionally ignored */
+          const errorMsg = (replyError as Error).message || 'Unknown error';
+          const errorCode = (replyError as any)?.code;
+
+          // Check if this is a permissions error
+          if (
+            errorMsg.includes('Missing Access') ||
+            errorMsg.includes('Missing Permissions') ||
+            errorCode === 50001 ||
+            errorCode === 50013
+          ) {
+            this.logger.error(
+              `[Permissions Error] Bot lacks permissions in channel ${channelId}: ${errorMsg}. Please grant VIEW_CHANNEL, SEND_MESSAGES, READ_MESSAGE_HISTORY, and ADD_REACTIONS permissions.`,
+            );
+          } else {
+            this.logger.error(
+              `Error in handleGptResponse for message ${message.id}: ${errorMsg}`,
+              (replyError as Error).stack,
+            );
+            // Fallback error reply if handleGptResponse itself fails critically
+            try {
+              await message
+                .reply('Something went very sideways. My apologies!')
+                .catch((replyErr) =>
+                  this.logger.error(
+                    'Really failed to send error: ' +
+                      (replyErr as Error).message,
+                  ),
+                );
+            } catch {
+              /* Already logged or intentionally ignored */
+            }
           }
+        } finally {
+          // Always mark message as processed when done
+          this.markMessageAsProcessed(messageId);
         }
-      } else if (cachedContext && !isFollowUp) {
-        // Clear cache if the time has expired and it wasn't a follow-up attempt
-        this.conversationContextCache.delete(cacheKey);
+      } else {
+        // Not engaging with this message, mark as processed
+        this.markMessageAsProcessed(messageId);
+        if (cachedContext && !isFollowUp) {
+          // Clear cache if the time has expired and it wasn't a follow-up attempt
+          this.conversationContextCache.delete(cacheKey);
+        }
       }
     });
   }
