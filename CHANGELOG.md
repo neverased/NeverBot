@@ -1,5 +1,18 @@
 # Changelog
 
+## [5.4.0](https://github.com/neverased/NeverBot/compare/never-bot-v5.3.0...never-bot-v5.4.0) (2025-10-04)
+
+
+### Features
+
+* add rate limiting & robust GPT handling ([25dff91](https://github.com/neverased/NeverBot/commit/25dff917e970e598cb11120e1675954ea402fd9e))
+* raise GPT token limit to 2048 ([0bf1a23](https://github.com/neverased/NeverBot/commit/0bf1a23ae9a2387538e92a5fed0be78aae2c3527))
+
+
+### Bug Fixes
+
+* harden OpenAI response parsing ([c7158fa](https://github.com/neverased/NeverBot/commit/c7158fa86e813ec7fd8b8263592d2d4c3e586850))
+
 ## [5.3.0](https://github.com/neverased/NeverBot/compare/never-bot-v5.2.0...never-bot-v5.3.0) (2025-10-02)
 
 
