@@ -21,7 +21,7 @@ jobs:
         run: echo "${{ secrets.GOOGLE_API }}" > sos-aio-bot-40e1568bd219.json
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v4.1.0
+        uses: pnpm/action-setup@v4.2.0
         with:
           run_install: false
 
