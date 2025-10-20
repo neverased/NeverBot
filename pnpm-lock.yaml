@@ -84,8 +84,8 @@ importers:
         specifier: ^3.3.2
         version: 3.3.2
       openai:
-        specifier: ^6.1.0
-        version: 6.1.0(ws@8.18.3)
+        specifier: ^6.6.0
+        version: 6.6.0(ws@8.18.3)
       os-utils:
         specifier: ^0.0.14
         version: 0.0.14
@@ -3609,8 +3609,8 @@ packages:
     resolution: {integrity: sha512-kbpaSSGJTWdAY5KPVeMOKXSrPtr8C8C7wodJbcsd51jRnmD+GZu8Y0VoU6Dm5Z4vWr0Ig/1NKuWRKf7j5aaYSg==}
     engines: {node: '>=6'}
 
-  openai@6.1.0:
-    resolution: {integrity: sha512-5sqb1wK67HoVgGlsPwcH2bUbkg66nnoIYKoyV9zi5pZPqh7EWlmSrSDjAh4O5jaIg/0rIlcDKBtWvZBuacmGZg==}
+  openai@6.6.0:
+    resolution: {integrity: sha512-1yWk4cBsHF5Bq9TreHYOHY7pbqdlT74COnm8vPx7WKn36StS+Hyk8DdAitnLaw67a5Cudkz5EmlFQjSrNnrA2w==}
     hasBin: true
     peerDependencies:
       ws: ^8.18.0
@@ -8985,7 +8985,7 @@ snapshots:
     dependencies:
       mimic-fn: 2.1.0
 
-  openai@6.1.0(ws@8.18.3):
+  openai@6.6.0(ws@8.18.3):
     optionalDependencies:
       ws: 8.18.3
 
