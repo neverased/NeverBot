@@ -54,8 +54,8 @@ importers:
         specifier: ^0.14.2
         version: 0.14.2
       dayjs:
-        specifier: ^1.11.18
-        version: 1.11.18
+        specifier: ^1.11.19
+        version: 1.11.19
       discord-interactions:
         specifier: ^4.4.0
         version: 4.4.0
@@ -2315,8 +2315,8 @@ packages:
   date.js@0.3.3:
     resolution: {integrity: sha512-HgigOS3h3k6HnW011nAb43c5xx5rBXk8P2v/WIT9Zv4koIaVXiH2BURguI78VVp+5Qc076T7OR378JViCnZtBw==}
 
-  dayjs@1.11.18:
-    resolution: {integrity: sha512-zFBQ7WFRvVRhKcWoUh+ZA1g2HVgUbsZm9sbddh8EC5iv93sui8DVVz1Npvz+r6meo9VKfa8NyLWBsQK1VvIKPA==}
+  dayjs@1.11.19:
+    resolution: {integrity: sha512-t5EcLVS6QPBNqM2z8fakk/NKel+Xzshgt8FFKAn+qwlD1pzZWxh0nVCrvFK7ZDb6XucZeF9z8C7CBWTRIVApAw==}
 
   debug@3.1.0:
     resolution: {integrity: sha512-OX8XqP7/1a9cqkxYw2yXss15f26NKWBpDXQd0/uK/KPqdQhxbPa994hnzjcE2VqQpDslf55723cKPUOGSmMY3g==}
@@ -7455,7 +7455,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  dayjs@1.11.18: {}
+  dayjs@1.11.19: {}
 
   debug@3.1.0:
     dependencies:
