@@ -8,5 +8,5 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6.0.1
       - uses: wagoid/commitlint-github-action@v6
