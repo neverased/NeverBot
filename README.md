@@ -4,7 +4,7 @@ General-purpose Discord chatbot built with NestJS and Discord.js. Features conve
 
 ## Features
 
-- Conversational chat using OpenAI Chat Completions with a witty, dynamic personality
+- Conversational chat using OpenAI Responses API with a witty, dynamic personality
 - User personality tracking and adaptive responses
 - **Image recognition and roasting** - Bot can see and comment on images sent in chat
 - Image generation via `gpt-image-1` (`/imagine`)
@@ -44,6 +44,22 @@ NODE_ENV=development
 # Metrics
 # If you want to allow higher-cardinality labels in metrics (use with care)
 METRICS_HIGH_CARD=false
+
+# Optional OpenAI model policy overrides
+LLM_PROMPT_CACHE_KEY_PREFIX=neverbot
+# LLM_MODEL_DEFAULT=gpt-5.5
+# LLM_MODEL_CHAT=gpt-5.5
+# LLM_MODEL_SUMMARY=gpt-5.5
+# LLM_MODEL_CHANGELOG=gpt-5.5
+# LLM_MODEL_VISION=gpt-4o
+# LLM_MODEL_IMAGE=gpt-image-1
+# LLM_REASONING_CHAT=low
+# LLM_REASONING_SUMMARY=low
+# LLM_REASONING_CHANGELOG=medium
+# LLM_MAX_OUTPUT_TOKENS_CHAT=768
+# LLM_MAX_OUTPUT_TOKENS_SUMMARY=320
+# LLM_MAX_OUTPUT_TOKENS_CHANGELOG=1200
+# LLM_MAX_OUTPUT_TOKENS_VISION=768
 ```
 
 Mongo is configured in `src/app.module.ts` to prefer `MONGO_URI`. If not set, it will fall back to `MONGO_USER`/`MONGO_PW`.
@@ -100,6 +116,8 @@ The Nest API starts on `http://localhost:3500` (see `src/main.ts`).
   - `discord_command_latency_ms` (histogram with `command` label)
   - `discord_command_success_total`, `discord_command_errors_total`
   - `openai_request_errors_total`, `discord_rate_limit_hits_total`
+  - `openai_responses_status_total`, `openai_responses_latency_ms`
+  - `openai_responses_cached_input_tokens_total`, `openai_responses_reasoning_output_tokens_total`
 - Optional `METRICS_HIGH_CARD` to allow higher-card labels (off by default).
 - Starter Grafana dashboard: `docs/metrics-grafana-dashboard.json` (set your Prometheus datasource UID in `DS_PROM`).
 - Example Prometheus alerting rules: `docs/prometheus-rules.yml`
@@ -127,7 +145,7 @@ The Nest API starts on `http://localhost:3500` (see `src/main.ts`).
   - `discord.service.ts` — client lifecycle, message/interaction handling
   - `commands/**` — slash commands (grouped by category: gpt, utility, fun)
   - `gpt/gpt-logic.ts` — prompt building and OpenAI invocation with personality integration
-- `src/shared/openai` — OpenAI chat helpers
+- `src/shared/openai` — OpenAI client, model policy, Responses helpers, structured outputs, and metrics hooks
 - `src/users` — user profiles, messages, and personality summaries
 - `src/servers` — per‑server settings (enabled channels, welcome channel, trap, conversation state)
 - `src/tasks` — task management system
