@@ -1,5 +1,63 @@
 # Changelog
 
+## [5.5.0](https://github.com/neverased/NeverBot/compare/never-bot-v5.4.0...never-bot-v5.5.0) (2026-05-06)
+
+
+### Features
+
+* **agents:** introduce a comprehensive suite of specialized AI agents ([f67671a](https://github.com/neverased/NeverBot/commit/f67671aeca9b0d3824cdfd0898379f54087f7085))
+* **deploy:** add local mongo compose stack ([c285283](https://github.com/neverased/NeverBot/commit/c285283b8a448dbc05b1a847ff2c13037fb21323))
+* **openai:** centralize response model policy ([aaa3347](https://github.com/neverased/NeverBot/commit/aaa3347fa898031dde812847df61b5294a25e0ab))
+* **users:** structure personality summaries ([c4bd47a](https://github.com/neverased/NeverBot/commit/c4bd47a8077ba592a5231c7b61b72936b354a579))
+
+
+### Bug Fixes
+
+* **discord:** streamline gpt command flows ([8e65795](https://github.com/neverased/NeverBot/commit/8e65795d17b821cb7ae6ba6838101e02059323c3))
+* **openai:** align chat wrapper with responses api ([188de50](https://github.com/neverased/NeverBot/commit/188de5012a0552620db843d69dbac4416520cfb3))
+* **runtime:** harden discord readiness and user updates ([f538f35](https://github.com/neverased/NeverBot/commit/f538f359b1cd0c5e14fb7f520f5727975490715d))
+* **translate:** load google credentials lazily ([cef8e49](https://github.com/neverased/NeverBot/commit/cef8e492f15a0ea36b47e21444e9df6e2d9ff953))
+
+
+### Refactoring
+
+* **discord:** remove retired utility features ([db9a10b](https://github.com/neverased/NeverBot/commit/db9a10b34b0c76201e4d65e6d03b49f04640e69f))
+
+
+### Documentation
+
+* **audit:** add reactivation audit ([5f397b5](https://github.com/neverased/NeverBot/commit/5f397b5c6178c0df243ac7b1647bfed9566a0a7a))
+* **openai:** document model policy knobs ([28e9ac0](https://github.com/neverased/NeverBot/commit/28e9ac0db929008674894261d17fc071523b97b5))
+
+
+### Build System
+
+* update dependencies ([e6ed916](https://github.com/neverased/NeverBot/commit/e6ed916e8cf6ebf0a9b6f22a21f3ebe58be26dce))
+* upgrades dependencies ([1d905d1](https://github.com/neverased/NeverBot/commit/1d905d144c491141f964166914639bf3c8c3d0ac))
+
+
+### Chores
+
+* Configure Renovate ([80587ca](https://github.com/neverased/NeverBot/commit/80587cada43ff3675d25c1715a86411ef027f88a))
+* **deps:** update actions/checkout action to v6 ([4b9780d](https://github.com/neverased/NeverBot/commit/4b9780d6d2ac9a592e3b044cfb1ec96903448145))
+* **deps:** update actions/checkout action to v6 ([f4f1c07](https://github.com/neverased/NeverBot/commit/f4f1c07045a3653364c572ad20e5fcfb19348079))
+* **deps:** update actions/labeler action to v6.1.0 ([efa69d9](https://github.com/neverased/NeverBot/commit/efa69d94475a056edbfd85e0322aa5da01685bbb))
+* **deps:** update actions/labeler action to v6.1.0 ([3be42e3](https://github.com/neverased/NeverBot/commit/3be42e309833ffb243e5804bbedea85f4f059e1c))
+* **deps:** update actions/setup-node action to v6.4.0 ([ea30962](https://github.com/neverased/NeverBot/commit/ea309620d915ed5f3a11ef87fdf970b514d43662))
+* **deps:** update actions/setup-node action to v6.4.0 ([8a0815e](https://github.com/neverased/NeverBot/commit/8a0815eb44f4fe7a99feb469e4da006349af50c2))
+* **deps:** update actions/stale action to v10.2.0 ([682c74d](https://github.com/neverased/NeverBot/commit/682c74dea9de63377ddd0ea9eb70d991281b84ec))
+* **deps:** update actions/stale action to v10.2.0 ([738ce62](https://github.com/neverased/NeverBot/commit/738ce6270a87eacd52d96fc4f744f033ba5065bf))
+* **deps:** update github/codeql-action action to v4.35.3 ([64d169b](https://github.com/neverased/NeverBot/commit/64d169b0ccb638ea01f92fbebb01fb9468429b46))
+* **deps:** update github/codeql-action action to v4.35.3 ([ab7686a](https://github.com/neverased/NeverBot/commit/ab7686ae6f66ec7a41b2cfeeea34f5a561b54355))
+* **deps:** update googleapis/release-please-action action to v4.4.1 ([e4b553f](https://github.com/neverased/NeverBot/commit/e4b553fd62fa4ffec41769052ebbcfadc1a4b60e))
+* **deps:** update googleapis/release-please-action action to v4.4.1 ([f21c029](https://github.com/neverased/NeverBot/commit/f21c0296dddbcd6d3cc8769fb397a1fa8d9c5aba))
+* **deps:** update peter-evans/close-issue action to v3.0.2 ([b555b09](https://github.com/neverased/NeverBot/commit/b555b09977f7883249eb121f1ec160da102f7505))
+* **deps:** update peter-evans/close-issue action to v3.0.2 ([97d9c82](https://github.com/neverased/NeverBot/commit/97d9c826bea0bbaa5b906c9b0b0343241a2fc632))
+* **deps:** update pnpm/action-setup action to v4.4.0 ([0fea5ff](https://github.com/neverased/NeverBot/commit/0fea5ffb2e594ab87519c2836a62e4f61afe9f90))
+* **deps:** update pnpm/action-setup action to v4.4.0 ([c2521e5](https://github.com/neverased/NeverBot/commit/c2521e545f07bb0b0fb0d31c8b181fc8cffa9483))
+* **release-please:** show docs/tests/build/ci/chore/style in changelog ([fe2edaa](https://github.com/neverased/NeverBot/commit/fe2edaa72a40fec17a13ddb78631a2e34185286f))
+* **tooling:** align node 24 validation gates ([2aad416](https://github.com/neverased/NeverBot/commit/2aad4164f69e81bea2d39beebacdfa56da7185a3))
+
 ## [5.4.0](https://github.com/neverased/NeverBot/compare/never-bot-v5.3.0...never-bot-v5.4.0) (2025-10-04)
 
 
