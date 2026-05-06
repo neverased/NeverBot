@@ -1,4 +1,4 @@
-# Use Node.js latest as the base image
+# Use the same major Node.js version as CI and local development.
 FROM node:24-alpine AS base
 
 # Set up PNPM environment variables
