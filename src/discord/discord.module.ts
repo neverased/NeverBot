@@ -6,6 +6,7 @@ import { UsersModule } from '../users/users.module';
 import { CommandRegistry } from './command-registry';
 import { DiscordService } from './discord.service';
 import { DiscordClientProvider } from './discord-client.provider';
+import { DISCORD_HEALTH } from './discord-health';
 import { InteractionHandler } from './interaction-handler';
 
 @Module({
@@ -15,7 +16,11 @@ import { InteractionHandler } from './interaction-handler';
     DiscordClientProvider,
     CommandRegistry,
     InteractionHandler,
+    {
+      provide: DISCORD_HEALTH,
+      useExisting: DiscordService,
+    },
   ],
-  exports: [DiscordService],
+  exports: [DiscordService, DISCORD_HEALTH],
 })
 export class DiscordModule {}

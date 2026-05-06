@@ -1,4 +1,9 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  OnModuleDestroy,
+  OnModuleInit,
+} from '@nestjs/common';
 import {
   ActivityType,
   ChatInputCommandInteraction,
@@ -12,6 +17,9 @@ import {
   Message,
   MessageReaction,
   NewsChannel,
+  PartialGuildMember,
+  PartialMessageReaction,
+  PartialUser,
   TextChannel,
   ThreadChannel,
   User as DiscordUserType,
@@ -62,7 +70,7 @@ declare module 'discord.js' {
 }
 
 @Injectable()
-export class DiscordService implements OnModuleInit {
+export class DiscordService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(DiscordService.name);
   private readonly token = process.env.BOT_TOKEN;
   private readonly client: Client;
@@ -76,6 +84,8 @@ export class DiscordService implements OnModuleInit {
   private readonly MAX_REQUESTS_PER_WINDOW = 10;
   // Message processing queue to prevent race conditions
   private processingMessages: Set<string> = new Set();
+  private cacheCleanupInterval?: NodeJS.Timeout;
+  private discordReady = false;
 
   constructor(
     private readonly usersService: UsersService,
@@ -120,6 +130,19 @@ export class DiscordService implements OnModuleInit {
     this.startCacheCleanupInterval();
   }
 
+  onModuleDestroy(): void {
+    if (this.cacheCleanupInterval) {
+      clearInterval(this.cacheCleanupInterval);
+      this.cacheCleanupInterval = undefined;
+    }
+    this.client.destroy();
+    this.discordReady = false;
+  }
+
+  isReady(): boolean {
+    return this.discordReady && this.client.isReady();
+  }
+
   private registerInteractionCreateHandler(): void {
     this.client.on(Events.InteractionCreate, (i: Interaction) => {
       void this.interactionHandler.handle(i);
@@ -128,6 +151,7 @@ export class DiscordService implements OnModuleInit {
 
   private registerClientReadyHandler(): void {
     this.client.on(Events.ClientReady, () => {
+      this.discordReady = true;
       this.logger.log('Client is ready!');
       this.setClientActivity();
       this.registerRateLimitHandler();
@@ -137,7 +161,10 @@ export class DiscordService implements OnModuleInit {
   private registerMessageReactionAddHandler(): void {
     this.client.on(
       Events.MessageReactionAdd,
-      async (reaction: MessageReaction, user: DiscordUserType) => {
+      async (
+        reaction: MessageReaction | PartialMessageReaction,
+        user: DiscordUserType | PartialUser,
+      ) => {
         await this.handleMessageReaction(reaction, user);
       },
     );
@@ -197,7 +224,9 @@ export class DiscordService implements OnModuleInit {
   }
 
   private registerGuildMemberRemoveHandler(): void {
-    this.client.on(Events.GuildMemberRemove, async (member: GuildMember) => {
+    this.client.on(
+      Events.GuildMemberRemove,
+      async (member: GuildMember | PartialGuildMember) => {
       try {
         const serverId = member.guild.id;
         const serverName = member.guild.name;
@@ -226,7 +255,8 @@ export class DiscordService implements OnModuleInit {
       } catch (err) {
         this.logger.error('Error handling GuildMemberRemove:', err);
       }
-    });
+      },
+    );
   }
 
   private isSendableChannel(
@@ -242,7 +272,7 @@ export class DiscordService implements OnModuleInit {
 
   private startCacheCleanupInterval(): void {
     // Clean up old conversation contexts every 5 minutes
-    setInterval(
+    this.cacheCleanupInterval = setInterval(
       () => {
         const now = Date.now();
         let removedCount = 0;
@@ -760,7 +790,6 @@ export class DiscordService implements OnModuleInit {
 
           await this.usersService.updateUserByDiscordUserId(
             discordUserId,
-            // @ts-expect-error - MongoDB update operators don't match UpdateUserDto
             updatePayload,
           );
         } catch (updateError) {
@@ -921,32 +950,35 @@ export class DiscordService implements OnModuleInit {
   }
 
   private async handleMessageReaction(
-    reaction: MessageReaction,
-    user: DiscordUserType,
+    reaction: MessageReaction | PartialMessageReaction,
+    user: DiscordUserType | PartialUser,
   ): Promise<void> {
     try {
-      if (reaction.partial) await reaction.fetch();
+      const fullReaction = reaction.partial ? await reaction.fetch() : reaction;
+      const fullUser: DiscordUserType = user.partial
+        ? await user.fetch()
+        : (user as DiscordUserType);
       const isTranslation = discordFlagToLanguageCode({
-        emoji: reaction.emoji.name,
+        emoji: fullReaction.emoji.name,
       });
       if (!isTranslation) return;
 
-      const attachment = reaction.message.attachments.first();
+      const attachment = fullReaction.message.attachments.first();
       if (attachment && attachment.contentType?.startsWith('image/')) {
         const scrape = await textFromImage({
           imgLink: attachment.url,
-          emoji: reaction.emoji.name,
-          user,
+          emoji: fullReaction.emoji.name,
+          user: fullUser,
         });
-        if (scrape) await reaction.message.reply({ embeds: [scrape] });
+        if (scrape) await fullReaction.message.reply({ embeds: [scrape] });
       } else {
         const translation = await translateText(
-          reaction.emoji.name,
-          reaction.message.content,
-          user,
+          fullReaction.emoji.name,
+          fullReaction.message.content,
+          fullUser,
         );
         if (translation)
-          await reaction.message.reply({ embeds: [translation] });
+          await fullReaction.message.reply({ embeds: [translation] });
       }
     } catch (error) {
       this.logger.error('Error handling message reaction:', error);
@@ -965,6 +997,8 @@ export class DiscordService implements OnModuleInit {
       await this.client.login(this.token);
     } catch (error) {
       this.logger.error('Error logging in the Discord client:', error);
+      this.discordReady = false;
+      throw error;
     }
   }
 

@@ -133,10 +133,16 @@ export class InteractionHandler {
         // Ignore metric errors
       }
       try {
-        await (interaction as ChatInputCommandInteraction).reply({
+        const chatInteraction = interaction as ChatInputCommandInteraction;
+        const replyOptions = {
           content: 'An error occurred while executing this command.',
           ephemeral: true,
-        });
+        };
+        if (chatInteraction.replied || chatInteraction.deferred) {
+          await chatInteraction.followUp(replyOptions);
+        } else {
+          await chatInteraction.reply(replyOptions);
+        }
       } catch {
         // Ignore reply errors
       }

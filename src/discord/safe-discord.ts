@@ -77,6 +77,7 @@ export function withSafeInteraction(
     'editReply',
     'deferReply',
   ]);
+  const initialAcknowledgementMethods = new Set(['reply', 'deferReply']);
 
   // Proxy to wrap selected methods with timeout + retry
   const proxy = new Proxy(interaction, {
@@ -92,7 +93,9 @@ export function withSafeInteraction(
         typeof original === 'function'
       ) {
         return (...args: unknown[]) =>
-          retryWithBackoff(() => original.apply(target, args), logger, opts);
+          initialAcknowledgementMethods.has(prop)
+            ? withTimeout(original.apply(target, args), opts.timeoutMs)
+            : retryWithBackoff(() => original.apply(target, args), logger, opts);
       }
       return original;
     },

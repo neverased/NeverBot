@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, mongo } from 'mongoose';
+import { Model, mongo, UpdateQuery } from 'mongoose';
 
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -61,12 +61,16 @@ export class UsersService {
 
   async updateUserByDiscordUserId(
     discordUserId: string,
-    updateUserDto: UpdateUserDto,
+    updateUserDto: UpdateUserDto | UpdateQuery<UserDocument>,
   ): Promise<UserDocument | null> {
+    const hasMongoOperator = Object.keys(updateUserDto).some((key) =>
+      key.startsWith('$'),
+    );
+
     return this.usersModel
       .findOneAndUpdate(
         { discordUserId: discordUserId },
-        { $set: updateUserDto },
+        hasMongoOperator ? updateUserDto : { $set: updateUserDto },
         {
           new: true,
         },
