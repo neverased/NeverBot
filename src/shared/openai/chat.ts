@@ -1,4 +1,10 @@
 import OpenAI from 'openai';
+import type {
+  EasyInputMessage,
+  ResponseCreateParamsNonStreaming,
+  ResponseInput,
+  Tool,
+} from 'openai/resources/responses/responses';
 
 import {
   openaiErrors,
@@ -20,7 +26,8 @@ export interface ChatRequestOptions {
   presencePenalty?: number;
   model?: string;
   retryCount?: number;
-  conversation?: 'auto' | { id: string };
+  previousResponseId?: string;
+  conversation?: { id: string };
   enableWebSearch?: boolean;
   reasoning?: { effort: 'low' | 'medium' | 'high' };
   text?: { verbosity: 'low' | 'medium' | 'high' };
@@ -46,6 +53,7 @@ export async function callChatCompletion(
     model = 'gpt-5',
     retryCount = 2,
     conversation,
+    previousResponseId,
     reasoning,
     text,
   } = options;
@@ -106,7 +114,7 @@ export async function callChatCompletion(
             {
               model: visionModel,
               messages: allMessages,
-              max_tokens: maxCompletionTokens, // Chat Completions expects max_tokens
+              max_completion_tokens: maxCompletionTokens,
               temperature,
               frequency_penalty: frequencyPenalty,
               presence_penalty: presencePenalty,
@@ -195,23 +203,8 @@ export async function callChatCompletion(
     throw lastError;
   }
 
-  // Build a plain text conversation input for TEXT-ONLY non-vision requests
-  const conversationText: string = nonSystem
-    .map((m) => {
-      const prefix = m.role === 'assistant' ? 'Assistant' : 'User';
-      const text: string =
-        typeof m.content === 'string'
-          ? m.content
-          : Array.isArray(m.content)
-            ? m.content
-                .map((c: string | { text?: string }) =>
-                  typeof c === 'string' ? c : (c?.text ?? ''),
-                )
-                .join('\n')
-            : String(m.content ?? '');
-      return `${prefix}: ${text}`;
-    })
-    .join('\n');
+  const input = buildResponsesInput(nonSystem);
+  const continuationResponseId = previousResponseId ?? conversation?.id;
 
   let lastError: unknown = undefined;
   for (let attempt = 0; attempt <= retryCount; attempt++) {
@@ -219,26 +212,22 @@ export async function callChatCompletion(
       const isGpt5: boolean =
         typeof model === 'string' && model.toLowerCase().startsWith('gpt-5');
 
-      const payload: Record<string, unknown> = {
+      const payload: ResponseCreateParamsNonStreaming = {
         model,
         // Only include instructions if any system content exists
         ...(systemInstructions ? { instructions: systemInstructions } : {}),
-        input: conversationText || undefined,
+        ...(input ? { input } : {}),
         // Prefer the Responses naming for token limits
         max_output_tokens: maxCompletionTokens,
-        // Only include conversation if a valid id is provided
-        ...(conversation &&
-        typeof conversation === 'object' &&
-        'id' in conversation
-          ? { conversation }
+        ...(continuationResponseId
+          ? { previous_response_id: continuationResponseId }
           : {}),
         ...(reasoning ? { reasoning } : {}),
         ...(text ? { text } : {}),
-        ...(options.enableWebSearch ||
-        String(process.env.WEB_SEARCH_ENABLED).toLowerCase() === 'true'
+        ...(options.enableWebSearch
           ? {
               tool_choice: 'auto',
-              tools: [{ type: 'web_search' }],
+              tools: [{ type: 'web_search' }] satisfies Tool[],
             }
           : {}),
       };
@@ -247,16 +236,13 @@ export async function callChatCompletion(
       if (!isGpt5) {
         Object.assign(payload, {
           temperature,
-          frequency_penalty: frequencyPenalty,
-          presence_penalty: presencePenalty,
         });
       }
 
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 30_000); // Reduced from 60s to 30s
       try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const response = await openai.responses.create(payload as any, {
+        const response = await openai.responses.create(payload, {
           signal: controller.signal,
         });
 
@@ -275,14 +261,13 @@ export async function callChatCompletion(
         // Check response status
         if (response?.status && response.status !== 'completed') {
           console.warn(
-            `[OpenAI] Response status is '${response.status}', not 'completed'. This may indicate an incomplete response.`,
+            `[OpenAI] Response status is '${response.status}', not 'completed'. Treating as degraded response.`,
           );
-          if (response.status === 'failed') {
-            const errorMsg =
-              response.incomplete_details?.reason ||
-              'Response failed without details';
-            throw new Error(`OpenAI response failed: ${errorMsg}`);
-          }
+          const errorMsg =
+            response.incomplete_details?.reason ||
+            response.error?.message ||
+            'Response did not complete';
+          throw new Error(`OpenAI response ${response.status}: ${errorMsg}`);
         }
 
         // Prefer `output_text` if populated; otherwise try to extract first text output
@@ -290,7 +275,7 @@ export async function callChatCompletion(
           response?.output_text?.trim?.() ??
           extractFirstTextFromResponse(response);
         const convId: string | undefined =
-          response?.conversation?.id ?? undefined;
+          response?.conversation?.id ?? response?.id ?? undefined;
 
         // Log if we got an empty response
         if (!content || content.trim() === '') {
@@ -376,21 +361,84 @@ export async function callChatCompletion(
   throw lastError;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function extractFirstTextFromResponse(res: any): string | null {
+function buildResponsesInput(
+  messages: Array<OpenAI.Chat.ChatCompletionMessageParam>,
+): ResponseInput | undefined {
+  const input = messages
+    .map((message): EasyInputMessage | null => {
+      const content = chatContentToText(message.content);
+      if (!content) {
+        return null;
+      }
+
+      return {
+        role: message.role === 'assistant' ? 'assistant' : 'user',
+        content,
+      };
+    })
+    .filter((message): message is EasyInputMessage => message !== null);
+
+  return input.length > 0 ? input : undefined;
+}
+
+function chatContentToText(
+  content: OpenAI.Chat.ChatCompletionMessageParam['content'],
+): string {
+  if (typeof content === 'string') {
+    return content;
+  }
+
+  if (Array.isArray(content)) {
+    return content
+      .map((part) => {
+        if (typeof part === 'string') {
+          return part;
+        }
+        if (
+          typeof part === 'object' &&
+          part !== null &&
+          'text' in part &&
+          typeof part.text === 'string'
+        ) {
+          return part.text;
+        }
+        return '';
+      })
+      .filter((textPart) => textPart.length > 0)
+      .join('\n');
+  }
+
+  return '';
+}
+
+function extractFirstTextFromResponse(res: unknown): string | null {
   try {
-    if (res?.output_text) {
-      return typeof res.output_text === 'string'
-        ? res.output_text.trim()
-        : String(res.output_text);
+    if (!isObjectRecord(res)) {
+      return null;
     }
+
+    const outputText = res.output_text;
+    if (outputText) {
+      return typeof outputText === 'string'
+        ? outputText.trim()
+        : String(outputText);
+    }
+
     // Fallback: walk typical Responses shapes to find first text segment
-    const outputs = res?.output ?? res?.response?.output ?? undefined;
+    const nestedResponse = isObjectRecord(res.response)
+      ? res.response
+      : undefined;
+    const outputs = res.output ?? nestedResponse?.output ?? undefined;
     if (Array.isArray(outputs) && outputs.length > 0) {
       for (const item of outputs) {
-        if (item?.content && Array.isArray(item.content)) {
+        if (
+          isObjectRecord(item) &&
+          'content' in item &&
+          Array.isArray(item.content)
+        ) {
           for (const part of item.content) {
             if (
+              isObjectRecord(part) &&
               part?.type === 'output_text' &&
               typeof part?.text === 'string'
             ) {
@@ -407,4 +455,8 @@ function extractFirstTextFromResponse(res: any): string | null {
     // ignore
   }
   return null;
+}
+
+function isObjectRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
 }
