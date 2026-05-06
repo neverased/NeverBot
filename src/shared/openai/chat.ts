@@ -1,18 +1,31 @@
 import OpenAI from 'openai';
+import { zodTextFormat } from 'openai/helpers/zod';
 import type {
   EasyInputMessage,
   ResponseCreateParamsNonStreaming,
   ResponseInput,
+  ResponseTextConfig,
+  ResponseUsage,
   Tool,
 } from 'openai/resources/responses/responses';
+import type { z } from 'zod';
 
 import {
   openaiErrors,
   openaiHttpErrors,
+  openaiResponseLatency,
+  openaiResponseStatus,
+  responsesCachedInputTokens,
   responsesInputTokens,
   responsesOutputTokens,
+  responsesReasoningOutputTokens,
 } from '../../core/metrics/metrics-registry';
-import openai from '../../utils/openai-client';
+import openai from './client';
+import {
+  getOpenAiFlowPolicy,
+  OpenAiFlow,
+  ReasoningEffort,
+} from './model-policy';
 
 export interface ChatMessageParam {
   role: 'system' | 'user' | 'assistant';
@@ -29,13 +42,21 @@ export interface ChatRequestOptions {
   previousResponseId?: string;
   conversation?: { id: string };
   enableWebSearch?: boolean;
-  reasoning?: { effort: 'low' | 'medium' | 'high' };
-  text?: { verbosity: 'low' | 'medium' | 'high' };
+  reasoning?: { effort: ReasoningEffort };
+  text?: Pick<ResponseTextConfig, 'verbosity'>;
+  flow?: OpenAiFlow;
+  promptCacheKey?: string;
+  store?: boolean;
+  metadata?: Record<string, string>;
 }
 
 export interface ChatResponse {
   content: string | null;
   conversationId?: string;
+}
+
+export interface StructuredChatResponse<T> extends ChatResponse {
+  parsed: T | null;
 }
 
 /**
@@ -45,17 +66,22 @@ export async function callChatCompletion(
   messages: Array<OpenAI.Chat.ChatCompletionMessageParam>,
   options: ChatRequestOptions = {},
 ): Promise<ChatResponse> {
+  const flow = options.flow ?? 'chat';
+  const policy = getOpenAiFlowPolicy(flow);
   const {
     temperature = 1,
-    maxCompletionTokens = 2048, // Increased default from 1024 to 2048
+    maxCompletionTokens = policy.maxCompletionTokens,
     frequencyPenalty = 0,
     presencePenalty = 0,
-    model = 'gpt-5',
+    model = policy.model,
     retryCount = 2,
     conversation,
     previousResponseId,
-    reasoning,
-    text,
+    reasoning = policy.reasoning,
+    text = policy.text,
+    promptCacheKey = policy.promptCacheKey,
+    store,
+    metadata,
   } = options;
 
   // Map ChatCompletion-style messages to Responses API fields
@@ -97,14 +123,16 @@ export async function callChatCompletion(
     }
     allMessages.push(...chatCompletionMessages);
 
-    // Use a vision-capable chat model. If caller passed a gpt-4* model, use it; otherwise default to gpt-4o
+    const visionPolicy = getOpenAiFlowPolicy('vision');
+    // Use a vision-capable chat model. If caller passed a gpt-4* model, use it; otherwise use the vision policy.
     const visionModel =
       typeof model === 'string' && model.toLowerCase().startsWith('gpt-4')
         ? model
-        : 'gpt-4o';
+        : visionPolicy.model;
 
     let lastError: unknown = undefined;
     for (let attempt = 0; attempt <= retryCount; attempt++) {
+      const startedAt = Date.now();
       try {
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 30_000); // Reduced from 60s to 30s
@@ -146,6 +174,12 @@ export async function callChatCompletion(
           } catch {
             // Ignore metric errors
           }
+          recordOpenAiOutcome({
+            model: visionModel,
+            flow: 'vision',
+            status: 'completed',
+            startedAt,
+          });
           // Chat Completions doesn't have conversation IDs, so we return undefined.
           // Context is maintained by passing message history.
           return { content, conversationId: undefined };
@@ -181,6 +215,12 @@ export async function callChatCompletion(
           // Ignore metric errors
         }
         lastError = error;
+        recordOpenAiOutcome({
+          model: visionModel,
+          flow: 'vision',
+          status: getErrorStatus(error),
+          startedAt,
+        });
 
         // Don't retry if this is the last attempt
         if (attempt < retryCount) {
@@ -208,6 +248,7 @@ export async function callChatCompletion(
 
   let lastError: unknown = undefined;
   for (let attempt = 0; attempt <= retryCount; attempt++) {
+    const startedAt = Date.now();
     try {
       const isGpt5: boolean =
         typeof model === 'string' && model.toLowerCase().startsWith('gpt-5');
@@ -222,6 +263,9 @@ export async function callChatCompletion(
         ...(continuationResponseId
           ? { previous_response_id: continuationResponseId }
           : {}),
+        prompt_cache_key: promptCacheKey,
+        ...(store === undefined ? {} : { store }),
+        ...(metadata ? { metadata } : {}),
         ...(reasoning ? { reasoning } : {}),
         ...(text ? { text } : {}),
         ...(options.enableWebSearch
@@ -255,7 +299,11 @@ export async function callChatCompletion(
           console.error(
             `[OpenAI] API returned error in response: ${errorType} - ${errorMsg}`,
           );
-          throw new Error(`OpenAI API Error: ${errorType} - ${errorMsg}`);
+          const apiError = new Error(
+            `OpenAI API Error: ${errorType} - ${errorMsg}`,
+          );
+          setOpenAiStatus(apiError, errorType);
+          throw apiError;
         }
 
         // Check response status
@@ -267,7 +315,11 @@ export async function callChatCompletion(
             response.incomplete_details?.reason ||
             response.error?.message ||
             'Response did not complete';
-          throw new Error(`OpenAI response ${response.status}: ${errorMsg}`);
+          const statusError = new Error(
+            `OpenAI response ${response.status}: ${errorMsg}`,
+          );
+          setOpenAiStatus(statusError, response.status);
+          throw statusError;
         }
 
         // Prefer `output_text` if populated; otherwise try to extract first text output
@@ -299,6 +351,7 @@ export async function callChatCompletion(
           const output = Number(
             (usage.output_tokens as number) ?? (usage.output as number) ?? 0,
           );
+          recordOpenAiUsage(response.usage, model, flow);
           if (!Number.isNaN(input) && input > 0) {
             responsesInputTokens.inc({ model }, input);
           }
@@ -308,6 +361,12 @@ export async function callChatCompletion(
         } catch {
           // Ignore metric errors
         }
+        recordOpenAiOutcome({
+          model,
+          flow,
+          status: 'completed',
+          startedAt,
+        });
         return { content, conversationId: convId };
       } finally {
         clearTimeout(timeout);
@@ -341,6 +400,12 @@ export async function callChatCompletion(
         // Ignore metric errors
       }
       lastError = error;
+      recordOpenAiOutcome({
+        model,
+        flow,
+        status: getErrorStatus(error),
+        startedAt,
+      });
 
       // Don't retry if this is the last attempt
       if (attempt < retryCount) {
@@ -358,6 +423,148 @@ export async function callChatCompletion(
   console.error(
     `[OpenAI] All retry attempts exhausted. Final error: ${finalErrorMsg}`,
   );
+  throw lastError;
+}
+
+export async function callStructuredResponse<TSchema extends z.ZodType>(
+  messages: Array<OpenAI.Chat.ChatCompletionMessageParam>,
+  schema: TSchema,
+  schemaName: string,
+  options: ChatRequestOptions = {},
+): Promise<StructuredChatResponse<z.infer<TSchema>>> {
+  const flow = options.flow ?? 'summary';
+  const policy = getOpenAiFlowPolicy(flow);
+  const {
+    maxCompletionTokens = policy.maxCompletionTokens,
+    model = policy.model,
+    retryCount = 2,
+    conversation,
+    previousResponseId,
+    reasoning = policy.reasoning,
+    text = policy.text,
+    promptCacheKey = policy.promptCacheKey,
+    store,
+    metadata,
+  } = options;
+  const systemInstructions: string = messages
+    .filter((m) => m.role === 'system' && typeof m.content === 'string')
+    .map((m) => String(m.content))
+    .join('\n');
+  const input = buildResponsesInput(
+    messages.filter((m) => m.role !== 'system'),
+  );
+  const continuationResponseId = previousResponseId ?? conversation?.id;
+
+  let lastError: unknown = undefined;
+  for (let attempt = 0; attempt <= retryCount; attempt++) {
+    const startedAt = Date.now();
+    try {
+      const payload: ResponseCreateParamsNonStreaming = {
+        model,
+        ...(systemInstructions ? { instructions: systemInstructions } : {}),
+        ...(input ? { input } : {}),
+        max_output_tokens: maxCompletionTokens,
+        ...(continuationResponseId
+          ? { previous_response_id: continuationResponseId }
+          : {}),
+        prompt_cache_key: promptCacheKey,
+        ...(store === undefined ? {} : { store }),
+        ...(metadata ? { metadata } : {}),
+        ...(reasoning ? { reasoning } : {}),
+        text: {
+          ...(text ?? {}),
+          format: zodTextFormat(schema, schemaName),
+        },
+      };
+
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 30_000);
+      try {
+        const response = await openai.responses.parse(payload, {
+          signal: controller.signal,
+        });
+
+        if (response?.error) {
+          const error = response.error as unknown as Record<string, unknown>;
+          const errorMsg =
+            (error.message as string) || JSON.stringify(response.error);
+          const errorType = (error.type as string) || 'unknown_error';
+          const apiError = new Error(
+            `OpenAI API Error: ${errorType} - ${errorMsg}`,
+          );
+          setOpenAiStatus(apiError, errorType);
+          throw apiError;
+        }
+
+        if (response?.status && response.status !== 'completed') {
+          const errorMsg =
+            response.incomplete_details?.reason ||
+            response.error?.message ||
+            'Response did not complete';
+          const statusError = new Error(
+            `OpenAI response ${response.status}: ${errorMsg}`,
+          );
+          setOpenAiStatus(statusError, response.status);
+          throw statusError;
+        }
+
+        recordOpenAiUsage(response.usage, model, flow);
+        recordOpenAiOutcome({
+          model,
+          flow,
+          status: 'completed',
+          startedAt,
+        });
+
+        const content: string | null =
+          response?.output_text?.trim?.() ??
+          extractFirstTextFromResponse(response);
+        return {
+          parsed: response.output_parsed ?? null,
+          content,
+          conversationId:
+            response?.conversation?.id ?? response?.id ?? undefined,
+        };
+      } finally {
+        clearTimeout(timeout);
+      }
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      const errorName = error instanceof Error ? error.name : 'UnknownError';
+      console.error(
+        `[OpenAI] Structured response attempt ${attempt + 1}/${retryCount + 1} failed: ${errorName} - ${errorMsg}`,
+      );
+
+      try {
+        openaiErrors.inc({ type: 'error' });
+      } catch {
+        // Ignore metric errors
+      }
+      try {
+        const status = getHttpStatus(error);
+        if (status) {
+          openaiHttpErrors.inc({ status: String(status) });
+        }
+      } catch {
+        // Ignore metric errors
+      }
+
+      lastError = error;
+      recordOpenAiOutcome({
+        model,
+        flow,
+        status: getErrorStatus(error),
+        startedAt,
+      });
+
+      if (attempt < retryCount) {
+        const jitter = Math.random() * 100;
+        const delayMs = 250 * Math.pow(2, attempt) + jitter;
+        await new Promise((r) => setTimeout(r, delayMs));
+      }
+    }
+  }
+
   throw lastError;
 }
 
@@ -459,4 +666,75 @@ function extractFirstTextFromResponse(res: unknown): string | null {
 
 function isObjectRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
+}
+
+function recordOpenAiUsage(
+  usage: ResponseUsage | null | undefined,
+  model: string,
+  flow: OpenAiFlow,
+): void {
+  if (!usage) return;
+
+  const cachedTokens = usage.input_tokens_details?.cached_tokens ?? 0;
+  const reasoningTokens = usage.output_tokens_details?.reasoning_tokens ?? 0;
+
+  if (cachedTokens > 0) {
+    responsesCachedInputTokens.inc({ model, flow }, cachedTokens);
+  }
+  if (reasoningTokens > 0) {
+    responsesReasoningOutputTokens.inc({ model, flow }, reasoningTokens);
+  }
+}
+
+function recordOpenAiOutcome({
+  model,
+  flow,
+  status,
+  startedAt,
+}: {
+  model: string;
+  flow: OpenAiFlow;
+  status: string;
+  startedAt: number;
+}): void {
+  try {
+    openaiResponseStatus.inc({ model, flow, status });
+    openaiResponseLatency.observe(
+      { model, flow, status },
+      Date.now() - startedAt,
+    );
+  } catch {
+    // Ignore metric errors
+  }
+}
+
+function getHttpStatus(error: unknown): number | undefined {
+  interface ErrorWithStatus {
+    status?: number;
+    response?: { status?: number };
+  }
+  const errorWithStatus = error as ErrorWithStatus;
+  return errorWithStatus?.status || errorWithStatus?.response?.status;
+}
+
+function getErrorStatus(error: unknown): string {
+  const openAiStatus = isObjectRecord(error) ? error.openAiStatus : undefined;
+  if (typeof openAiStatus === 'string' && openAiStatus.length > 0) {
+    return openAiStatus;
+  }
+  const httpStatus = getHttpStatus(error);
+  if (httpStatus) {
+    return String(httpStatus);
+  }
+  if (error instanceof Error && error.name) {
+    return error.name;
+  }
+  return 'error';
+}
+
+function setOpenAiStatus(error: Error, status: string): void {
+  Object.defineProperty(error, 'openAiStatus', {
+    value: status,
+    enumerable: false,
+  });
 }

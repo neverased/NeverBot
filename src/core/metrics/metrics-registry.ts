@@ -70,3 +70,32 @@ export const responsesOutputTokens = new Counter({
   registers: [registry],
   labelNames: ['model'],
 });
+
+export const responsesCachedInputTokens = new Counter({
+  name: 'openai_responses_cached_input_tokens_total',
+  help: 'Total cached input tokens reported by OpenAI Responses API',
+  registers: [registry],
+  labelNames: ['model', 'flow'],
+});
+
+export const responsesReasoningOutputTokens = new Counter({
+  name: 'openai_responses_reasoning_output_tokens_total',
+  help: 'Total reasoning output tokens reported by OpenAI Responses API',
+  registers: [registry],
+  labelNames: ['model', 'flow'],
+});
+
+export const openaiResponseStatus = new Counter({
+  name: 'openai_responses_status_total',
+  help: 'Count of OpenAI Responses outcomes by model, flow, and status',
+  registers: [registry],
+  labelNames: ['model', 'flow', 'status'],
+});
+
+export const openaiResponseLatency = new Histogram({
+  name: 'openai_responses_latency_ms',
+  help: 'OpenAI Responses latency in milliseconds by model, flow, and status',
+  buckets: [250, 500, 1000, 2000, 5000, 10000, 30000, 60000],
+  registers: [registry],
+  labelNames: ['model', 'flow', 'status'],
+});

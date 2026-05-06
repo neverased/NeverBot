@@ -1,13 +1,15 @@
 import OpenAI from 'openai';
+import { z } from 'zod';
 
-import openai from '../../utils/openai-client';
-import { callChatCompletion } from './chat';
+import { callChatCompletion, callStructuredResponse } from './chat';
+import openai from './client';
 
-jest.mock('../../utils/openai-client', () => ({
+jest.mock('./client', () => ({
   __esModule: true,
   default: {
     responses: {
       create: jest.fn(),
+      parse: jest.fn(),
     },
     chat: {
       completions: {
@@ -18,14 +20,18 @@ jest.mock('../../utils/openai-client', () => ({
 }));
 
 jest.mock('../../core/metrics/metrics-registry', () => ({
+  openaiResponseLatency: { observe: jest.fn() },
+  openaiResponseStatus: { inc: jest.fn() },
   openaiErrors: { inc: jest.fn() },
   openaiHttpErrors: { inc: jest.fn() },
+  responsesCachedInputTokens: { inc: jest.fn() },
   responsesInputTokens: { inc: jest.fn() },
   responsesOutputTokens: { inc: jest.fn() },
+  responsesReasoningOutputTokens: { inc: jest.fn() },
 }));
 
 const mockedOpenAI = openai as unknown as {
-  responses: { create: jest.Mock };
+  responses: { create: jest.Mock; parse: jest.Mock };
   chat: { completions: { create: jest.Mock } };
 };
 
@@ -48,6 +54,21 @@ describe('callChatCompletion', () => {
       error: null,
       incomplete_details: null,
       usage: { input_tokens: 10, output_tokens: 2 },
+    });
+    mockedOpenAI.responses.parse.mockResolvedValue({
+      id: 'resp_structured',
+      status: 'completed',
+      output_text: '{"summary":"ok"}',
+      output: [],
+      output_parsed: { summary: 'ok' },
+      error: null,
+      incomplete_details: null,
+      usage: {
+        input_tokens: 10,
+        output_tokens: 2,
+        input_tokens_details: { cached_tokens: 3 },
+        output_tokens_details: { reasoning_tokens: 1 },
+      },
     });
   });
 
@@ -156,8 +177,32 @@ describe('callChatCompletion', () => {
 
     const payload = mockedOpenAI.chat.completions.create.mock.calls[0][0];
     expect(payload).toMatchObject({
-      max_completion_tokens: 2048,
+      max_completion_tokens: 768,
     });
     expect(payload).not.toHaveProperty('max_tokens');
+  });
+
+  it('parses structured Responses with a schema and prompt cache key', async () => {
+    const schema = z.object({ summary: z.string() });
+
+    const response = await callStructuredResponse(
+      [{ role: 'user', content: 'summarize this' }],
+      schema,
+      'summary_payload',
+      { retryCount: 0, flow: 'summary' },
+    );
+
+    expect(response.parsed).toEqual({ summary: 'ok' });
+    const payload = mockedOpenAI.responses.parse.mock.calls[0][0];
+    expect(payload).toMatchObject({
+      model: 'gpt-5.5',
+      prompt_cache_key: 'neverbot:summary:v1',
+      text: {
+        verbosity: 'low',
+        format: expect.objectContaining({
+          type: 'json_schema',
+        }),
+      },
+    });
   });
 });
