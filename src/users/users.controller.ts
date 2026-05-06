@@ -11,11 +11,10 @@ import {
 } from '@nestjs/common';
 import { mongo } from 'mongoose';
 
-import { callChatCompletion } from '../shared/openai/chat';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
-import { UserMessagesService } from './messages/messages.service';
+import { PersonalitySummaryGenerator } from './personality/personality-summary.generator';
 import { UsersService } from './users.service';
 
 @Controller('users')
@@ -24,7 +23,7 @@ export class UsersController {
 
   constructor(
     private readonly usersService: UsersService,
-    private readonly userMessagesService: UserMessagesService,
+    private readonly personalitySummaryGenerator: PersonalitySummaryGenerator,
   ) {}
 
   @Post()
@@ -64,89 +63,11 @@ export class UsersController {
     }
     this.logger.log(`User ${discordUserId} found. Fetching recent messages.`);
 
-    // Fetch recent messages for richer context
-    let recentMessages = [];
-    try {
-      recentMessages =
-        await this.userMessagesService.findMessagesForPersonalityAnalysis(
-          discordUserId,
-          20,
-        );
-      this.logger.log(
-        `Fetched ${recentMessages.length} messages for user ${discordUserId}`,
-      );
-    } catch (error) {
-      this.logger.warn(
-        `Could not fetch messages for user ${discordUserId} during summary generation: ${error.message}`,
-        error.stack,
-      );
-      // Continue without messages if fetching fails
-    }
-    const messageSamples = recentMessages
-      .map((msg) => msg.content)
-      .join('\\n- ');
-
-    const topics =
-      user.topicsOfInterest.length > 0
-        ? user.topicsOfInterest.join(', ')
-        : 'None apparent';
-
-    let sentimentOverview = 'neutral';
-    if (user.sentimentHistory.length > 0) {
-      const positiveCount = user.sentimentHistory.filter(
-        (s) => s.sentiment === 'positive',
-      ).length;
-      const negativeCount = user.sentimentHistory.filter(
-        (s) => s.sentiment === 'negative',
-      ).length;
-      const totalSentiments = user.sentimentHistory.length;
-      if (positiveCount / totalSentiments > 0.6)
-        sentimentOverview = 'mostly positive';
-      else if (negativeCount / totalSentiments > 0.6)
-        sentimentOverview = 'mostly negative';
-      else if (positiveCount > negativeCount)
-        sentimentOverview = 'generally positive';
-      else if (negativeCount > positiveCount)
-        sentimentOverview = 'generally negative';
-    }
-
-    const prompt = `Based on the following user data and recent messages, generate a concise and insightful personality summary (2-3 sentences) for a Discord bot to understand the user better. Focus on their typical communication style, recurring themes in their messages, and main interests. Do not address the user directly.
-
-User Data:
-- Topics of Interest (derived from keywords): ${topics}
-- Overall Sentiment Pattern: ${sentimentOverview}
-- Message Count: ${user.messageCount}
-
-Recent Message Samples (last 20):
-- ${messageSamples || 'No recent messages available.'}
-
-Example Summary: "This user is generally positive, frequently discusses gaming and music, and their recent messages show an inquisitive and sometimes humorous communication style. They seem to enjoy detailed explanations."
-
-Generate the personality summary:`;
-    this.logger.debug(
-      `Generated prompt for OpenAI for user ${discordUserId}:\n${prompt}`,
-    );
-
     try {
       this.logger.log(`Sending request to OpenAI for user ${discordUserId}`);
-      const { content: generated } = await callChatCompletion(
-        [
-          {
-            role: 'system',
-            content:
-              'You are an AI assistant that generates insightful personality summaries based on user data and message content. Your summaries should be nuanced and capture communication style as well as topics.',
-          },
-          { role: 'user', content: prompt },
-        ],
-        {
-          model: 'gpt-5',
-          maxCompletionTokens: 150,
-          reasoning: { effort: 'low' },
-          text: { verbosity: 'low' },
-        },
-      );
-
-      const summary = generated?.trim() || 'Could not generate summary.';
+      const summary =
+        (await this.personalitySummaryGenerator.generateForUser(user)) ||
+        'Could not generate summary.';
       this.logger.log(
         `Received summary from OpenAI for user ${discordUserId}: "${summary}"`,
       );

@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { UserMessagesService } from './messages/messages.service';
+import { PersonalitySummaryGenerator } from './personality/personality-summary.generator';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 
@@ -12,7 +12,7 @@ describe('UsersController', () => {
       controllers: [UsersController],
       providers: [
         { provide: UsersService, useValue: {} },
-        { provide: UserMessagesService, useValue: {} },
+        { provide: PersonalitySummaryGenerator, useValue: {} },
       ],
     }).compile();
 

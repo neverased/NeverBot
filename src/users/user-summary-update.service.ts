@@ -1,9 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 
-import { callChatCompletion } from '../shared/openai/chat';
 import { User } from './entities/user.entity';
-import { UserMessagesService } from './messages/messages.service';
+import { PersonalitySummaryGenerator } from './personality/personality-summary.generator';
 import { UsersService } from './users.service';
 
 @Injectable()
@@ -12,7 +11,7 @@ export class UserSummaryUpdateService {
 
   constructor(
     private readonly usersService: UsersService,
-    private readonly userMessagesService: UserMessagesService,
+    private readonly personalitySummaryGenerator: PersonalitySummaryGenerator,
   ) {}
 
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT) // Adjust cron expression as needed
@@ -118,82 +117,6 @@ export class UserSummaryUpdateService {
   private async generatePersonalitySummaryForUser(
     user: User,
   ): Promise<string | null> {
-    const recentMessages =
-      await this.userMessagesService.findMessagesForPersonalityAnalysis(
-        user.discordUserId,
-        20,
-      );
-    const messageSamples = recentMessages
-      .map((msg) => msg.content)
-      .join('\\n- ');
-
-    const topics =
-      user.topicsOfInterest.length > 0
-        ? user.topicsOfInterest.join(', ')
-        : 'None apparent';
-
-    let sentimentOverview = 'neutral';
-    if (user.sentimentHistory && user.sentimentHistory.length > 0) {
-      const positiveCount = user.sentimentHistory.filter(
-        (s) => s.sentiment === 'positive',
-      ).length;
-      const negativeCount = user.sentimentHistory.filter(
-        (s) => s.sentiment === 'negative',
-      ).length;
-      const totalSentiments = user.sentimentHistory.length;
-      if (positiveCount / totalSentiments > 0.6)
-        sentimentOverview = 'mostly positive';
-      else if (negativeCount / totalSentiments > 0.6)
-        sentimentOverview = 'mostly negative';
-      else if (positiveCount > negativeCount)
-        sentimentOverview = 'generally positive';
-      else if (negativeCount > positiveCount)
-        sentimentOverview = 'generally negative';
-    }
-
-    const prompt = `Based on the following user data and recent messages, generate a concise, actionable personality summary (2-3 sentences) for a Discord bot to adapt tone and initiative. Capture:
-1) communication style (pace, humor level, directness),
-2) recurring topics/interests,
-3) guidance on how the bot should respond (be decisive, avoid numbered options, how playful/sarcastic to be).
-Do not address the user directly.
-
-User Data:
-- Topics of Interest (derived from keywords): ${topics}
-- Overall Sentiment Pattern: ${sentimentOverview}
-- Message Count: ${user.messageCount}
-
-Recent Message Samples (last 20):
-- ${messageSamples || 'No recent messages available.'}
-
-Example Summary: "Mostly upbeat and concise; enjoys playful sarcasm. Talks about gaming and music; likes clear next steps over questions. Prefer decisive, short replies; add a witty aside occasionally and only one emoji if any."
-
-Generate the personality summary:`;
-
-    try {
-      const { content } = await callChatCompletion(
-        [
-          {
-            role: 'system',
-            content:
-              'You generate concise, actionable personality summaries for adapting chatbot tone. Include style cues and decision guidance; no greetings or bullet lists, just 2-3 sentences.',
-          },
-          { role: 'user', content: prompt },
-        ],
-        {
-          model: 'gpt-5',
-          maxCompletionTokens: 220,
-          reasoning: { effort: 'medium' },
-          text: { verbosity: 'low' },
-        },
-      );
-
-      return content || null;
-    } catch (error) {
-      this.logger.error(
-        `Error generating summary for user ${user.discordUserId} with OpenAI:`,
-        error,
-      );
-      return null;
-    }
+    return this.personalitySummaryGenerator.generateForUser(user);
   }
 }
