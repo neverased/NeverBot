@@ -9,10 +9,9 @@ import path from 'path';
 import { justTranslateText } from './translate';
 
 async function loadCredentials(): Promise<string> {
-  const credentialsPath = path.join(
-    __dirname,
-    './sos-aio-bot-40e1568bd219.json',
-  );
+  const credentialsPath =
+    process.env.GOOGLE_CLOUD_CREDENTIALS_PATH ||
+    path.join(process.cwd(), 'sos-aio-bot-40e1568bd219.json');
   return readFile(credentialsPath, 'utf8');
 }
 

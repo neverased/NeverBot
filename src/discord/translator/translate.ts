@@ -5,14 +5,36 @@ import { Translate } from '@google-cloud/translate/build/src/v2';
 import { EmbedBuilder } from 'discord.js';
 import * as fs from 'fs';
 
-// Load Google Cloud credentials from environment variable
-const credentialsPath =
-  process.env.GOOGLE_CLOUD_CREDENTIALS_PATH ||
-  './sos-aio-bot-40e1568bd219.json';
-const data = fs.readFileSync(credentialsPath, { encoding: 'utf8', flag: 'r' });
+let translateClient: Translate | null = null;
+let translateCredentialsWarningLogged = false;
 
-// Creates a client
-const translate = new Translate({ credentials: JSON.parse(data) });
+function getTranslateClient(): Translate | null {
+  if (translateClient) {
+    return translateClient;
+  }
+
+  const credentialsPath =
+    process.env.GOOGLE_CLOUD_CREDENTIALS_PATH ||
+    './sos-aio-bot-40e1568bd219.json';
+
+  try {
+    const data = fs.readFileSync(credentialsPath, {
+      encoding: 'utf8',
+      flag: 'r',
+    });
+    translateClient = new Translate({ credentials: JSON.parse(data) });
+    return translateClient;
+  } catch (error) {
+    if (!translateCredentialsWarningLogged) {
+      console.warn(
+        `Google Translate credentials could not be loaded from ${credentialsPath}. Translation features will be disabled.`,
+        error,
+      );
+      translateCredentialsWarningLogged = true;
+    }
+    return null;
+  }
+}
 
 interface FlagToLanguageCodeParams {
   emoji: string;
@@ -107,6 +129,8 @@ export async function justTranslateText(
   try {
     const target = discordFlagToLanguageCode({ emoji });
     if (target == null) return null;
+    const translate = getTranslateClient();
+    if (!translate) return null;
     const [translations] = await translate.translate(text, target);
     return translations;
   } catch (error) {
@@ -124,6 +148,8 @@ export async function translateText(
   try {
     const target = discordFlagToLanguageCode({ emoji });
     if (target == null) return null;
+    const translate = getTranslateClient();
+    if (!translate) return null;
     const [translations] = await translate.translate(text, target);
 
     const embed = new EmbedBuilder()
