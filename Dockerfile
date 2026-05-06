@@ -1,5 +1,5 @@
 # Use the same major Node.js version as CI and local development.
-FROM node:24-alpine AS base
+FROM node:24 AS base
 
 # Set up PNPM environment variables
 ENV PNPM_HOME="/pnpm"

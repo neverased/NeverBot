@@ -2,3 +2,13 @@ node_modules
 .git
 .gitignore
 dist
+.env
+.env.*
+coverage
+*.log
+*.tsbuildinfo
+sos-aio-*.json
+image.png
+image_from_queue.png
+image_dalle_v3.png
+imagined.png

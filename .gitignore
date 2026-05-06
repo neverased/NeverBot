@@ -37,6 +37,9 @@ lerna-debug.log*
 
 # env
 .env
+.env.*
+!.env.example
+!.env.*.example
 
 # tokens
 sos-aio-*.json
