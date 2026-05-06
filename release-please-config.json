@@ -30,33 +30,27 @@
         },
         {
           "type": "docs",
-          "section": "Documentation",
-          "hidden": true
+          "section": "Documentation"
         },
         {
           "type": "test",
-          "section": "Tests",
-          "hidden": true
+          "section": "Tests"
         },
         {
           "type": "build",
-          "section": "Build System",
-          "hidden": true
+          "section": "Build System"
         },
         {
           "type": "ci",
-          "section": "CI",
-          "hidden": true
+          "section": "CI"
         },
         {
           "type": "chore",
-          "section": "Chores",
-          "hidden": true
+          "section": "Chores"
         },
         {
           "type": "style",
-          "section": "Styling",
-          "hidden": true
+          "section": "Styling"
         }
       ]
     }
