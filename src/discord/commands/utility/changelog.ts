@@ -3,6 +3,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 
 import { callChatCompletion } from '../../../shared/openai/chat';
+import { getOpenAiFlowPolicy } from '../../../shared/openai/model-policy';
 import { setDiscordResilience } from '../../decorators/discord-resilience.decorator';
 
 module.exports = {
@@ -46,16 +47,20 @@ module.exports = {
 ${changelogContent}
 
 Summary:`;
+      const policy = getOpenAiFlowPolicy('changelog');
       const { content: summary } = await callChatCompletion(
         [
           { role: 'system', content: 'You are a helpful assistant.' },
           { role: 'user', content: prompt },
         ],
         {
-          model: 'gpt-5',
-          maxCompletionTokens: 1024,
-          reasoning: { effort: 'medium' },
-          text: { verbosity: 'medium' },
+          flow: 'changelog',
+          model: policy.model,
+          maxCompletionTokens: policy.maxCompletionTokens,
+          reasoning: policy.reasoning,
+          text: policy.text,
+          promptCacheKey: policy.promptCacheKey,
+          metadata: { feature: 'changelog' },
         },
       );
       if (!summary) {

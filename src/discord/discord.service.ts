@@ -31,6 +31,7 @@ import { discordRateLimitHits } from '../core/metrics/metrics-registry';
 import { Server } from '../servers/schemas/server.schema';
 import { ServersService } from '../servers/servers.service';
 import { callChatCompletion } from '../shared/openai/chat';
+import { getOpenAiFlowPolicy } from '../shared/openai/model-policy';
 import { splitTextIntoParts } from '../shared/utils/text-splitter';
 import { User as UserModel } from '../users/entities/user.entity';
 import { CreateUserMessageDto } from '../users/messages/dto/create-user-message.dto';
@@ -185,6 +186,7 @@ export class DiscordService implements OnModuleInit, OnModuleDestroy {
         const channel = member.guild.channels.cache.get(welcomeChannelId);
         if (!channel || !(channel instanceof TextChannel)) return;
 
+        const policy = getOpenAiFlowPolicy('chat');
         const { content } = await callChatCompletion(
           [
             {
@@ -198,10 +200,13 @@ export class DiscordService implements OnModuleInit, OnModuleDestroy {
             },
           ],
           {
-            model: 'gpt-5',
+            flow: 'chat',
+            model: policy.model,
             maxCompletionTokens: 150,
-            reasoning: { effort: 'low' },
-            text: { verbosity: 'low' },
+            reasoning: policy.reasoning,
+            text: policy.text,
+            promptCacheKey: policy.promptCacheKey,
+            metadata: { feature: 'welcome' },
           },
         );
 
@@ -227,34 +232,34 @@ export class DiscordService implements OnModuleInit, OnModuleDestroy {
     this.client.on(
       Events.GuildMemberRemove,
       async (member: GuildMember | PartialGuildMember) => {
-      try {
-        const serverId = member.guild.id;
-        const serverName = member.guild.name;
-        const serverConfig = await this.serversService.findOrCreateServer(
-          serverId,
-          serverName,
-        );
-        const welcomeChannelId = serverConfig?.welcomeChannelId;
-        if (!welcomeChannelId) return;
+        try {
+          const serverId = member.guild.id;
+          const serverName = member.guild.name;
+          const serverConfig = await this.serversService.findOrCreateServer(
+            serverId,
+            serverName,
+          );
+          const welcomeChannelId = serverConfig?.welcomeChannelId;
+          if (!welcomeChannelId) return;
 
-        const channel = member.guild.channels.cache.get(welcomeChannelId);
-        if (!channel || !(channel instanceof TextChannel)) return;
+          const channel = member.guild.channels.cache.get(welcomeChannelId);
+          if (!channel || !(channel instanceof TextChannel)) return;
 
-        await channel.send({
-          embeds: [
-            {
-              title: `${member.user.username} just left the server! 👋`,
-              description:
-                "We're sorry to see you go.\\nWe hope you enjoyed your stay.\\n\\nIf you ever want to come back, we'll be here waiting for you.\\n\\nUntil then, take care! 🍪🤖🎉",
-              color: 0xff0000,
-              thumbnail: { url: member.user.displayAvatarURL() ?? undefined },
-              timestamp: new Date().toISOString(),
-            },
-          ],
-        });
-      } catch (err) {
-        this.logger.error('Error handling GuildMemberRemove:', err);
-      }
+          await channel.send({
+            embeds: [
+              {
+                title: `${member.user.username} just left the server! 👋`,
+                description:
+                  "We're sorry to see you go.\\nWe hope you enjoyed your stay.\\n\\nIf you ever want to come back, we'll be here waiting for you.\\n\\nUntil then, take care! 🍪🤖🎉",
+                color: 0xff0000,
+                thumbnail: { url: member.user.displayAvatarURL() ?? undefined },
+                timestamp: new Date().toISOString(),
+              },
+            ],
+          });
+        } catch (err) {
+          this.logger.error('Error handling GuildMemberRemove:', err);
+        }
       },
     );
   }
@@ -368,8 +373,21 @@ export class DiscordService implements OnModuleInit, OnModuleDestroy {
       );
     }
 
+    // Extract image attachments before deciding context strategy. Vision requests
+    // still use Chat Completions and therefore need explicit local context.
+    const imageUrls: string[] = [];
+    if (message.attachments.size > 0) {
+      for (const attachment of message.attachments.values()) {
+        if (attachment.contentType?.startsWith('image/')) {
+          imageUrls.push(attachment.url);
+          this.logger.log(`[GPT] Image attachment detected: ${attachment.url}`);
+        }
+      }
+    }
+
+    const shouldUseLocalHistory = !priorConversationId || imageUrls.length > 0;
     let historyText = '';
-    if (this.isSendableChannel(message.channel)) {
+    if (shouldUseLocalHistory && this.isSendableChannel(message.channel)) {
       try {
         const history = await message.channel.messages.fetch({
           limit: 15,
@@ -395,18 +413,9 @@ export class DiscordService implements OnModuleInit, OnModuleDestroy {
       }
     }
 
-    const fullQuestion = `Here is the recent conversation history in this channel. Your response should continue the conversation naturally as a participant named NeverBot.\n\n${historyText}\n\nUser ${message.author.username} (ID: ${message.author.id}): ${gptQuestion}`;
-
-    // Extract image attachments if any
-    const imageUrls: string[] = [];
-    if (message.attachments.size > 0) {
-      for (const attachment of message.attachments.values()) {
-        if (attachment.contentType?.startsWith('image/')) {
-          imageUrls.push(attachment.url);
-          this.logger.log(`[GPT] Image attachment detected: ${attachment.url}`);
-        }
-      }
-    }
+    const fullQuestion = shouldUseLocalHistory
+      ? `Here is the recent conversation history in this channel. Your response should continue the conversation naturally as a participant named NeverBot.\n\n${historyText}\n\nUser ${message.author.username} (ID: ${message.author.id}): ${gptQuestion}`
+      : `User ${message.author.username} (ID: ${message.author.id}): ${gptQuestion}`;
 
     let gptResponse: string | null = null;
     let conversationId: string | undefined = undefined;

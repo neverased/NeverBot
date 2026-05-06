@@ -1,11 +1,78 @@
 import 'dotenv/config';
 
-// import axios from 'axios'; // No longer needed for b64_json
-import { SlashCommandBuilder } from 'discord.js';
-import * as fs from 'fs/promises';
+import { AttachmentBuilder, SlashCommandBuilder } from 'discord.js';
+import type { ImagesResponse } from 'openai/resources/images';
 
-import openai from '../../../utils/openai-client';
+import openai from '../../../shared/openai/client';
+import { getOpenAiFlowPolicy } from '../../../shared/openai/model-policy';
 import { setDiscordResilience } from '../../decorators/discord-resilience.decorator';
+
+const GENERATED_IMAGE_FILE_NAME = 'imagined.png';
+
+interface GeneratedImage {
+  base64: string;
+  imageCount: number;
+}
+
+interface OpenAiErrorPayload {
+  response?: {
+    status?: number;
+    data?: {
+      error?: {
+        message?: string;
+      };
+    };
+  };
+  message?: string;
+}
+
+class ImageGenerationResponseError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ImageGenerationResponseError';
+  }
+}
+
+function getGeneratedImage(response: ImagesResponse): GeneratedImage {
+  const imageCount = Array.isArray(response.data) ? response.data.length : 0;
+  const base64 = response.data?.[0]?.b64_json;
+
+  if (!base64) {
+    throw new ImageGenerationResponseError(
+      'Image data not found in API response (b64_json missing).',
+    );
+  }
+
+  return { base64, imageCount };
+}
+
+function getOpenAiErrorDetails(error: unknown): {
+  status?: number;
+  apiMessage?: string;
+  message?: string;
+} {
+  const errorWithResponse = error as OpenAiErrorPayload;
+
+  return {
+    status: errorWithResponse?.response?.status,
+    apiMessage: errorWithResponse?.response?.data?.error?.message,
+    message: errorWithResponse?.message,
+  };
+}
+
+function formatImageGenerationError(error: unknown): string {
+  const { apiMessage, message } = getOpenAiErrorDetails(error);
+
+  if (apiMessage) {
+    return `couldn't generate that: ${apiMessage}`;
+  }
+
+  if (message) {
+    return `couldn't generate that: ${message}`;
+  }
+
+  return "couldn't generate that image. maybe the prompt's too wild or something broke on my end?";
+}
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -28,104 +95,47 @@ module.exports = {
       return await interaction.editReply('Please provide a prompt!');
     }
 
-    const tempImagePath = 'imagined.png';
-
     try {
       console.log(
         `[Imagine] Start | user=${interaction.user?.id} guild=${interaction.guild?.id ?? 'DM'} question="${question}"`,
       );
-      console.log(
-        '[Imagine] Calling OpenAI images.generate | model=gpt-image-1 size=1024x1024',
-      );
+      console.log('[Imagine] Calling OpenAI images.generate | size=1024x1024');
+      const policy = getOpenAiFlowPolicy('image');
       const imageResponse = await openai.images.generate({
-        model: 'gpt-image-1', // Using gpt-image-1
+        model: policy.model,
         prompt: question,
-        // response_format: 'url', // Removed, assuming default or b64_json
-        size: '1024x1024', // Keep size for now, adjust if model requires different
-        // n: 1, // Default is 1, can be explicit if needed
+        size: '1024x1024',
       });
 
-      // const image_url = image.data[0].url; // Old URL logic
-      interface ImageResponseData {
-        data?: Array<{ b64_json?: string }>;
-      }
-      const responseData = imageResponse as ImageResponseData;
-      const imageCount = Array.isArray(responseData?.data)
-        ? responseData.data.length
-        : 0;
-      const image_base64 = responseData?.data?.[0]?.b64_json; // New b64_json logic
+      const image = getGeneratedImage(imageResponse);
       console.log(
-        `[Imagine] OpenAI response received | images=${imageCount} hasB64=${Boolean(
-          image_base64,
+        `[Imagine] OpenAI response received | images=${image.imageCount} hasB64=${Boolean(
+          image.base64,
         )}`,
       );
 
-      if (!image_base64) {
-        throw new Error(
-          'Image data not found in API response (b64_json missing).',
-        );
-      }
-
-      // Removed download_image function as we are writing from base64
-      // const download_image = async (
-      //   url: string,
-      //   image_path: string,
-      // ): Promise<void> => {
-      //   const response = await axios({
-      //     url,
-      //     responseType: 'arraybuffer',
-      //   });
-      //   await fs.writeFile(image_path, response.data);
-      // };
-
-      // await download_image(image_url, tempImagePath); // Old download call
-
-      // Decode base64 and write to file
-      const image_bytes = Buffer.from(image_base64, 'base64');
-      await fs.writeFile(tempImagePath, image_bytes);
+      const imageBuffer = Buffer.from(image.base64, 'base64');
+      const attachment = new AttachmentBuilder(imageBuffer, {
+        name: GENERATED_IMAGE_FILE_NAME,
+      });
       console.log(
-        `[Imagine] Wrote image | path=${tempImagePath} sizeBytes=${image_bytes.length}`,
+        `[Imagine] Prepared image attachment | name=${GENERATED_IMAGE_FILE_NAME} sizeBytes=${imageBuffer.length}`,
       );
 
       await interaction.editReply({
         content: 'Prompt: ' + question,
-        files: [tempImagePath],
+        files: [attachment],
       });
       console.log(`[Imagine] Reply sent | elapsedMs=${Date.now() - startedAt}`);
     } catch (error) {
       const elapsed = Date.now() - startedAt;
-      // Try to surface OpenAI API details when present
-      interface ErrorResponse {
-        response?: {
-          status?: number;
-          data?: {
-            error?: {
-              message?: string;
-            };
-          };
-        };
-        message?: string;
-      }
-      const errorWithResponse = error as ErrorResponse;
-      const status = errorWithResponse?.response?.status;
-      const apiMsg = errorWithResponse?.response?.data?.error?.message;
+      const { status, apiMessage, message } = getOpenAiErrorDetails(error);
       console.error(
         `[Imagine] Error | elapsedMs=${elapsed} status=${status ?? 'n/a'} message=${
-          (error as Error)?.message
-        } details=${apiMsg ?? 'n/a'}`,
+          message ?? 'n/a'
+        } details=${apiMessage ?? 'n/a'}`,
       );
-      let errorMessage =
-        "couldn't generate that image. maybe the prompt's too wild or something broke on my end?";
-      if (
-        errorWithResponse.response &&
-        errorWithResponse.response.data &&
-        errorWithResponse.response.data.error &&
-        errorWithResponse.response.data.error.message
-      ) {
-        errorMessage = `couldn't generate that: ${errorWithResponse.response.data.error.message}`;
-      } else if (errorWithResponse.message) {
-        errorMessage = `couldn't generate that: ${errorWithResponse.message}`;
-      }
+      const errorMessage = formatImageGenerationError(error);
 
       if (interaction.replied || interaction.deferred) {
         await interaction
@@ -138,22 +148,6 @@ module.exports = {
         await interaction
           .reply(errorMessage)
           .catch((e) => console.error('Error sending initial error reply:', e));
-      }
-    } finally {
-      try {
-        await fs.unlink(tempImagePath);
-        console.log(`[Imagine] Cleaned up | deleted ${tempImagePath}`);
-      } catch (unlinkError) {
-        // Log only if the error is not ENOENT (file not found), as it might not have been created
-        interface NodeError extends Error {
-          code?: string;
-        }
-        if ((unlinkError as NodeError).code !== 'ENOENT') {
-          console.error(
-            `Failed to delete temporary image ${tempImagePath}:`,
-            unlinkError,
-          );
-        }
       }
     }
   },
