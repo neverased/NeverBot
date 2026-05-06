@@ -8,17 +8,10 @@ export class DiscordClientProvider {
       intents: [
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMessages,
-        GatewayIntentBits.GuildMessageReactions,
         GatewayIntentBits.GuildMembers,
         GatewayIntentBits.MessageContent,
       ],
-      partials: [
-        Partials.Reaction,
-        Partials.Message,
-        Partials.User,
-        Partials.Channel,
-        Partials.GuildMember,
-      ],
+      partials: [Partials.Message, Partials.Channel, Partials.GuildMember],
     });
   }
 }

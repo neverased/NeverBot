@@ -14,8 +14,6 @@ import * as Joi from 'joi';
         MONGO_USER: Joi.string().optional(),
         MONGO_PW: Joi.string().optional(),
         DISCORD_APPLICATION_ID: Joi.string().optional(),
-        API_URL: Joi.string().uri().optional(),
-        GOOGLE_CLOUD_CREDENTIALS_PATH: Joi.string().optional(),
         METRICS_HIGH_CARD: Joi.boolean().default(false),
         WEB_SEARCH_ENABLED: Joi.boolean().default(false),
         LLM_MODEL_DEFAULT: Joi.string().optional(),

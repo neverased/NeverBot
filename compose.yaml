@@ -10,7 +10,6 @@ services:
     environment:
       NODE_ENV: production
       PORT: ${PORT:-3500}
-      API_URL: ${API_URL:-http://localhost:3500/}
       MONGO_URI: "mongodb://${LOCAL_MONGO_ROOT_USERNAME:-neverbot}:${LOCAL_MONGO_ROOT_PASSWORD:?Set LOCAL_MONGO_ROOT_PASSWORD in .env or shell}@mongo:27017/${MONGO_DB_NAME:-neverbot}?authSource=admin"
     ports:
       - "${APP_HOST:-127.0.0.1}:${APP_PORT:-3500}:${PORT:-3500}"

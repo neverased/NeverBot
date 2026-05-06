@@ -1,15 +1,13 @@
 # NeverBot
 
-General-purpose Discord chatbot built with NestJS and Discord.js. Features conversational AI with a unique personality, image generation, translations, and server management utilities.
+General-purpose Discord chatbot built with NestJS and Discord.js. Features conversational AI with a unique personality, image generation, and server management utilities.
 
 ## Features
 
 - Conversational chat using OpenAI Responses API with a witty, dynamic personality
-- User personality tracking and adaptive responses
 - **Image recognition and roasting** - Bot can see and comment on images sent in chat
 - Image generation via `gpt-image-1` (`/imagine`)
-- OCR + translation of image text (Google Vision + Translate)
-- Server utilities: welcome messages, channel enablement, trap scheduling helpers
+- Server utilities: welcome messages and channel enablement
 - Conversation context management for natural multi-turn interactions
 - Comprehensive metrics and observability (Prometheus/Grafana)
 
@@ -20,7 +18,6 @@ General-purpose Discord chatbot built with NestJS and Discord.js. Features conve
 - MongoDB URI for persistence; `compose.yaml` includes a local MongoDB service
 - OpenAI API key
 - Discord Bot token and Application ID
-- Optional: Google Cloud credentials for OCR/Translate
 
 ## Environment Variables
 
@@ -38,8 +35,6 @@ MONGO_URI=mongodb://user:password@localhost:27017/neverbot?authSource=admin
 
 # Optional
 PORT=3500
-API_URL=http://localhost:3500/
-GOOGLE_CLOUD_CREDENTIALS_PATH=./sos-aio-bot-40e1568bd219.json
 NODE_ENV=development
 # Metrics
 # If you want to allow higher-cardinality labels in metrics (use with care)
@@ -128,15 +123,11 @@ The Nest API starts on `http://localhost:3500` (see `src/main.ts`).
 - `/imagine` — Generate an image from a prompt
 - `/help` — List available commands
 - `/server` — Show server info
-- `/user` — Show user info and personality summary
-- `/personality` — View or update your personality profile
-- `/botstat` — Show bot stats
+- `/personality` — View a personality profile if one exists
 - `/setbotchannels` — Configure which channels the bot can reply in
 - `/setwelcomechannel` — Configure a welcome channel
 - `/resetconversation` — Reset conversation context for your channel
-- `/trap` — Configure trap time/channel (utility)
 - `/changelog` — View bot changelog
-- `/help` — List available commands
 - `/ping` — Check bot responsiveness
 
 ## Project Structure
@@ -146,10 +137,10 @@ The Nest API starts on `http://localhost:3500` (see `src/main.ts`).
   - `commands/**` — slash commands (grouped by category: gpt, utility, fun)
   - `gpt/gpt-logic.ts` — prompt building and OpenAI invocation with personality integration
 - `src/shared/openai` — OpenAI client, model policy, Responses helpers, structured outputs, and metrics hooks
-- `src/users` — user profiles, messages, and personality summaries
-- `src/servers` — per‑server settings (enabled channels, welcome channel, trap, conversation state)
+- `src/users` — internal user profiles and message context used by GPT flows
+- `src/servers` — per‑server settings (enabled channels, welcome channel, conversation state)
 - `src/tasks` — task management system
-- `src/scripts` — maintenance scripts (message backfill, summary updates)
+- `src/scripts` — maintenance scripts (message backfill and legacy server config cleanup)
 - `src/core` — configuration, filters, interceptors, and metrics
 
 ## Testing
@@ -177,7 +168,7 @@ APP_HOST=127.0.0.1
 APP_PORT=3500
 ```
 
-See `.env.compose.example` for the full template. If OCR/Translate should run, mount the Google credentials JSON into the container and set `GOOGLE_CLOUD_CREDENTIALS_PATH`; do not bake that JSON into the image.
+See `.env.compose.example` for the full template.
 
 Start or update the stack:
 

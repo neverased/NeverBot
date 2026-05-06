@@ -78,7 +78,7 @@ module.exports = {
         );
       } else {
         await interaction.editReply(
-          `I don't have a personality summary for ${targetDiscordUser.username} yet. I'm still observing! Perhaps they need to chat a bit more, or their summary is still being generated.`,
+          `I don't have a personality summary for ${targetDiscordUser.username} yet.`,
         );
       }
     } catch (error) {

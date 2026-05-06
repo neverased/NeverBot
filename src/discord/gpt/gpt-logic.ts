@@ -4,7 +4,6 @@ import { callChatCompletion } from '../../shared/openai/chat';
 import { getOpenAiFlowPolicy } from '../../shared/openai/model-policy';
 import { User as UserModel } from '../../users/entities/user.entity';
 import { UserMessagesService } from '../../users/messages/messages.service';
-import { sanitizePersonalitySummaryForPrompt } from '../../users/personality/personality-summary.generator';
 
 export async function generateOpenAiReplyWithState(
   question: string,
@@ -113,4 +112,12 @@ export async function generateOpenAiReplyWithState(
   });
   const content = response.content ?? null;
   return { content, conversationId: response.conversationId };
+}
+
+function sanitizePersonalitySummaryForPrompt(summary: string): string {
+  return summary
+    .replace(/[<>]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 700);
 }

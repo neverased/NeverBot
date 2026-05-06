@@ -47,11 +47,6 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
   tasks?: {
     enabledChannels?: string[];
     welcome_channel_id?: string;
-    trap?: {
-      time?: string;
-      start_day?: string;
-      notification_channel_id?: string;
-    };
   };
 
   @IsOptional()

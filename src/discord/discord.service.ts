@@ -15,14 +15,10 @@ import {
   GuildMember,
   Interaction,
   Message,
-  MessageReaction,
   NewsChannel,
   PartialGuildMember,
-  PartialMessageReaction,
-  PartialUser,
   TextChannel,
   ThreadChannel,
-  User as DiscordUserType,
 } from 'discord.js';
 import * as natural from 'natural';
 import * as path from 'path';
@@ -41,9 +37,6 @@ import { CommandRegistry } from './command-registry';
 import { DiscordClientProvider } from './discord-client.provider';
 import { generateOpenAiReplyWithState } from './gpt/gpt-logic';
 import { InteractionHandler } from './interaction-handler';
-import { textFromImage } from './translator/cv_scrape';
-import { translateText } from './translator/translate';
-import { discordFlagToLanguageCode } from './translator/translate';
 
 interface Command {
   data: { name: string; description?: string };
@@ -122,7 +115,6 @@ export class DiscordService implements OnModuleInit, OnModuleDestroy {
   async onModuleInit(): Promise<void> {
     this.registerInteractionCreateHandler();
     this.registerClientReadyHandler();
-    this.registerMessageReactionAddHandler();
     this.registerMessageCreateHandler();
     this.registerGuildMemberAddHandler();
     this.registerGuildMemberRemoveHandler();
@@ -157,18 +149,6 @@ export class DiscordService implements OnModuleInit, OnModuleDestroy {
       this.setClientActivity();
       this.registerRateLimitHandler();
     });
-  }
-
-  private registerMessageReactionAddHandler(): void {
-    this.client.on(
-      Events.MessageReactionAdd,
-      async (
-        reaction: MessageReaction | PartialMessageReaction,
-        user: DiscordUserType | PartialUser,
-      ) => {
-        await this.handleMessageReaction(reaction, user);
-      },
-    );
   }
 
   private registerGuildMemberAddHandler(): void {
@@ -955,42 +935,6 @@ export class DiscordService implements OnModuleInit, OnModuleDestroy {
       await interaction.followUp(replyOptions);
     } else {
       await interaction.reply(replyOptions);
-    }
-  }
-
-  private async handleMessageReaction(
-    reaction: MessageReaction | PartialMessageReaction,
-    user: DiscordUserType | PartialUser,
-  ): Promise<void> {
-    try {
-      const fullReaction = reaction.partial ? await reaction.fetch() : reaction;
-      const fullUser: DiscordUserType = user.partial
-        ? await user.fetch()
-        : (user as DiscordUserType);
-      const isTranslation = discordFlagToLanguageCode({
-        emoji: fullReaction.emoji.name,
-      });
-      if (!isTranslation) return;
-
-      const attachment = fullReaction.message.attachments.first();
-      if (attachment && attachment.contentType?.startsWith('image/')) {
-        const scrape = await textFromImage({
-          imgLink: attachment.url,
-          emoji: fullReaction.emoji.name,
-          user: fullUser,
-        });
-        if (scrape) await fullReaction.message.reply({ embeds: [scrape] });
-      } else {
-        const translation = await translateText(
-          fullReaction.emoji.name,
-          fullReaction.message.content,
-          fullUser,
-        );
-        if (translation)
-          await fullReaction.message.reply({ embeds: [translation] });
-      }
-    } catch (error) {
-      this.logger.error('Error handling message reaction:', error);
     }
   }
 

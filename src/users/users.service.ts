@@ -108,33 +108,4 @@ export class UsersService {
   async remove(serverId: string): Promise<mongo.DeleteResult> {
     return await this.usersModel.deleteOne({ serverId: serverId }).exec();
   }
-
-  async updatePersonalitySummary(
-    discordUserId: string,
-    summary: string,
-  ): Promise<UserDocument | null> {
-    return this.usersModel
-      .findOneAndUpdate(
-        { discordUserId },
-        {
-          $set: { personalitySummary: summary, lastSeen: new Date() },
-          $inc: { __v: 1 },
-        },
-        { new: true },
-      )
-      .exec();
-  }
-
-  async findActiveUsersForSummaryUpdate(
-    sinceDays: number = 7,
-  ): Promise<UserDocument[]> {
-    const dateSince = new Date();
-    dateSince.setDate(dateSince.getDate() - sinceDays);
-    return this.usersModel
-      .find({
-        lastSeen: { $gte: dateSince },
-        messageCount: { $gt: 0 },
-      })
-      .exec();
-  }
 }
