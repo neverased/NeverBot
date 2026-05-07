@@ -1,5 +1,36 @@
 # Changelog
 
+## [5.6.0](https://github.com/neverased/NeverBot/compare/never-bot-v5.5.0...never-bot-v5.6.0) (2026-05-07)
+
+
+### Features
+
+* **discord:** generate personality snapshots from collected messages ([2fcfb5e](https://github.com/neverased/NeverBot/commit/2fcfb5e7d7719c6a587711e498ba2ca6b4513d4c))
+
+
+### Bug Fixes
+
+* **ci:** satisfy workflow security scanners ([0d7c037](https://github.com/neverased/NeverBot/commit/0d7c037bbf146ff407d19938efb51bb567b03241))
+* **deps:** resolve pnpm audit advisories ([f9e4a3c](https://github.com/neverased/NeverBot/commit/f9e4a3c6ea3a9d48f26330f8bce1cf4e9f83796a))
+* **discord:** harden chat prompt boundaries ([19e2799](https://github.com/neverased/NeverBot/commit/19e2799459e7ec9272104dc59ca631b6a84bd4c2))
+* **discord:** harden personality data handling ([8afd905](https://github.com/neverased/NeverBot/commit/8afd90515084c42d4d1e1d3bb5eff30ff67f36cc))
+* **discord:** harden utility prompt handling ([dcb2990](https://github.com/neverased/NeverBot/commit/dcb2990965613ba512060f4702f5542db1d530f3))
+* **openai:** version updated prompt cache keys ([1a45c1b](https://github.com/neverased/NeverBot/commit/1a45c1b4c37e1a90abb50fe6ba17631cd9840a12))
+* **security:** harden GitHub security scanning ([0f8a163](https://github.com/neverased/NeverBot/commit/0f8a1639d4076b9c986c996045228e0a6476d0b9))
+
+
+### Chores
+
+* **deps:** migrate to pnpm 11 ([be73224](https://github.com/neverased/NeverBot/commit/be73224bd8b9be5134537439e905540cdd3f72a1))
+* **deps:** update dependency picomatch@&lt;2.3.2 to v4 ([df105fc](https://github.com/neverased/NeverBot/commit/df105fcaf1e95de64b89b03d94bcc2f0b55c4482))
+* **deps:** update dependency picomatch@&lt;2.3.2 to v4 ([d9177cc](https://github.com/neverased/NeverBot/commit/d9177cc9120117fa4ce9b5be84d1066e69e55024))
+* **deps:** update googleapis/release-please-action action to v5 ([bef8304](https://github.com/neverased/NeverBot/commit/bef83045979f4c5fbf4b5e7e47eca1e677dbff92))
+* **deps:** update googleapis/release-please-action action to v5 ([3550949](https://github.com/neverased/NeverBot/commit/355094951413939c5e2974be793dcd8457b9d68e))
+* **deps:** update pnpm/action-setup action to v6 ([f28d512](https://github.com/neverased/NeverBot/commit/f28d512cf0aa2622939813a65cc542df1b25eee5))
+* **deps:** update pnpm/action-setup action to v6 ([eecc19b](https://github.com/neverased/NeverBot/commit/eecc19bb0be37326181c7a137c43a871584ec283))
+* **deps:** update pozil/auto-assign-issue action to v3 ([9a8edf6](https://github.com/neverased/NeverBot/commit/9a8edf68c3b6d6f87ddd475607ecd3e32bdf8da1))
+* **deps:** update pozil/auto-assign-issue action to v3 ([40a97e0](https://github.com/neverased/NeverBot/commit/40a97e002c151ffbea9b51ac5fecc7219093b770))
+
 ## [5.5.0](https://github.com/neverased/NeverBot/compare/never-bot-v5.4.0...never-bot-v5.5.0) (2026-05-06)
 
 
