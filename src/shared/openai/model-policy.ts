@@ -22,7 +22,7 @@ const DEFAULT_POLICIES: Record<OpenAiFlow, OpenAiFlowPolicy> = {
     maxCompletionTokens: 768,
     reasoning: { effort: 'low' },
     text: { verbosity: 'low' },
-    promptCacheKey: 'neverbot:chat:v1',
+    promptCacheKey: 'neverbot:chat:v2',
   },
   summary: {
     model: 'gpt-5.5',
@@ -36,7 +36,7 @@ const DEFAULT_POLICIES: Record<OpenAiFlow, OpenAiFlowPolicy> = {
     maxCompletionTokens: 1200,
     reasoning: { effort: 'medium' },
     text: { verbosity: 'medium' },
-    promptCacheKey: 'neverbot:changelog:v1',
+    promptCacheKey: 'neverbot:changelog:v2',
   },
   vision: {
     model: 'gpt-4o',
@@ -72,13 +72,16 @@ export function getOpenAiFlowPolicy(flow: OpenAiFlow): OpenAiFlowPolicy {
   const reasoning = getReasoningEffortEnv(`LLM_REASONING_${envSuffix}`);
   const promptCacheKeyPrefix =
     getEnv('LLM_PROMPT_CACHE_KEY_PREFIX') ?? 'neverbot';
+  const promptCacheKeyVersion = getPromptCacheKeyVersion(
+    defaults.promptCacheKey,
+  );
 
   return {
     ...defaults,
     model,
     maxCompletionTokens,
     ...(reasoning ? { reasoning: { effort: reasoning } } : {}),
-    promptCacheKey: `${promptCacheKeyPrefix}:${flow}:v1`,
+    promptCacheKey: `${promptCacheKeyPrefix}:${flow}:${promptCacheKeyVersion}`,
   };
 }
 
@@ -101,4 +104,9 @@ function getReasoningEffortEnv(name: string): ReasoningEffort | undefined {
     return undefined;
   }
   return raw as ReasoningEffort;
+}
+
+function getPromptCacheKeyVersion(defaultPromptCacheKey: string): string {
+  const keyParts = defaultPromptCacheKey.split(':');
+  return keyParts[keyParts.length - 1] || 'v1';
 }
