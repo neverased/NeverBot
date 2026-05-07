@@ -21,6 +21,7 @@ import {
   ThreadChannel,
 } from 'discord.js';
 import * as natural from 'natural';
+import OpenAI from 'openai';
 import * as path from 'path';
 
 import { discordRateLimitHits } from '../core/metrics/metrics-registry';
@@ -36,6 +37,7 @@ import { UsersService } from '../users/users.service';
 import { CommandRegistry } from './command-registry';
 import { DiscordClientProvider } from './discord-client.provider';
 import { generateOpenAiReplyWithState } from './gpt/gpt-logic';
+import { buildWelcomePromptMessages } from './gpt/prompts';
 import { InteractionHandler } from './interaction-handler';
 
 interface Command {
@@ -168,17 +170,7 @@ export class DiscordService implements OnModuleInit, OnModuleDestroy {
 
         const policy = getOpenAiFlowPolicy('chat');
         const { content } = await callChatCompletion(
-          [
-            {
-              role: 'system',
-              content:
-                "You're NeverBot, chatting naturally on Discord. You're welcoming a new person. Be casual and friendly, not over-the-top. Keep it short—2-3 sentences max.",
-            },
-            {
-              role: 'user',
-              content: `Someone new just joined: ${member.user.username}. Welcome them briefly and mention /help exists if they need it.`,
-            },
-          ],
+          buildWelcomePromptMessages(member.user.id, member.user.username),
           {
             flow: 'chat',
             model: policy.model,
@@ -366,26 +358,14 @@ export class DiscordService implements OnModuleInit, OnModuleDestroy {
     }
 
     const shouldUseLocalHistory = !priorConversationId || imageUrls.length > 0;
-    let historyText = '';
+    let localHistoryMessages: Array<OpenAI.Chat.ChatCompletionMessageParam> = [];
     if (shouldUseLocalHistory && this.isSendableChannel(message.channel)) {
       try {
         const history = await message.channel.messages.fetch({
           limit: 15,
           before: message.id,
         });
-        historyText = history
-          .reverse()
-          .map((m) => {
-            let content = m.content;
-            const imageCount = m.attachments.filter((a) =>
-              a.contentType?.startsWith('image/'),
-            ).size;
-            if (imageCount > 0) {
-              content += ` [attached ${imageCount} image${imageCount > 1 ? 's' : ''}]`;
-            }
-            return `User ${m.author.username} (ID: ${m.author.id}): ${content}`;
-          })
-          .join('\n');
+        localHistoryMessages = this.buildOpenAiHistoryMessages(history);
       } catch (e) {
         this.logger.warn(
           `Failed to fetch message history for channel ${message.channel.id}: ${(e as Error).message}`,
@@ -393,9 +373,7 @@ export class DiscordService implements OnModuleInit, OnModuleDestroy {
       }
     }
 
-    const fullQuestion = shouldUseLocalHistory
-      ? `Here is the recent conversation history in this channel. Your response should continue the conversation naturally as a participant named NeverBot.\n\n${historyText}\n\nUser ${message.author.username} (ID: ${message.author.id}): ${gptQuestion}`
-      : `User ${message.author.username} (ID: ${message.author.id}): ${gptQuestion}`;
+    const fullQuestion = `User ${message.author.username} (ID: ${message.author.id}): ${gptQuestion}`;
 
     let gptResponse: string | null = null;
     let conversationId: string | undefined = undefined;
@@ -408,6 +386,7 @@ export class DiscordService implements OnModuleInit, OnModuleDestroy {
         this.userMessagesService,
         priorConversationId,
         imageUrls.length > 0 ? imageUrls : undefined,
+        localHistoryMessages.length > 0 ? localHistoryMessages : undefined,
       );
       gptResponse = response.content;
       conversationId = response.conversationId;
@@ -533,6 +512,42 @@ export class DiscordService implements OnModuleInit, OnModuleDestroy {
       }
       this.logger.warn('[GPT] No response generated; sent error fallback.');
     }
+  }
+
+  private buildOpenAiHistoryMessages(
+    history: Collection<string, Message>,
+  ): Array<OpenAI.Chat.ChatCompletionMessageParam> {
+    return history
+      .reverse()
+      .map((m): OpenAI.Chat.ChatCompletionMessageParam | null => {
+        const imageCount = m.attachments.filter((a) =>
+          a.contentType?.startsWith('image/'),
+        ).size;
+        const attachmentNote =
+          imageCount > 0
+            ? ` [attached ${imageCount} image${imageCount > 1 ? 's' : ''}]`
+            : '';
+        const content = `${m.content ?? ''}${attachmentNote}`.trim();
+        if (!content) {
+          return null;
+        }
+        if (m.author.id === this.client.user?.id) {
+          return {
+            role: 'assistant',
+            content,
+          };
+        }
+        return {
+          role: 'user',
+          content: `User ${m.author.username} (ID: ${m.author.id}): ${content}`,
+        };
+      })
+      .filter(
+        (
+          message,
+        ): message is OpenAI.Chat.ChatCompletionMessageParam =>
+          message !== null,
+      );
   }
 
   private registerMessageCreateHandler(): void {
