@@ -27,7 +27,7 @@ Set these in your shell or a `.env` file:
 BOT_TOKEN=your_discord_bot_token
 DISCORD_APPLICATION_ID=your_discord_app_id
 GPT_KEY=your_openai_api_key
-MONGO_URI=mongodb://user:password@localhost:27017/neverbot?authSource=admin
+MONGO_URI=mongodb://localhost:27017/neverbot
 
 # Legacy (optional fallback):
 # MONGO_USER=your_mongodb_user
@@ -65,6 +65,7 @@ LLM_PROMPT_CACHE_KEY_PREFIX=neverbot
 ```
 
 Mongo is configured in `src/app.module.ts` to prefer `MONGO_URI`. If not set, it will fall back to `MONGO_USER`/`MONGO_PW`.
+For authenticated MongoDB connections, keep credentials in local environment variables or secrets, not in committed examples.
 
 ## Install
 

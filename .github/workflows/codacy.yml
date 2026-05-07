@@ -56,8 +56,12 @@ jobs:
 
       # GitHub Code Scanning rejects third-party SARIF uploads when a file has
       # duplicate run categories, and each uploaded SARIF file may contain at
-      # most 20 runs. Normalize Codacy's combined output before uploading.
+      # most 20 runs. Normalize Codacy's combined output before uploading and
+      # keep GitHub Security focused on security tools, not lint/style tools.
       - name: Normalize Codacy SARIF for GitHub
+        env:
+          CODACY_SECURITY_SARIF_TOOLS: semgrep,opengrep,checkov
+          CODACY_NON_SECURITY_SARIF_TOOLS: markdownlint,biome,eslint,eslint-8,eslint-9,remark-lint,psscriptanalyzer,jshint
         run: node .github/scripts/normalize-codacy-sarif.cjs results.sarif github-code-scanning.sarif
 
       # Upload the SARIF file generated in the previous step

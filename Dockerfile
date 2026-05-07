@@ -44,5 +44,7 @@ ENV NODE_ENV=production
 # Expose port 3500 (matches app default PORT)
 EXPOSE 3500
 
+USER node
+
 # Run the application in production
-CMD [ "pnpm", "run", "start:prod" ]
+CMD [ "node", "dist/main" ]

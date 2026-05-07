@@ -4,6 +4,9 @@ on:
   schedule:
     - cron: '21 4 * * *'
 
+permissions:
+  contents: read
+
 jobs:
   stale:
     permissions:

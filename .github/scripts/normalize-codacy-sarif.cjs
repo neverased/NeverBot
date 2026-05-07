@@ -3,6 +3,17 @@
 const fs = require('node:fs');
 
 const MAX_GITHUB_SARIF_RUNS = 20;
+const DEFAULT_SECURITY_TOOL_NAMES = ['semgrep', 'opengrep', 'checkov'];
+const DEFAULT_NON_SECURITY_TOOL_NAMES = [
+  'markdownlint',
+  'biome',
+  'eslint',
+  'eslint-8',
+  'eslint-9',
+  'remark-lint',
+  'psscriptanalyzer',
+  'jshint',
+];
 const [inputPath = 'results.sarif', outputPath = 'github-code-scanning.sarif'] =
   process.argv.slice(2);
 
@@ -21,6 +32,63 @@ function slug(value, fallback) {
 
 function ruleKey(rule, index) {
   return rule?.id ?? rule?.name ?? JSON.stringify(rule) ?? `rule-${index}`;
+}
+
+function normalizeToolName(value) {
+  return String(value ?? '')
+    .toLowerCase()
+    .replace(/\s+\(reported by codacy\)$/u, '')
+    .trim();
+}
+
+function securityToolNames() {
+  const raw =
+    process.env.CODACY_SECURITY_SARIF_TOOLS ??
+    DEFAULT_SECURITY_TOOL_NAMES.join(',');
+
+  const names = raw
+    .split(',')
+    .map((value) => normalizeToolName(value))
+    .filter(Boolean);
+
+  return new Set(names.length > 0 ? names : DEFAULT_SECURITY_TOOL_NAMES);
+}
+
+function nonSecurityToolNames() {
+  const raw =
+    process.env.CODACY_NON_SECURITY_SARIF_TOOLS ??
+    DEFAULT_NON_SECURITY_TOOL_NAMES.join(',');
+
+  const names = raw
+    .split(',')
+    .map((value) => normalizeToolName(value))
+    .filter(Boolean);
+
+  return new Set(names.length > 0 ? names : DEFAULT_NON_SECURITY_TOOL_NAMES);
+}
+
+function runToolNames(run) {
+  const driver = run.tool?.driver ?? {};
+
+  return [driver.name, driver.fullName]
+    .map((value) => normalizeToolName(value))
+    .filter(Boolean);
+}
+
+function isSecurityToolRun(run, allowedToolNames) {
+  const names = runToolNames(run);
+
+  return names.some((name) => allowedToolNames.has(name));
+}
+
+function isNonSecurityToolRun(run, ignoredToolNames) {
+  const names = runToolNames(run);
+
+  return names.some((name) => ignoredToolNames.has(name));
+}
+
+function describeRunTool(run) {
+  return runToolNames(run).join(' / ') || 'unknown';
 }
 
 function artifactKey(artifact, index) {
@@ -167,6 +235,40 @@ function normalizeSarif(sarif) {
   let normalizedRuns = [...groupedRuns.values()].sort(
     (left, right) => left.firstIndex - right.firstIndex,
   );
+
+  const allowedSecurityToolNames = securityToolNames();
+  const ignoredNonSecurityToolNames = nonSecurityToolNames();
+  const droppedNonSecurityRuns = [];
+  const keptUnknownRuns = [];
+
+  normalizedRuns = normalizedRuns.filter((entry) => {
+    if (isNonSecurityToolRun(entry.run, ignoredNonSecurityToolNames)) {
+      droppedNonSecurityRuns.push(entry.run);
+      return false;
+    }
+
+    if (!isSecurityToolRun(entry.run, allowedSecurityToolNames)) {
+      keptUnknownRuns.push(entry.run);
+    }
+
+    return true;
+  });
+
+  if (droppedNonSecurityRuns.length > 0) {
+    console.warn(
+      `Codacy SARIF noise filter kept ${normalizedRuns.length} tool groups and dropped ${droppedNonSecurityRuns.length} known non-security tool groups: ${[
+        ...new Set(droppedNonSecurityRuns.map(describeRunTool)),
+      ].join(', ')}.`,
+    );
+  }
+
+  if (keptUnknownRuns.length > 0) {
+    console.warn(
+      `Codacy SARIF noise filter kept ${keptUnknownRuns.length} unclassified tool groups for visibility: ${[
+        ...new Set(keptUnknownRuns.map(describeRunTool)),
+      ].join(', ')}. Review and add them to CODACY_SECURITY_SARIF_TOOLS or CODACY_NON_SECURITY_SARIF_TOOLS if needed.`,
+    );
+  }
 
   if (normalizedRuns.length > MAX_GITHUB_SARIF_RUNS) {
     const selected = normalizedRuns
