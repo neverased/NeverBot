@@ -53,7 +53,7 @@ describe('UsersService', () => {
     expect(usersModel.findOneAndUpdate).toHaveBeenCalledWith(
       { discordUserId: 'user-1' },
       { $set: { messageCount: 3 } },
-      { new: true },
+      { returnDocument: 'after' },
     );
     expect(exec).toHaveBeenCalled();
   });
@@ -75,7 +75,7 @@ describe('UsersService', () => {
     expect(usersModel.findOneAndUpdate).toHaveBeenCalledWith(
       { discordUserId: 'user-1' },
       update,
-      { new: true },
+      { returnDocument: 'after' },
     );
   });
 

@@ -176,7 +176,7 @@ export class UsersService {
         { discordUserId: discordUserId },
         hasMongoOperator ? updateUserDto : { $set: updateUserDto },
         {
-          new: true,
+          returnDocument: 'after',
         },
       )
       .exec();
@@ -190,7 +190,7 @@ export class UsersService {
       .findOneAndUpdate(
         { serverId: serverId },
         { $set: updateUserDto },
-        { new: true },
+        { returnDocument: 'after' },
       )
       .exec();
   }

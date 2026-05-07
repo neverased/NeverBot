@@ -72,7 +72,7 @@ export class UserMessagesService {
   ): Promise<UserMessage> {
     return this.userMessageModel
       .findOneAndUpdate({ userId, messageId }, updateUserMessageDto, {
-        new: true,
+        returnDocument: 'after',
       })
       .exec();
   }

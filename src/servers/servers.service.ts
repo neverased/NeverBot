@@ -32,7 +32,11 @@ export class ServersService {
     update: Partial<Server>,
   ): Promise<Server | null> {
     return this.serversModel
-      .findOneAndUpdate({ discordServerId }, { $set: update }, { new: true })
+      .findOneAndUpdate(
+        { discordServerId },
+        { $set: update },
+        { returnDocument: 'after' },
+      )
       .exec();
   }
 
