@@ -8,6 +8,7 @@ import { getOpenAiFlowPolicy } from '../../../shared/openai/model-policy';
 import { setDiscordResilience } from '../../decorators/discord-resilience.decorator';
 
 const GENERATED_IMAGE_FILE_NAME = 'imagined.png';
+const MAX_IMAGE_PROMPT_LENGTH = 1600;
 
 interface GeneratedImage {
   base64: string;
@@ -90,20 +91,27 @@ module.exports = {
     const startedAt = Date.now();
     await interaction.deferReply();
     const question = interaction.options.getString('question');
+    const prompt = question?.trim() ?? '';
 
-    if (!question) {
+    if (!prompt) {
       return await interaction.editReply('Please provide a prompt!');
+    }
+
+    if (prompt.length > MAX_IMAGE_PROMPT_LENGTH) {
+      return await interaction.editReply(
+        `prompt is too long. keep it under ${MAX_IMAGE_PROMPT_LENGTH} characters.`,
+      );
     }
 
     try {
       console.log(
-        `[Imagine] Start | user=${interaction.user?.id} guild=${interaction.guild?.id ?? 'DM'} question="${question}"`,
+        `[Imagine] Start | user=${interaction.user?.id} guild=${interaction.guild?.id ?? 'DM'} promptLength=${prompt.length}`,
       );
       console.log('[Imagine] Calling OpenAI images.generate | size=1024x1024');
       const policy = getOpenAiFlowPolicy('image');
       const imageResponse = await openai.images.generate({
         model: policy.model,
-        prompt: question,
+        prompt,
         size: '1024x1024',
       });
 
@@ -123,7 +131,7 @@ module.exports = {
       );
 
       await interaction.editReply({
-        content: 'Prompt: ' + question,
+        content: 'Prompt: ' + prompt,
         files: [attachment],
       });
       console.log(`[Imagine] Reply sent | elapsedMs=${Date.now() - startedAt}`);

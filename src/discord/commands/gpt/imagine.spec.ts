@@ -86,4 +86,37 @@ describe('/imagine command', () => {
       "couldn't generate that: Image data not found in API response (b64_json missing).",
     );
   });
+
+  it('trims image prompts before calling OpenAI', async () => {
+    const imageBytes = Buffer.from('generated image bytes');
+    const interaction = createInteraction('  a neon city  ');
+    generateMock.mockResolvedValue({
+      created: 1,
+      data: [{ b64_json: imageBytes.toString('base64') }],
+    });
+
+    await command.execute(interaction);
+
+    expect(generateMock).toHaveBeenCalledWith({
+      model: 'gpt-image-1',
+      prompt: 'a neon city',
+      size: '1024x1024',
+    });
+    expect(interaction.editReply).toHaveBeenCalledWith(
+      expect.objectContaining({
+        content: 'Prompt: a neon city',
+      }),
+    );
+  });
+
+  it('rejects overly long image prompts before calling OpenAI', async () => {
+    const interaction = createInteraction('x'.repeat(1601));
+
+    await command.execute(interaction);
+
+    expect(generateMock).not.toHaveBeenCalled();
+    expect(interaction.editReply).toHaveBeenCalledWith(
+      'prompt is too long. keep it under 1600 characters.',
+    );
+  });
 });
