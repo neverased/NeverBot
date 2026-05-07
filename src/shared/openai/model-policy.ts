@@ -1,4 +1,10 @@
-export type OpenAiFlow = 'chat' | 'summary' | 'changelog' | 'vision' | 'image';
+export type OpenAiFlow =
+  | 'chat'
+  | 'summary'
+  | 'changelog'
+  | 'personality'
+  | 'vision'
+  | 'image';
 
 export type ReasoningEffort =
   | 'none'
@@ -37,6 +43,13 @@ const DEFAULT_POLICIES: Record<OpenAiFlow, OpenAiFlowPolicy> = {
     reasoning: { effort: 'medium' },
     text: { verbosity: 'medium' },
     promptCacheKey: 'neverbot:changelog:v2',
+  },
+  personality: {
+    model: 'gpt-5.5',
+    maxCompletionTokens: 800,
+    reasoning: { effort: 'low' },
+    text: { verbosity: 'low' },
+    promptCacheKey: 'neverbot:personality:v1',
   },
   vision: {
     model: 'gpt-4o',

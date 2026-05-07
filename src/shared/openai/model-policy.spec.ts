@@ -23,5 +23,8 @@ describe('OpenAI model policy prompt cache keys', () => {
     expect(getOpenAiFlowPolicy('summary').promptCacheKey).toBe(
       'testbot:summary:v1',
     );
+    expect(getOpenAiFlowPolicy('personality').promptCacheKey).toBe(
+      'testbot:personality:v1',
+    );
   });
 });

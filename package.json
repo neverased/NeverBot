@@ -28,7 +28,8 @@
     "compose:logs": "docker compose logs -f neverbot",
     "release": "release-please",
     "register-commands": "ts-node src/register-commands.ts",
-    "backfill:messagecounts": "ts-node src/scripts/backfill-message-counts.ts"
+    "backfill:messagecounts": "ts-node src/scripts/backfill-message-counts.ts",
+    "personality:refresh": "ts-node src/scripts/refresh-personality-summaries.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.19",

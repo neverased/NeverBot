@@ -46,14 +46,17 @@ LLM_PROMPT_CACHE_KEY_PREFIX=neverbot
 # LLM_MODEL_CHAT=gpt-5.5
 # LLM_MODEL_SUMMARY=gpt-5.5
 # LLM_MODEL_CHANGELOG=gpt-5.5
+# LLM_MODEL_PERSONALITY=gpt-5.5
 # LLM_MODEL_VISION=gpt-4o
 # LLM_MODEL_IMAGE=gpt-image-1
 # LLM_REASONING_CHAT=low
 # LLM_REASONING_SUMMARY=low
 # LLM_REASONING_CHANGELOG=medium
+# LLM_REASONING_PERSONALITY=low
 # LLM_MAX_OUTPUT_TOKENS_CHAT=768
 # LLM_MAX_OUTPUT_TOKENS_SUMMARY=320
 # LLM_MAX_OUTPUT_TOKENS_CHANGELOG=1200
+# LLM_MAX_OUTPUT_TOKENS_PERSONALITY=800
 # LLM_MAX_OUTPUT_TOKENS_VISION=768
 ```
 
@@ -227,6 +230,7 @@ docker compose run --rm neverbot pnpm register-commands
 - OpenAI errors: confirm `GPT_KEY` is set and OpenAI access is active.
 - Mongo connection: confirm `MONGO_URI` or `MONGO_USER`/`MONGO_PW` and network access.
 - Conversation issues: use `/resetconversation` to clear conversation context.
+- Missing personality summaries: run `pnpm personality:refresh` after enough user messages have been collected. Add `-- --force` to recompute existing summaries.
 
 ## Contributing
 

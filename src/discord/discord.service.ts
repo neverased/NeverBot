@@ -33,6 +33,7 @@ import { splitTextIntoParts } from '../shared/utils/text-splitter';
 import { User as UserModel } from '../users/entities/user.entity';
 import { CreateUserMessageDto } from '../users/messages/dto/create-user-message.dto';
 import { UserMessagesService } from '../users/messages/messages.service';
+import { PersonalityService } from '../users/personality/personality.service';
 import { UsersService } from '../users/users.service';
 import { CommandRegistry } from './command-registry';
 import { DiscordClientProvider } from './discord-client.provider';
@@ -86,6 +87,7 @@ export class DiscordService implements OnModuleInit, OnModuleDestroy {
   constructor(
     private readonly usersService: UsersService,
     private readonly userMessagesService: UserMessagesService,
+    private readonly personalityService: PersonalityService,
     private readonly serversService: ServersService,
     private readonly discordClientProvider: DiscordClientProvider,
     private readonly commandRegistry: CommandRegistry,
@@ -325,7 +327,7 @@ export class DiscordService implements OnModuleInit, OnModuleDestroy {
       await message.channel.sendTyping();
     }
     this.logger.log(
-      `[GPT] Incoming question from ${message.author.username}: "${gptQuestion}"`,
+      `[GPT] Incoming question from ${message.author.username}; length=${gptQuestion.length}`,
     );
     const cacheKey = `${message.channel.id}-${message.author.id}`;
     const cached = this.conversationContextCache.get(cacheKey);
@@ -592,7 +594,9 @@ export class DiscordService implements OnModuleInit, OnModuleDestroy {
         return;
       }
 
-      // Channel enablement check
+      // Channel enablement only gates bot replies. Message collection and user
+      // stats stay always-on so personality can learn from normal server use.
+      let canRespondInChannel = true;
       if (
         message.guild &&
         serverConfig &&
@@ -600,7 +604,7 @@ export class DiscordService implements OnModuleInit, OnModuleDestroy {
         serverConfig.enabledChannels.length > 0
       ) {
         if (!serverConfig.enabledChannels.includes(channelId)) {
-          return; // Do not respond in this channel
+          canRespondInChannel = false;
         }
       }
 
@@ -621,7 +625,11 @@ export class DiscordService implements OnModuleInit, OnModuleDestroy {
       );
       const isBotMentioned = mentionsBotItself || mentionsNever;
 
-      if (isBotMentioned && !this.checkRateLimit(discordUserId)) {
+      if (
+        canRespondInChannel &&
+        isBotMentioned &&
+        !this.checkRateLimit(discordUserId)
+      ) {
         this.logger.warn(
           `[Rate Limit] User ${message.author.username} (${discordUserId}) exceeded rate limit`,
         );
@@ -792,10 +800,27 @@ export class DiscordService implements OnModuleInit, OnModuleDestroy {
             };
           }
 
-          await this.usersService.updateUserByDiscordUserId(
+          const updatedUser = await this.usersService.updateUserByDiscordUserId(
             discordUserId,
             updatePayload,
           );
+          void this.personalityService
+            .maybeRefreshPersonalitySummary(discordUserId)
+            .then((result) => {
+              if (result.status === 'updated') {
+                this.logger.log(
+                  `[Personality] Refreshed summary for ${discordUserId} at messageCount=${updatedUser?.messageCount ?? 'unknown'}`,
+                );
+              }
+            })
+            .catch((personalityError) => {
+              this.logger.error(
+                `Error refreshing personality summary for ${discordUserId}: ${
+                  (personalityError as Error).message
+                }`,
+                (personalityError as Error).stack,
+              );
+            });
         } catch (updateError) {
           this.logger.error(
             `Error updating user ${discordUserId} stats: ${(updateError as Error).message}`,
@@ -820,7 +845,7 @@ export class DiscordService implements OnModuleInit, OnModuleDestroy {
       }
 
       // Reaction logic (only if not a follow-up that will be replied to)
-      if (isBotMentioned && !isFollowUp) {
+      if (canRespondInChannel && isBotMentioned && !isFollowUp) {
         // If it's a follow up, we don't need the generic react.
         try {
           if (!message.content.endsWith('?')) {
@@ -846,9 +871,12 @@ export class DiscordService implements OnModuleInit, OnModuleDestroy {
       }
 
       // Core condition: bot is mentioned OR it's a follow-up to a recent bot interaction
-      if (isBotMentioned || (isFollowUp && !isBotMentioned)) {
+      if (
+        canRespondInChannel &&
+        (isBotMentioned || (isFollowUp && !isBotMentioned))
+      ) {
         this.logger.log(
-          `Bot engaged by ${message.author.username} (Mention: ${isBotMentioned}, Follow-up: ${isFollowUp}): "${message.content}"`,
+          `Bot engaged by ${message.author.username} (Mention: ${isBotMentioned}, Follow-up: ${isFollowUp}); length=${message.content.length}`,
         );
 
         // Keywords to indicate user wants to stop the follow-up

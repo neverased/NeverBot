@@ -1,6 +1,7 @@
 import {
   ChatInputCommandInteraction,
   EmbedBuilder,
+  PermissionFlagsBits,
   SlashCommandBuilder,
   User as DiscordUser,
 } from 'discord.js';
@@ -30,7 +31,7 @@ module.exports = {
       timeoutMs: 8000,
       retries: 0,
     });
-    await interaction.deferReply();
+    await interaction.deferReply({ ephemeral: true });
 
     if (!usersService) {
       return await interaction.editReply(
@@ -40,6 +41,13 @@ module.exports = {
 
     const targetDiscordUser: DiscordUser =
       interaction.options.getUser('target') || interaction.user;
+    const isSelfLookup = targetDiscordUser.id === interaction.user.id;
+
+    if (!isSelfLookup && !canViewOtherPersonalities(interaction)) {
+      return await interaction.editReply(
+        'you can only view your own personality snapshot.',
+      );
+    }
 
     try {
       const targetUserProfile: UserModel | null =
@@ -51,31 +59,31 @@ module.exports = {
         );
       }
 
+      if (targetUserProfile.personalitySummaryStatus === 'error') {
+        await interaction.editReply(
+          'I tried to refresh that personality snapshot, but something broke. Last good snapshot is kept for chat context.',
+        );
+        return;
+      }
+
       if (
         targetUserProfile.personalitySummary &&
-        targetUserProfile.personalitySummary.trim() !== '' &&
-        !targetUserProfile.personalitySummary
-          .toLowerCase()
-          .includes('error generating summary')
+        targetUserProfile.personalitySummary.trim() !== ''
       ) {
+        const displaySummary = sanitizePersonalitySummaryForDisplay(
+          targetUserProfile.personalitySummary,
+        );
         const personalityEmbed = new EmbedBuilder()
           .setColor(0x0099ff)
           .setTitle(`${targetDiscordUser.username}'s Personality Snapshot`)
-          .setDescription(targetUserProfile.personalitySummary)
+          .setDescription(displaySummary)
           .setThumbnail(targetDiscordUser.displayAvatarURL())
           .setTimestamp()
-          .setFooter({ text: 'Based on recent activity and interactions.' });
+          .setFooter({
+            text: buildPersonalityFooter(targetUserProfile),
+          });
 
         await interaction.editReply({ embeds: [personalityEmbed] });
-      } else if (
-        targetUserProfile.personalitySummary &&
-        targetUserProfile.personalitySummary
-          .toLowerCase()
-          .includes('error generating summary')
-      ) {
-        await interaction.editReply(
-          `I tried to get a read on ${targetDiscordUser.username}, but there was an issue generating their personality summary. Please try again later or ask an admin to regenerate it.`,
-        );
       } else {
         await interaction.editReply(
           `I don't have a personality summary for ${targetDiscordUser.username} yet.`,
@@ -92,3 +100,35 @@ module.exports = {
     }
   },
 };
+
+function canViewOtherPersonalities(
+  interaction: ChatInputCommandInteraction,
+): boolean {
+  return Boolean(
+    interaction.memberPermissions?.has(PermissionFlagsBits.Administrator) ||
+      interaction.memberPermissions?.has(PermissionFlagsBits.ManageGuild),
+  );
+}
+
+function sanitizePersonalitySummaryForDisplay(summary: string): string {
+  return summary
+    .replace(/<@!?\d+>/g, '[mention]')
+    .replace(/<@&\d+>/g, '[role]')
+    .replace(/<#\d+>/g, '[channel]')
+    .replace(/@everyone/gi, 'everyone')
+    .replace(/@here/gi, 'here')
+    .replace(/https?:\/\/\S+/gi, '[link]')
+    .replace(/[<>]/g, '')
+    .trim()
+    .slice(0, 3500);
+}
+
+function buildPersonalityFooter(profile: UserModel): string {
+  if (!profile.personalitySummaryUpdatedAt) {
+    return 'Based on recent collected server activity.';
+  }
+
+  return `Based on recent collected server activity. Updated ${new Date(
+    profile.personalitySummaryUpdatedAt,
+  ).toISOString()}`;
+}

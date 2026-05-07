@@ -20,6 +20,7 @@ import * as Joi from 'joi';
         LLM_MODEL_CHAT: Joi.string().optional(),
         LLM_MODEL_SUMMARY: Joi.string().optional(),
         LLM_MODEL_CHANGELOG: Joi.string().optional(),
+        LLM_MODEL_PERSONALITY: Joi.string().optional(),
         LLM_MODEL_VISION: Joi.string().optional(),
         LLM_MODEL_IMAGE: Joi.string().optional(),
         LLM_REASONING_CHAT: Joi.string()
@@ -31,9 +32,16 @@ import * as Joi from 'joi';
         LLM_REASONING_CHANGELOG: Joi.string()
           .valid('none', 'minimal', 'low', 'medium', 'high', 'xhigh')
           .optional(),
+        LLM_REASONING_PERSONALITY: Joi.string()
+          .valid('none', 'minimal', 'low', 'medium', 'high', 'xhigh')
+          .optional(),
         LLM_MAX_OUTPUT_TOKENS_CHAT: Joi.number().integer().min(1).optional(),
         LLM_MAX_OUTPUT_TOKENS_SUMMARY: Joi.number().integer().min(1).optional(),
         LLM_MAX_OUTPUT_TOKENS_CHANGELOG: Joi.number()
+          .integer()
+          .min(1)
+          .optional(),
+        LLM_MAX_OUTPUT_TOKENS_PERSONALITY: Joi.number()
           .integer()
           .min(1)
           .optional(),

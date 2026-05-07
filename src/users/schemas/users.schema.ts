@@ -38,6 +38,21 @@ export class User {
   @Prop({ type: String, default: '' })
   personalitySummary: string;
 
+  @Prop({ type: String, default: 'pending' })
+  personalitySummaryStatus: string;
+
+  @Prop({ type: Date })
+  personalitySummaryUpdatedAt?: Date;
+
+  @Prop({ type: Number, default: 0 })
+  personalitySummaryMessageCount: number;
+
+  @Prop({ type: String, default: '' })
+  personalitySummaryVersion: string;
+
+  @Prop({ type: String, default: '' })
+  personalitySummaryError: string;
+
   @Prop({
     type: {
       enabledChannels: { type: [String], default: [] },

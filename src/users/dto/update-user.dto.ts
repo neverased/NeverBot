@@ -71,4 +71,24 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
   @IsOptional()
   @IsString()
   personalitySummary?: string;
+
+  @IsOptional()
+  @IsString()
+  personalitySummaryStatus?: string;
+
+  @IsOptional()
+  @IsDate()
+  personalitySummaryUpdatedAt?: Date;
+
+  @IsOptional()
+  @IsNumber()
+  personalitySummaryMessageCount?: number;
+
+  @IsOptional()
+  @IsString()
+  personalitySummaryVersion?: string;
+
+  @IsOptional()
+  @IsString()
+  personalitySummaryError?: string;
 }

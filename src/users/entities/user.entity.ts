@@ -14,5 +14,10 @@ export class User {
   topicsOfInterest: string[];
   sentimentHistory: { sentiment: string; score: number; timestamp: Date }[];
   personalitySummary: string;
+  personalitySummaryStatus?: string;
+  personalitySummaryUpdatedAt?: Date;
+  personalitySummaryMessageCount?: number;
+  personalitySummaryVersion?: string;
+  personalitySummaryError?: string;
   tasks?: UserTasks;
 }
