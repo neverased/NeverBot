@@ -47,6 +47,10 @@ import * as Joi from 'joi';
           .optional(),
         LLM_MAX_OUTPUT_TOKENS_VISION: Joi.number().integer().min(1).optional(),
         LLM_PROMPT_CACHE_KEY_PREFIX: Joi.string().optional(),
+        USER_MESSAGE_RETENTION_DAYS: Joi.number()
+          .integer()
+          .min(0)
+          .optional(),
         ALLOWED_ORIGINS: Joi.string().optional(),
         PORT: Joi.number().integer().min(1).max(65535).default(3500),
         NODE_ENV: Joi.string()

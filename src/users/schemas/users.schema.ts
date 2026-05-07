@@ -3,6 +3,21 @@ import { HydratedDocument } from 'mongoose';
 
 export type UserDocument = HydratedDocument<User>;
 
+export type GuildMembershipSource =
+  | 'observed'
+  | 'guild_member_sync'
+  | 'guild_member_add';
+
+export class GuildMembership {
+  guildId: string;
+  guildName: string;
+  joinedAt?: Date;
+  firstSeenAt: Date;
+  lastSeenAt: Date;
+  leftAt?: Date | null;
+  source: GuildMembershipSource;
+}
+
 @Schema()
 export class User {
   @Prop({ type: String, required: true, unique: true })
@@ -16,6 +31,22 @@ export class User {
 
   @Prop({ type: String })
   serverId: string;
+
+  @Prop({
+    type: [
+      {
+        guildId: { type: String, required: true },
+        guildName: { type: String, default: 'N/A' },
+        joinedAt: { type: Date },
+        firstSeenAt: { type: Date, default: Date.now },
+        lastSeenAt: { type: Date, default: Date.now },
+        leftAt: { type: Date, default: null },
+        source: { type: String, default: 'observed' },
+      },
+    ],
+    default: [],
+  })
+  guildMemberships: GuildMembership[];
 
   @Prop({ type: String, default: 'free' })
   subscription: string;
@@ -53,6 +84,21 @@ export class User {
   @Prop({ type: String, default: '' })
   personalitySummaryError: string;
 
+  @Prop({ type: Date })
+  personalitySummarySampleFrom?: Date;
+
+  @Prop({ type: Date })
+  personalitySummarySampleTo?: Date;
+
+  @Prop({ type: Number, default: 0 })
+  personalitySummaryGuildCount: number;
+
+  @Prop({ type: Number, default: 0 })
+  personalitySummaryDmCount: number;
+
+  @Prop({ type: [String], default: [] })
+  personalitySummaryScopeTypes: string[];
+
   @Prop({
     type: {
       enabledChannels: { type: [String], default: [] },
@@ -69,3 +115,4 @@ export class User {
 export const UserSchema = SchemaFactory.createForClass(User);
 UserSchema.index({ lastSeen: -1 });
 UserSchema.index({ serverId: 1 });
+UserSchema.index({ 'guildMemberships.guildId': 1 });

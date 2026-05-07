@@ -11,6 +11,9 @@ import {
   UserMessageDocument,
 } from './schemas/user-message.schema';
 
+const DEFAULT_MESSAGE_RETENTION_DAYS = 90;
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
 @Injectable()
 export class UserMessagesService {
   private readonly logger = new Logger(UserMessagesService.name);
@@ -27,9 +30,11 @@ export class UserMessagesService {
       `Creating message for userId: ${createUserMessageDto.userId}, messageId: ${createUserMessageDto.messageId}`,
     );
     try {
-      const createdUserMessage = new this.userMessageModel(
-        createUserMessageDto,
-      );
+      const createdUserMessage = new this.userMessageModel({
+        ...createUserMessageDto,
+        expiresAt:
+          createUserMessageDto.expiresAt ?? getMessageRetentionExpiresAt(),
+      });
       const savedMessage = await createdUserMessage.save();
       this.logger.log(
         `Successfully saved message for userId: ${createUserMessageDto.userId}, messageId: ${createUserMessageDto.messageId}`,
@@ -76,6 +81,10 @@ export class UserMessagesService {
     return this.userMessageModel.deleteOne({ userId, messageId }).exec();
   }
 
+  async removeAllByUserId(userId: string): Promise<mongo.DeleteResult> {
+    return this.userMessageModel.deleteMany({ userId }).exec();
+  }
+
   async findMessagesForPersonalityAnalysis(
     userId: string,
     limit: number = 100,
@@ -88,4 +97,15 @@ export class UserMessagesService {
       .exec();
     return result as UserMessage[];
   }
+}
+
+function getMessageRetentionExpiresAt(): Date | undefined {
+  const retentionDays = Number(
+    process.env.USER_MESSAGE_RETENTION_DAYS ?? DEFAULT_MESSAGE_RETENTION_DAYS,
+  );
+  if (!Number.isFinite(retentionDays) || retentionDays <= 0) {
+    return undefined;
+  }
+
+  return new Date(Date.now() + retentionDays * MS_PER_DAY);
 }

@@ -334,10 +334,10 @@ export async function callChatCompletion(
           console.warn(
             `[OpenAI] Received empty content. Response status: ${response?.status || 'unknown'}, Response keys: ${Object.keys(response).join(', ')}`,
           );
-          // Log more details about the response structure
+          // Log only structural metadata; output content can contain user data.
           if (response?.output) {
             console.warn(
-              `[OpenAI] Output structure: ${JSON.stringify(response.output).substring(0, 500)}`,
+              `[OpenAI] Output items: ${response.output.length}`,
             );
           }
         }

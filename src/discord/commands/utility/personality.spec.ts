@@ -1,8 +1,8 @@
-import { PermissionFlagsBits } from 'discord.js';
-
 jest.mock('../../decorators/discord-resilience.decorator', () => ({
   setDiscordResilience: jest.fn(),
 }));
+
+export {};
 
 type PersonalityCommand = {
   execute: (
@@ -38,13 +38,7 @@ function createInteraction(options: {
       displayAvatarURL: jest.fn().mockReturnValue('https://avatar.example/alice.png'),
     },
     memberPermissions: {
-      has: jest.fn((permission: bigint) => {
-        return (
-          options.hasModeratorPermission &&
-          (permission === PermissionFlagsBits.Administrator ||
-            permission === PermissionFlagsBits.ManageGuild)
-        );
-      }),
+      has: jest.fn().mockReturnValue(Boolean(options.hasModeratorPermission)),
     },
   };
 }
@@ -83,8 +77,11 @@ describe('/personality command', () => {
     });
   });
 
-  it('blocks viewing another user without moderator permissions', async () => {
-    const interaction = createInteraction({ targetUserId: 'user-2' });
+  it('blocks viewing another user even with moderator permissions', async () => {
+    const interaction = createInteraction({
+      targetUserId: 'user-2',
+      hasModeratorPermission: true,
+    });
 
     await command.execute(interaction, undefined, undefined, usersService);
 

@@ -107,6 +107,7 @@ export class PersonalityService {
       if (!transcript || transcript.usedMessageCount < MIN_MESSAGES_FOR_SUMMARY) {
         return { status: 'skipped', reason: 'not_enough_recent_messages' };
       }
+      const provenance = buildPersonalityProvenance(messages);
 
       const policy = getOpenAiFlowPolicy('personality');
       const response = await callStructuredResponse(
@@ -166,6 +167,11 @@ export class PersonalityService {
         personalitySummaryMessageCount: user.messageCount ?? messages.length,
         personalitySummaryVersion: PERSONALITY_SUMMARY_VERSION,
         personalitySummaryError: '',
+        personalitySummarySampleFrom: provenance.sampleFrom,
+        personalitySummarySampleTo: provenance.sampleTo,
+        personalitySummaryGuildCount: provenance.guildCount,
+        personalitySummaryDmCount: provenance.dmCount,
+        personalitySummaryScopeTypes: provenance.scopeTypes,
       });
       return { status: 'updated', summary };
     } catch (error) {
@@ -273,4 +279,34 @@ function renderPersonalitySummary(payload: PersonalitySummaryPayload): string {
   }
   parts.push(`Confidence: ${payload.confidence}`);
   return parts.join('\n');
+}
+
+function buildPersonalityProvenance(messages: UserMessage[]): {
+  sampleFrom?: Date;
+  sampleTo?: Date;
+  guildCount: number;
+  dmCount: number;
+  scopeTypes: string[];
+} {
+  const timestamps = messages
+    .map((message) => new Date(message.timestamp))
+    .filter((date) => !Number.isNaN(date.getTime()))
+    .sort((a, b) => a.getTime() - b.getTime());
+  const guildIds = new Set(
+    messages
+      .map((message) => message.guildId)
+      .filter((guildId): guildId is string => Boolean(guildId)),
+  );
+  const dmCount = messages.filter((message) => message.scopeType === 'dm').length;
+  const scopeTypes = Array.from(
+    new Set(messages.map((message) => message.scopeType).filter(Boolean)),
+  );
+
+  return {
+    sampleFrom: timestamps[0],
+    sampleTo: timestamps[timestamps.length - 1],
+    guildCount: guildIds.size,
+    dmCount,
+    scopeTypes,
+  };
 }

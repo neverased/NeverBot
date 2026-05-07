@@ -12,6 +12,7 @@ import {
   CommandInteraction,
   DMChannel,
   Events,
+  Guild,
   GuildMember,
   Interaction,
   Message,
@@ -152,6 +153,7 @@ export class DiscordService implements OnModuleInit, OnModuleDestroy {
       this.logger.log('Client is ready!');
       this.setClientActivity();
       this.registerRateLimitHandler();
+      void this.syncKnownGuildMembers();
     });
   }
 
@@ -160,6 +162,14 @@ export class DiscordService implements OnModuleInit, OnModuleDestroy {
       try {
         const serverId = member.guild.id;
         const serverName = member.guild.name;
+        if (!member.user.bot) {
+          await this.usersService.findOrCreateUser(
+            member.user.id,
+            serverName,
+            serverId,
+            'guild_member_add',
+          );
+        }
         const serverConfig = await this.serversService.findOrCreateServer(
           serverId,
           serverName,
@@ -181,6 +191,7 @@ export class DiscordService implements OnModuleInit, OnModuleDestroy {
             text: policy.text,
             promptCacheKey: policy.promptCacheKey,
             metadata: { feature: 'welcome' },
+            store: false,
           },
         );
 
@@ -209,6 +220,12 @@ export class DiscordService implements OnModuleInit, OnModuleDestroy {
         try {
           const serverId = member.guild.id;
           const serverName = member.guild.name;
+          if (!member.user.bot) {
+            await this.usersService.markGuildMembershipLeft(
+              member.user.id,
+              serverId,
+            );
+          }
           const serverConfig = await this.serversService.findOrCreateServer(
             serverId,
             serverName,
@@ -247,6 +264,51 @@ export class DiscordService implements OnModuleInit, OnModuleDestroy {
       channel instanceof ThreadChannel ||
       channel instanceof DMChannel
     );
+  }
+
+  private async syncKnownGuildMembers(): Promise<void> {
+    for (const guild of this.client.guilds.cache.values()) {
+      await this.syncGuildMembers(guild);
+    }
+  }
+
+  private async syncGuildMembers(guild: Guild): Promise<void> {
+    try {
+      await this.serversService.findOrCreateServer(guild.id, guild.name);
+      const members = await guild.members.fetch();
+      const humanMembers = [...members.values()].filter(
+        (member) => !member.user.bot,
+      );
+
+      await this.runInBatches(humanMembers, 25, async (member) => {
+        await this.usersService.findOrCreateUser(
+          member.user.id,
+          guild.name,
+          guild.id,
+          'guild_member_sync',
+        );
+      });
+
+      this.logger.log(
+        `[Members] Synced ${humanMembers.length} human members for guild ${guild.id}`,
+      );
+    } catch (error) {
+      this.logger.warn(
+        `[Members] Failed to sync members for guild ${guild.id}: ${
+          (error as Error).message
+        }`,
+      );
+    }
+  }
+
+  private async runInBatches<T>(
+    items: T[],
+    batchSize: number,
+    task: (item: T) => Promise<void>,
+  ): Promise<void> {
+    for (let index = 0; index < items.length; index += batchSize) {
+      await Promise.all(items.slice(index, index + batchSize).map(task));
+    }
   }
 
   private startCacheCleanupInterval(): void {
@@ -354,7 +416,7 @@ export class DiscordService implements OnModuleInit, OnModuleDestroy {
       for (const attachment of message.attachments.values()) {
         if (attachment.contentType?.startsWith('image/')) {
           imageUrls.push(attachment.url);
-          this.logger.log(`[GPT] Image attachment detected: ${attachment.url}`);
+          this.logger.log('[GPT] Image attachment detected');
         }
       }
     }
@@ -565,6 +627,8 @@ export class DiscordService implements OnModuleInit, OnModuleDestroy {
       const serverId = message.guild?.id; // Guild might be null for DMs if we handle them
       const serverName = message.guild?.name;
       const channelId = message.channel.id;
+      const scopeType = serverId ? 'guild' : 'dm';
+      const scopeId = serverId ?? channelId;
       const messageId = message.id;
       const messageContentLower = message.content.toLowerCase();
       const botNameLower = (
@@ -655,14 +719,11 @@ export class DiscordService implements OnModuleInit, OnModuleDestroy {
       let sentimentComparative: number;
       let sentimentCategory: string;
       let significantTopics: string[] = [];
-      let sentimentTokens: string[] = [];
-      let wordsForMessageDto: string[] = [];
 
       try {
         const tokenizer = new natural.WordTokenizer();
-        wordsForMessageDto = tokenizer.tokenize(message.content);
         const stemmer = natural.PorterStemmer;
-        sentimentTokens = tokenizer.tokenize(messageContentLower);
+        const sentimentTokens = tokenizer.tokenize(messageContentLower);
         const sentimentAnalyzer = new natural.SentimentAnalyzer(
           'English',
           stemmer,
@@ -739,14 +800,14 @@ export class DiscordService implements OnModuleInit, OnModuleDestroy {
             userId: discordUserId,
             messageId: messageId,
             channelId: channelId,
-            guildId: serverId, // Use optional guildId
+            guildId: serverId ?? null,
+            scopeType,
+            scopeId,
             content: messageContent,
             timestamp: message.createdAt,
             sentiment: {
               score: sentimentScore,
               comparative: sentimentComparative,
-              tokens: sentimentTokens,
-              words: wordsForMessageDto,
             },
             keywords: significantTopics,
           };

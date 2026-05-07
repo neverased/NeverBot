@@ -10,6 +10,7 @@ import {
 } from 'class-validator';
 
 import { CreateUserDto } from './create-user.dto';
+import { GuildMembershipDto } from './create-user.dto';
 
 // Define a DTO for the sentiment history items for validation
 class SentimentHistoryItemDto {
@@ -39,6 +40,9 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
   @IsOptional()
   @IsString()
   serverId?: string;
+
+  @IsOptional()
+  guildMemberships?: GuildMembershipDto[];
 
   @IsOptional()
   @IsString()
@@ -91,4 +95,25 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
   @IsOptional()
   @IsString()
   personalitySummaryError?: string;
+
+  @IsOptional()
+  @IsDate()
+  personalitySummarySampleFrom?: Date;
+
+  @IsOptional()
+  @IsDate()
+  personalitySummarySampleTo?: Date;
+
+  @IsOptional()
+  @IsNumber()
+  personalitySummaryGuildCount?: number;
+
+  @IsOptional()
+  @IsNumber()
+  personalitySummaryDmCount?: number;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  personalitySummaryScopeTypes?: string[];
 }

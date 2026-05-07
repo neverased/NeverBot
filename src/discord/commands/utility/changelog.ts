@@ -98,6 +98,7 @@ module.exports = {
           text: policy.text,
           promptCacheKey: policy.promptCacheKey,
           metadata: { feature: 'changelog' },
+          store: false,
         },
       );
       const summary = parsed

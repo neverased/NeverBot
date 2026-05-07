@@ -1,7 +1,6 @@
 import {
   ChatInputCommandInteraction,
   EmbedBuilder,
-  PermissionFlagsBits,
   SlashCommandBuilder,
   User as DiscordUser,
 } from 'discord.js';
@@ -43,7 +42,7 @@ module.exports = {
       interaction.options.getUser('target') || interaction.user;
     const isSelfLookup = targetDiscordUser.id === interaction.user.id;
 
-    if (!isSelfLookup && !canViewOtherPersonalities(interaction)) {
+    if (!isSelfLookup) {
       return await interaction.editReply(
         'you can only view your own personality snapshot.',
       );
@@ -79,9 +78,7 @@ module.exports = {
           .setDescription(displaySummary)
           .setThumbnail(targetDiscordUser.displayAvatarURL())
           .setTimestamp()
-          .setFooter({
-            text: buildPersonalityFooter(targetUserProfile),
-          });
+          .setFooter({ text: buildPersonalityFooter(targetUserProfile) });
 
         await interaction.editReply({ embeds: [personalityEmbed] });
       } else {
@@ -101,15 +98,6 @@ module.exports = {
   },
 };
 
-function canViewOtherPersonalities(
-  interaction: ChatInputCommandInteraction,
-): boolean {
-  return Boolean(
-    interaction.memberPermissions?.has(PermissionFlagsBits.Administrator) ||
-      interaction.memberPermissions?.has(PermissionFlagsBits.ManageGuild),
-  );
-}
-
 function sanitizePersonalitySummaryForDisplay(summary: string): string {
   return summary
     .replace(/<@!?\d+>/g, '[mention]')
@@ -124,11 +112,24 @@ function sanitizePersonalitySummaryForDisplay(summary: string): string {
 }
 
 function buildPersonalityFooter(profile: UserModel): string {
+  const scope = buildPersonalityScopeLabel(profile);
   if (!profile.personalitySummaryUpdatedAt) {
-    return 'Based on recent collected server activity.';
+    return `Based on recent collected activity${scope}.`;
   }
 
-  return `Based on recent collected server activity. Updated ${new Date(
+  return `Based on recent collected activity${scope}. Updated ${new Date(
     profile.personalitySummaryUpdatedAt,
   ).toISOString()}`;
+}
+
+function buildPersonalityScopeLabel(profile: UserModel): string {
+  const parts: string[] = [];
+  if (profile.personalitySummaryGuildCount) {
+    parts.push(`${profile.personalitySummaryGuildCount} guild(s)`);
+  }
+  if (profile.personalitySummaryDmCount) {
+    parts.push(`${profile.personalitySummaryDmCount} DM message(s)`);
+  }
+
+  return parts.length > 0 ? ` across ${parts.join(', ')}` : '';
 }

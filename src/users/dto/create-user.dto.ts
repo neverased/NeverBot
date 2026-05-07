@@ -1,5 +1,15 @@
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
+export interface GuildMembershipDto {
+  guildId: string;
+  guildName: string;
+  joinedAt?: Date;
+  firstSeenAt: Date;
+  lastSeenAt: Date;
+  leftAt?: Date | null;
+  source: 'observed' | 'guild_member_sync' | 'guild_member_add';
+}
+
 export class CreateUserDto {
   @IsNotEmpty()
   @IsString()
@@ -12,6 +22,8 @@ export class CreateUserDto {
   @IsOptional()
   @IsString()
   serverId: string;
+  @IsOptional()
+  guildMemberships?: GuildMembershipDto[];
   @IsOptional()
   @IsString()
   subscription: string;

@@ -16,6 +16,14 @@ import { CommandRegistry } from './command-registry';
 import { getDiscordResilience } from './decorators/discord-resilience.decorator';
 import { withSafeInteraction } from './safe-discord';
 
+const COMMANDS_ALLOWED_OUTSIDE_ENABLED_CHANNELS = new Set([
+  'personality',
+  'privacy-delete',
+  'privacy-export',
+  'setbotchannels',
+  'setwelcomechannel',
+]);
+
 @Injectable()
 export class InteractionHandler {
   private readonly logger = new Logger(InteractionHandler.name);
@@ -75,7 +83,8 @@ export class InteractionHandler {
         serverConfig &&
         Array.isArray(serverConfig.enabledChannels) &&
         serverConfig.enabledChannels.length > 0 &&
-        !serverConfig.enabledChannels.includes(interaction.channelId)
+        !serverConfig.enabledChannels.includes(interaction.channelId) &&
+        !COMMANDS_ALLOWED_OUTSIDE_ENABLED_CHANNELS.has(interaction.commandName)
       ) {
         await interaction.reply({
           content: 'This command is not enabled in this channel.',

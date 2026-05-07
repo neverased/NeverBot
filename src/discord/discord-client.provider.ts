@@ -8,6 +8,7 @@ export class DiscordClientProvider {
       intents: [
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.DirectMessages,
         GatewayIntentBits.GuildMembers,
         GatewayIntentBits.MessageContent,
       ],

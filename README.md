@@ -58,6 +58,10 @@ LLM_PROMPT_CACHE_KEY_PREFIX=neverbot
 # LLM_MAX_OUTPUT_TOKENS_CHANGELOG=1200
 # LLM_MAX_OUTPUT_TOKENS_PERSONALITY=800
 # LLM_MAX_OUTPUT_TOKENS_VISION=768
+
+# Raw collected messages are retained for personality evidence and then
+# automatically expire; set 0 to disable TTL expiry.
+# USER_MESSAGE_RETENTION_DAYS=90
 ```
 
 Mongo is configured in `src/app.module.ts` to prefer `MONGO_URI`. If not set, it will fall back to `MONGO_USER`/`MONGO_PW`.

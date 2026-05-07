@@ -62,6 +62,9 @@ describe('PersonalityService', () => {
             ? `I keep breaking TypeScript builds but I love debugging it. ${'x'.repeat(400)}`
             : `Message ${index + 1} about debugging bots and TypeScript edges.`,
         timestamp: new Date(`2026-05-07T${String(index).padStart(2, '0')}:00:00.000Z`),
+        guildId: index < 6 ? 'guild-1' : 'guild-2',
+        scopeType: 'guild',
+        scopeId: index < 6 ? 'guild-1' : 'guild-2',
         keywords: ['typescript', 'debug'],
       })) as never,
     );
@@ -95,6 +98,9 @@ describe('PersonalityService', () => {
         personalitySummary: expect.stringContaining('Often jokes'),
         personalitySummaryStatus: 'ready',
         personalitySummaryMessageCount: 30,
+        personalitySummaryGuildCount: 2,
+        personalitySummaryDmCount: 0,
+        personalitySummaryScopeTypes: ['guild'],
       }),
     );
   });

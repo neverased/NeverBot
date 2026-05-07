@@ -4,12 +4,18 @@ import { Model, mongo, UpdateQuery } from 'mongoose';
 
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { User, UserDocument } from './schemas/users.schema';
+import { UserMessagesService } from './messages/messages.service';
+import {
+  GuildMembershipSource,
+  User,
+  UserDocument,
+} from './schemas/users.schema';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectModel(User.name) private readonly usersModel: Model<UserDocument>,
+    private readonly userMessagesService: UserMessagesService,
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<UserDocument> {
@@ -40,22 +46,121 @@ export class UsersService {
     discordUserId: string,
     serverName?: string,
     serverId?: string,
+    membershipSource: GuildMembershipSource = 'observed',
   ): Promise<UserDocument> {
     let userDoc: UserDocument | null = await this.usersModel
       .findOne({ discordUserId })
       .exec();
     if (!userDoc) {
+      const now = new Date();
       const createUserDto: CreateUserDto = {
         discordUserId,
         serverName: serverName || 'N/A',
         serverId: serverId || 'N/A',
-        registeredAt: new Date(),
+        registeredAt: now,
         subscription: 'free',
         tasks: {},
+        guildMemberships: serverId
+          ? [
+              {
+                guildId: serverId,
+                guildName: serverName || 'N/A',
+                firstSeenAt: now,
+                lastSeenAt: now,
+                leftAt: null,
+                source: membershipSource,
+              },
+            ]
+          : [],
       };
       userDoc = await this.create(createUserDto);
+    } else if (serverId) {
+      await this.rememberGuildMembership(
+        discordUserId,
+        serverId,
+        serverName,
+        membershipSource,
+      );
     }
     return userDoc;
+  }
+
+  async rememberGuildMembership(
+    discordUserId: string,
+    guildId: string,
+    guildName?: string,
+    source: GuildMembershipSource = 'observed',
+    joinedAt?: Date | null,
+  ): Promise<void> {
+    const now = new Date();
+    const guildNameValue = guildName || 'N/A';
+    const existingUpdate = await this.usersModel
+      .updateOne(
+        {
+          discordUserId,
+          'guildMemberships.guildId': guildId,
+        },
+        {
+          $set: {
+            serverId: guildId,
+            serverName: guildNameValue,
+            'guildMemberships.$.guildName': guildNameValue,
+            'guildMemberships.$.lastSeenAt': now,
+            'guildMemberships.$.leftAt': null,
+            'guildMemberships.$.source': source,
+            ...(joinedAt
+              ? { 'guildMemberships.$.joinedAt': joinedAt }
+              : {}),
+          },
+        },
+      )
+      .exec();
+
+    if (existingUpdate.matchedCount > 0) {
+      return;
+    }
+
+    await this.usersModel
+      .updateOne(
+        { discordUserId },
+        {
+          $set: {
+            serverId: guildId,
+            serverName: guildNameValue,
+          },
+          $push: {
+            guildMemberships: {
+              guildId,
+              guildName: guildNameValue,
+              joinedAt: joinedAt ?? undefined,
+              firstSeenAt: now,
+              lastSeenAt: now,
+              leftAt: null,
+              source,
+            },
+          },
+        },
+      )
+      .exec();
+  }
+
+  async markGuildMembershipLeft(
+    discordUserId: string,
+    guildId: string,
+  ): Promise<void> {
+    await this.usersModel
+      .updateOne(
+        {
+          discordUserId,
+          'guildMemberships.guildId': guildId,
+        },
+        {
+          $set: {
+            'guildMemberships.$.leftAt': new Date(),
+          },
+        },
+      )
+      .exec();
   }
 
   async updateUserByDiscordUserId(
@@ -93,6 +198,7 @@ export class UsersService {
   async removeByDiscordUserId(
     discordUserId: string,
   ): Promise<mongo.DeleteResult> {
+    await this.userMessagesService.removeAllByUserId(discordUserId);
     const result = await this.usersModel
       .deleteOne({ discordUserId: discordUserId })
       .exec();
