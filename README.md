@@ -14,7 +14,7 @@ General-purpose Discord chatbot built with NestJS and Discord.js. Features conve
 ## Prerequisites
 
 - Node.js 24.x
-- pnpm (recommended) or npm
+- pnpm 11 via Corepack
 - MongoDB URI for persistence; `compose.yaml` includes a local MongoDB service
 - OpenAI API key
 - Discord Bot token and Application ID
