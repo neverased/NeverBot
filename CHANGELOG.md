@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.6.1](https://github.com/neverased/NeverBot/compare/never-bot-v5.6.0...never-bot-v5.6.1) (2026-05-07)
+
+
+### Bug Fixes
+
+* **mongoose:** replace deprecated update option ([a2a6519](https://github.com/neverased/NeverBot/commit/a2a651973c0c471e59366c56d4acbf54a7561f15))
+
 ## [5.6.0](https://github.com/neverased/NeverBot/compare/never-bot-v5.5.0...never-bot-v5.6.0) (2026-05-07)
 
 
