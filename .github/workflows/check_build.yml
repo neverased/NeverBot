@@ -6,8 +6,7 @@ on:
       - main
   workflow_dispatch:
 
-permissions:
-  contents: read
+permissions: read-all
 
 jobs:
   validate:
@@ -17,7 +16,8 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Install pnpm
-        uses: pnpm/action-setup@8912a9102ac27614460f54aedde9e1e7f9aec20d # v6.0.5
+        # pnpm/action-setup v6.0.5
+        uses: pnpm/action-setup@8912a9102ac27614460f54aedde9e1e7f9aec20d
         with:
           run_install: false
 

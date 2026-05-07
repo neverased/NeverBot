@@ -3,8 +3,7 @@ on:
   issues:
     types: [labeled]
 
-permissions:
-  contents: read
+permissions: read-all
 
 jobs:
   build:
@@ -13,7 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Close Issue
-        uses: peter-evans/close-issue@05dff7ca07116e5707cfb3a3cd4af7bb5e43524c # v3.0.2
+        # peter-evans/close-issue v3.0.2
+        uses: peter-evans/close-issue@05dff7ca07116e5707cfb3a3cd4af7bb5e43524c
         if: contains(github.event.issue.labels.*.name, 'support')
         with:
           comment: |
