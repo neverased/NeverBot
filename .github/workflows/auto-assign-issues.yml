@@ -14,7 +14,7 @@ jobs:
     steps:
       - name: 'Auto-assign issue'
         # pozil/auto-assign-issue v3.0.0
-        uses: pozil/auto-assign-issue@70adb98ca8b3941524e9ecde48e89067c4f96736
+        uses: pozil/auto-assign-issue@v3.0.0
         with:
           assignees: neverased
           numOfAssignee: 1
