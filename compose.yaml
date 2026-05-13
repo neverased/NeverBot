@@ -28,7 +28,7 @@ services:
       start_period: 30s
 
   mongo:
-    image: mongo:8.3.1
+    image: mongo:8.3.2
     restart: unless-stopped
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${LOCAL_MONGO_ROOT_USERNAME:-neverbot}
