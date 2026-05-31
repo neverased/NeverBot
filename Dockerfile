@@ -5,8 +5,8 @@ FROM node:26.2.0 AS base
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 
-# Enable Corepack, which includes pnpm
-RUN corepack enable
+# Node 25+ does not bundle Corepack; install it to use packageManager-pinned pnpm.
+RUN npm install -g corepack@0.35.0 && corepack enable
 
 # Copy the application code to /app
 COPY . /app
