@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.7.1](https://github.com/neverased/NeverBot/compare/never-bot-v5.7.0...never-bot-v5.7.1) (2026-05-31)
+
+
+### Bug Fixes
+
+* **build:** support node 26 docker builds ([adf985e](https://github.com/neverased/NeverBot/commit/adf985e86cc3e05eb0439107b3d312cffb7572db))
+
 ## [5.7.0](https://github.com/neverased/NeverBot/compare/never-bot-v5.6.1...never-bot-v5.7.0) (2026-05-31)
 
 
