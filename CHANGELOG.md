@@ -1,5 +1,27 @@
 # Changelog
 
+## [5.7.0](https://github.com/neverased/NeverBot/compare/never-bot-v5.6.1...never-bot-v5.7.0) (2026-05-31)
+
+
+### Features
+
+* **agents:** categorization and specialized agent definitions ([3cbd1ce](https://github.com/neverased/NeverBot/commit/3cbd1ce44594852f7bc402d48b28c059512b89ea))
+
+
+### Chores
+
+* **deps:** bump dependencies and regenerate pnpm-lock.yaml ([21758ba](https://github.com/neverased/NeverBot/commit/21758baeba54e915ef931b6c373214757484e9de))
+* **deps:** bump Node base to 26 ([613039f](https://github.com/neverased/NeverBot/commit/613039f0dad25f4dc728eb330b271478531a83d9))
+* **deps:** bump various dependencies and regenerate pnpm-lock.yaml ([a5b5a24](https://github.com/neverased/NeverBot/commit/a5b5a24ef65286c8c8b0c28ddfb9bb5eeae41306))
+* **deps:** update actions/stale action to v10.3.0 ([21aa24f](https://github.com/neverased/NeverBot/commit/21aa24fc870c59017634fb993b6aaa00521ae663))
+* **deps:** update actions/stale action to v10.3.0 ([f265085](https://github.com/neverased/NeverBot/commit/f265085c50ac067545e8b2d43cfbeb7447235290))
+* **deps:** update dependency versions and regenerate pnpm lockfile ([82c9250](https://github.com/neverased/NeverBot/commit/82c925034f25d8decbe7a30d59148f4fb9cce86a))
+* **deps:** update github/codeql-action action to v4.36.0 ([06927c8](https://github.com/neverased/NeverBot/commit/06927c8d858a2253932efefda7fe4d0568bcff0f))
+* **deps:** update github/codeql-action action to v4.36.0 ([95175de](https://github.com/neverased/NeverBot/commit/95175de68b09ea445e87c98da4dc9869125c12cb))
+* **deps:** update minor/patch dependencies and Docker Node.js image ([09ae32f](https://github.com/neverased/NeverBot/commit/09ae32faa3472748848849b1713da8aa5327f09d))
+* **deps:** update mongo docker tag to v8.3.2 ([98be024](https://github.com/neverased/NeverBot/commit/98be024c71712edc7437259fb4dab6d1a26d8502))
+* **deps:** update mongo docker tag to v8.3.2 ([ecf332b](https://github.com/neverased/NeverBot/commit/ecf332b7bf3c3139ebecfacd22ccc6704546cd40))
+
 ## [5.6.1](https://github.com/neverased/NeverBot/compare/never-bot-v5.6.0...never-bot-v5.6.1) (2026-05-07)
 
 
