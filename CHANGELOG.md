@@ -1,5 +1,15 @@
 # Changelog
 
+## [5.7.2](https://github.com/neverased/NeverBot/compare/never-bot-v5.7.1...never-bot-v5.7.2) (2026-08-09)
+
+
+### Chores
+
+* **deps:** update minor and patch dependencies ([b9e2371](https://github.com/neverased/NeverBot/commit/b9e237113b34ce329e7775aae433999ec935623e))
+* **deps:** update NestJS packages to latest patch versions ([36f4b1b](https://github.com/neverased/NeverBot/commit/36f4b1b2a1201c690088fde7646166fcb08b3f96))
+* **deps:** update node.js to v26.3.0 ([d1b685a](https://github.com/neverased/NeverBot/commit/d1b685a7c22f5c995fe2177a73f0a46b10a48423))
+* **deps:** update node.js to v26.3.0 ([710478c](https://github.com/neverased/NeverBot/commit/710478c0b19a755087ef5fbff97c8f5fa8127be5))
+
 ## [5.7.1](https://github.com/neverased/NeverBot/compare/never-bot-v5.7.0...never-bot-v5.7.1) (2026-05-31)
 
 
