@@ -193,6 +193,8 @@ describe('callChatCompletion', () => {
     );
 
     expect(response.parsed).toEqual({ summary: 'ok' });
+    const summary: string = response.parsed.summary;
+    expect(summary).toBe('ok');
     const payload = mockedOpenAI.responses.parse.mock.calls[0][0];
     expect(payload).toMatchObject({
       model: 'gpt-5.5',
@@ -204,5 +206,9 @@ describe('callChatCompletion', () => {
         }),
       },
     });
+    expect(payload.text.format.$parseRaw('{"summary":"validated"}')).toEqual({
+      summary: 'validated',
+    });
+    expect(() => payload.text.format.$parseRaw('{"summary":123}')).toThrow();
   });
 });

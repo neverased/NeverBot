@@ -459,7 +459,7 @@ export async function callStructuredResponse<TSchema extends z.ZodType>(
   for (let attempt = 0; attempt <= retryCount; attempt++) {
     const startedAt = Date.now();
     try {
-      const payload: ResponseCreateParamsNonStreaming = {
+      const payload = {
         model,
         ...(systemInstructions ? { instructions: systemInstructions } : {}),
         ...(input ? { input } : {}),
@@ -475,12 +475,15 @@ export async function callStructuredResponse<TSchema extends z.ZodType>(
           ...(text ?? {}),
           format: zodTextFormat(schema, schemaName),
         },
-      };
+      } satisfies ResponseCreateParamsNonStreaming;
 
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 30_000);
       try {
-        const response = await openai.responses.parse(payload, {
+        const response = await openai.responses.parse<
+          typeof payload,
+          z.infer<TSchema>
+        >(payload, {
           signal: controller.signal,
         });
 

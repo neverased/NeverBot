@@ -14,10 +14,25 @@ General-purpose Discord chatbot built with NestJS and Discord.js. Features conve
 ## Prerequisites
 
 - Node.js 26.x
-- Corepack with pnpm 11 (`npm install -g corepack@0.35.0 && corepack enable` if `corepack` is missing)
+- Corepack with pnpm 12 (`npm install -g corepack@0.35.0 && corepack enable` if `corepack` is missing)
 - MongoDB URI for persistence; `compose.yaml` includes a local MongoDB service
 - OpenAI API key
 - Discord Bot token and Application ID
+
+Type checking uses TypeScript 7 through the `@typescript/native` alias. The
+`typescript` dependency aliases `@typescript/typescript6` to provide the compiler
+API required by Nest CLI, ts-jest, ts-node, and typescript-eslint. Keep both aliases
+when updating dependencies; installing TypeScript 7 directly as `typescript`
+breaks those tools.
+
+The test scripts enable Node's `--experimental-vm-modules` for Jest to load NestJS
+12's ESM packages from the CommonJS application. Babel stays on 7 because ts-jest
+29 and Jest's Babel syntax plugins do not support Babel 8 yet.
+
+`pnpm peers check` still reports NestJS 12 outside the declared peer ranges of
+`@nestjs/mapped-types@2.1.1` and `@nestjs/throttler@6.5.0`. The E2E suite verifies
+mapped DTO validation and HTTP rate limiting with the installed NestJS version;
+the upstream peer warnings remain visible.
 
 ## Environment Variables
 
