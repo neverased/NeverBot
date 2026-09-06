@@ -1,5 +1,24 @@
 # Changelog
 
+## [5.7.2](https://github.com/neverased/NeverBot/compare/never-bot-v5.7.1...never-bot-v5.7.2) (2026-09-06)
+
+
+### Chores
+
+* **ci:** update GitHub Action versions to latest ([c3fcd36](https://github.com/neverased/NeverBot/commit/c3fcd36b95ca815cbde0d283170c4ff35163d91b))
+* **dependencies:** update to latest ([e288f78](https://github.com/neverased/NeverBot/commit/e288f78b861c8e76d895ae3e5cd387a2efd07ad8))
+* **deps:** update dependency fast-xml-parser@&lt;5.7.0 to v5.11.1 ([8485cb9](https://github.com/neverased/NeverBot/commit/8485cb9c0f55294b3d6265cea0d76653197c5426))
+* **deps:** update dependency fast-xml-parser@&lt;5.7.0 to v5.11.1 ([ee07d67](https://github.com/neverased/NeverBot/commit/ee07d67da2189573beb2dde7e08d483c858d0e06))
+* **deps:** update dependency picomatch@&lt;2.3.2 to v4.0.7 ([b4cf1c1](https://github.com/neverased/NeverBot/commit/b4cf1c1c4a7df3355bd0621c4a8e53698edb83f5))
+* **deps:** update dependency picomatch@&lt;2.3.2 to v4.0.7 ([120235e](https://github.com/neverased/NeverBot/commit/120235e61ecda34e466500063e890eed0e8da5b9))
+* **deps:** update minor and patch dependencies ([b9e2371](https://github.com/neverased/NeverBot/commit/b9e237113b34ce329e7775aae433999ec935623e))
+* **deps:** update mongo docker tag to v8.3.8 ([92b3a2f](https://github.com/neverased/NeverBot/commit/92b3a2f018067d1e18c9a8b2ed08ee7339bb808a))
+* **deps:** update mongo docker tag to v8.3.8 ([7109d6b](https://github.com/neverased/NeverBot/commit/7109d6b2f1060cd284d8995ebd480977f474a066))
+* **deps:** update NestJS packages to latest patch versions ([36f4b1b](https://github.com/neverased/NeverBot/commit/36f4b1b2a1201c690088fde7646166fcb08b3f96))
+* **deps:** update node.js to v26.3.0 ([d1b685a](https://github.com/neverased/NeverBot/commit/d1b685a7c22f5c995fe2177a73f0a46b10a48423))
+* **deps:** update node.js to v26.3.0 ([710478c](https://github.com/neverased/NeverBot/commit/710478c0b19a755087ef5fbff97c8f5fa8127be5))
+* **deps:** update TypeScript and adjust test configurations ([b509730](https://github.com/neverased/NeverBot/commit/b509730489f49dc114b473029270c838d77ae555))
+
 ## [5.7.1](https://github.com/neverased/NeverBot/compare/never-bot-v5.7.0...never-bot-v5.7.1) (2026-05-31)
 
 
