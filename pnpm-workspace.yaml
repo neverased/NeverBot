@@ -48,6 +48,6 @@ minimumReleaseAgeExclude:
   - openai@7.47.0
 
 overrides:
-  "fast-xml-parser@<5.7.0": "5.11.1"
+  "fast-xml-parser@<5.7.0": "5.11.2"
   "lodash@>=4.0.0 <4.18.0": "4.18.1"
   "picomatch@<2.3.2": "4.0.7"
